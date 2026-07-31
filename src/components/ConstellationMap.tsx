@@ -116,7 +116,6 @@ export function ConstellationMap({
         .filter(Boolean)
         .join(" ")}
       data-testid={`${kind}-constellation`}
-      data-mode={mode}
       aria-hidden={mode === "inactive" ? "true" : undefined}
       ref={rootRef}
       style={
@@ -170,7 +169,6 @@ export function ConstellationMap({
               data-index={index}
               id={`constellation-star-${kind}-${item.slug}`}
               key={item.slug}
-              data-depth={item.depth}
               data-tone={item.tone}
               data-prominence={item.prominence}
               ref={(element) => {

@@ -185,6 +185,13 @@ const starProminence = (value: unknown, path: string): StarProminence => {
   return parsed;
 };
 
+const starPlacement = (value: Record<string, unknown>, path: string) => ({
+  position: point(value.position, `${path}.position`),
+  depth: depth(value.depth, `${path}.depth`),
+  tone: starTone(value.tone, `${path}.tone`),
+  prominence: starProminence(value.prominence, `${path}.prominence`),
+});
+
 const connection = (value: unknown, path: string): Connection => {
   const endpoints = array(value, path);
   if (endpoints.length !== 2) {
@@ -287,13 +294,7 @@ export function validateSiteContent(value: unknown): SiteContent {
       shortLabel: text(entry.shortLabel, `path[${index}].shortLabel`),
       area: text(entry.area, `path[${index}].area`),
       summary: text(entry.summary, `path[${index}].summary`),
-      position: point(entry.position, `path[${index}].position`),
-      depth: depth(entry.depth, `path[${index}].depth`),
-      tone: starTone(entry.tone, `path[${index}].tone`),
-      prominence: starProminence(
-        entry.prominence,
-        `path[${index}].prominence`,
-      ),
+      ...starPlacement(entry, `path[${index}]`),
     };
   });
   assertUniqueSlugs(path, "path entry");
@@ -342,13 +343,7 @@ export function validateSiteContent(value: unknown): SiteContent {
         `projects[${index}].linkLabel`,
       ),
       artifact,
-      position: point(project.position, `projects[${index}].position`),
-      depth: depth(project.depth, `projects[${index}].depth`),
-      tone: starTone(project.tone, `projects[${index}].tone`),
-      prominence: starProminence(
-        project.prominence,
-        `projects[${index}].prominence`,
-      ),
+      ...starPlacement(project, `projects[${index}]`),
     };
   });
   assertUniqueSlugs(projects, "project");
@@ -364,13 +359,7 @@ export function validateSiteContent(value: unknown): SiteContent {
         quote.attributionNote,
         `quotes[${index}].attributionNote`,
       ),
-      position: point(quote.position, `quotes[${index}].position`),
-      depth: depth(quote.depth, `quotes[${index}].depth`),
-      tone: starTone(quote.tone, `quotes[${index}].tone`),
-      prominence: starProminence(
-        quote.prominence,
-        `quotes[${index}].prominence`,
-      ),
+      ...starPlacement(quote, `quotes[${index}]`),
     };
   });
   assertUniqueSlugs(quotes, "quote");

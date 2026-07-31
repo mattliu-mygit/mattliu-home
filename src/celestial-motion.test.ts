@@ -225,7 +225,26 @@ describe("celestial motion", () => {
     ).toBe(true);
 
     const anchors = stars.filter(({ tier }) => tier === "anchor");
+    const medium = stars.filter(({ tier }) => tier === "medium");
     const faint = stars.filter(({ tier }) => tier === "faint");
+    expect(Math.min(...faint.map(({ size }) => size))).toBeGreaterThanOrEqual(
+      0.264,
+    );
+    expect(Math.min(...medium.map(({ size }) => size))).toBeGreaterThanOrEqual(
+      0.616,
+    );
+    expect(Math.min(...anchors.map(({ size }) => size))).toBeGreaterThanOrEqual(
+      1.045,
+    );
+    expect(Math.max(...faint.map(({ size }) => size))).toBeGreaterThanOrEqual(
+      0.57,
+    );
+    expect(Math.max(...medium.map(({ size }) => size))).toBeGreaterThanOrEqual(
+      0.92,
+    );
+    expect(Math.max(...anchors.map(({ size }) => size))).toBeGreaterThanOrEqual(
+      1.5,
+    );
     expect(Math.min(...anchors.map(({ size }) => size))).toBeGreaterThan(
       Math.max(...faint.map(({ size }) => size)),
     );

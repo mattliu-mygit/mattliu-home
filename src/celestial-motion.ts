@@ -206,10 +206,10 @@ export function createStarField(
           : "neutral";
     const profile =
       tier === "anchor"
-        ? { minimumSize: 0.95, sizeRange: 0.42, minimumLight: 215 }
+        ? { minimumSize: 1.045, sizeRange: 0.462, minimumLight: 215 }
         : tier === "medium"
-          ? { minimumSize: 0.56, sizeRange: 0.28, minimumLight: 175 }
-          : { minimumSize: 0.24, sizeRange: 0.28, minimumLight: 125 };
+          ? { minimumSize: 0.616, sizeRange: 0.308, minimumLight: 175 }
+          : { minimumSize: 0.264, sizeRange: 0.308, minimumLight: 125 };
     return {
       x: inDensePocket
         ? 0.48 + (nextRandom() - 0.5) * 0.7
