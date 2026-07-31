@@ -119,6 +119,32 @@ describe("personal universe", () => {
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
   });
 
+  it("keeps the same constellation star mounted across zoom levels", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const star = screen.getByRole("button", {
+      name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+    });
+    await user.click(star);
+
+    expect(
+      within(screen.getByRole("region", { name: "Path constellation" })).getByRole(
+        "button",
+        {
+        name: "Focus Johns Hopkins Whiting School of Engineering",
+        },
+      ),
+    ).toBe(star);
+
+    await user.click(screen.getByRole("button", { name: "Go to Universe" }));
+    expect(
+      screen.getByRole("button", {
+        name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+      }),
+    ).toBe(star);
+  });
+
   it("lets the camera own constellation entry motion", async () => {
     const user = userEvent.setup();
     const scrollIntoView = vi.fn();
@@ -235,7 +261,7 @@ describe("personal universe", () => {
     ).toHaveAttribute("data-active-beat", "projects/monopole");
   });
 
-  it("remounts the constellation stage so consecutive pans can animate", async () => {
+  it("keeps one constellation stage while consecutive destinations pan", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -250,8 +276,8 @@ describe("personal universe", () => {
       name: "Quotes constellation",
     });
 
-    expect(projectRegion).not.toBe(pathRegion);
-    expect(quoteRegion).not.toBe(projectRegion);
+    expect(projectRegion).toBe(pathRegion);
+    expect(quoteRegion).toBe(projectRegion);
     expect(quoteRegion).toHaveAttribute("data-camera-transition", "pan");
     expect(quoteRegion).toHaveStyle({
       "--camera-pan-x": "-7.7vw",

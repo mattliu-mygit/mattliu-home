@@ -23,7 +23,7 @@ export type ConstellationItem = {
 
 type ConstellationMapProps = {
   kind: DestinationSlug;
-  variant?: "detail" | "overview";
+  mode?: "detail" | "overview" | "inactive";
   items: readonly ConstellationItem[];
   connections: readonly Connection[];
   activeSlug?: string;
@@ -36,7 +36,7 @@ type ConstellationMapProps = {
 
 export function ConstellationMap({
   kind,
-  variant = "detail",
+  mode = "detail",
   items,
   connections,
   activeSlug,
@@ -46,6 +46,7 @@ export function ConstellationMap({
   onOpen,
   onSelect,
 }: ConstellationMapProps) {
+  const variant = mode === "detail" ? "detail" : "overview";
   const rootRef = useRef<HTMLDivElement>(null);
   const starRefs = useRef(new Map<string, HTMLButtonElement>());
   const lineRefs = useRef(new Map<string, SVGLineElement>());
@@ -53,7 +54,7 @@ export function ConstellationMap({
 
   useLayoutEffect(() => {
     const root = rootRef.current;
-    if (variant !== "detail" || !root || !motionChannel) {
+    if (mode !== "detail" || !root || !motionChannel) {
       return;
     }
 
@@ -102,7 +103,7 @@ export function ConstellationMap({
       resizeObserver?.disconnect();
       unsubscribe();
     };
-  }, [connections, items, motionChannel, variant]);
+  }, [connections, items, mode, motionChannel]);
   const getOrigin = (): Point => {
     const fallback = position ?? [50, 50];
     const root = rootRef.current;
@@ -133,11 +134,14 @@ export function ConstellationMap({
         "constellation-map",
         `constellation-map--${kind}`,
         `constellation-map--${variant}`,
+        `constellation-map--${mode}`,
         variant === "overview" ? "universe-constellation" : "",
       ]
         .filter(Boolean)
         .join(" ")}
       data-testid={`${kind}-constellation-${variant}`}
+      data-mode={mode}
+      aria-hidden={mode === "inactive" ? "true" : undefined}
       ref={rootRef}
       style={
         position
@@ -188,7 +192,7 @@ export function ConstellationMap({
               className="constellation-star"
               data-active={activeSlug === item.slug ? "true" : undefined}
               data-index={index}
-              id={`constellation-star-${variant}-${kind}-${item.slug}`}
+              id={`constellation-star-${kind}-${item.slug}`}
               key={item.slug}
               data-depth={item.depth}
               data-tone={item.tone}
@@ -207,16 +211,17 @@ export function ConstellationMap({
                 } as CSSProperties
               }
               type="button"
+              tabIndex={mode === "inactive" ? -1 : 0}
               aria-label={getAccessibleName(item)}
               aria-pressed={
-                variant === "detail"
+                mode === "detail"
                   ? activeSlug === item.slug
                   : undefined
               }
               onClick={() =>
                 onSelect(
                   item.slug,
-                  variant === "overview" ? getOrigin() : undefined,
+                  mode === "overview" ? getOrigin() : undefined,
                 )
               }
             >
@@ -235,7 +240,7 @@ export function ConstellationMap({
         })}
       </div>
 
-      {variant === "overview" && label && onOpen ? (
+      {mode === "overview" && label && onOpen ? (
         <button
           className="constellation-map__name"
           id={`universe-destination-${kind}`}

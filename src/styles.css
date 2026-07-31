@@ -717,6 +717,10 @@ a:focus-visible {
   will-change: transform;
 }
 
+.constellation-map--inactive {
+  display: none;
+}
+
 .constellation-map--overview::before {
   position: absolute;
   top: 50%;

@@ -13,9 +13,9 @@ import {
 } from "./celestial-motion";
 import { CelestialScene } from "./components/CelestialScene";
 import {
-  ConstellationMap,
   type ConstellationItem,
 } from "./components/ConstellationMap";
+import { ConstellationWorld } from "./components/ConstellationWorld";
 import {
   NarrativeWheel,
   type NarrativeWheelHandle,
@@ -23,7 +23,6 @@ import {
 import { ProjectLens } from "./components/ProjectLens";
 import { QuoteReadout } from "./components/QuoteReadout";
 import { RouteRail, type RouteRailHandle } from "./components/RouteRail";
-import { UniverseOverview } from "./components/UniverseOverview";
 import {
   projectBySlug,
   siteContent,
@@ -615,7 +614,7 @@ export default function App() {
         viewHeading.current?.focus();
       } else if (target.type === "universe") {
         const targetId = target.itemSlug
-          ? `constellation-star-overview-${target.slug}-${target.itemSlug}`
+          ? `constellation-star-${target.slug}-${target.itemSlug}`
           : `universe-destination-${target.slug}`;
         document.getElementById(targetId)?.focus();
       } else {
@@ -679,27 +678,30 @@ export default function App() {
           ref={wheelRef}
         />
 
-        {location.view === "universe" ? (
-          <UniverseOverview
-            destinations={destinations}
-            items={constellationItems}
-            onSelect={enterConstellation}
-          />
-        ) : (
-          <section
-            className={`constellation-view constellation-view--${constellationView}`}
-            data-camera-transition={cameraTransition}
-            onAnimationEnd={finishCameraArrival}
-            role="region"
-            aria-labelledby="constellation-view-title"
-            key={constellationView}
-            style={
-              {
-                "--camera-pan-x": `${cameraPan.x}vw`,
-                "--camera-pan-y": `${cameraPan.y}vh`,
-              } as CSSProperties
-            }
-          >
+        <section
+          aria-label={location.view === "universe" ? "Universe" : undefined}
+          aria-labelledby={
+            location.view === "universe" ? undefined : "constellation-view-title"
+          }
+          className={
+            location.view === "universe"
+              ? "universe-overview"
+              : `constellation-view constellation-view--${constellationView}`
+          }
+          data-camera-transition={
+            location.view === "universe" ? undefined : cameraTransition
+          }
+          onAnimationEnd={finishCameraArrival}
+          role="region"
+          style={
+            {
+              "--camera-pan-x": `${cameraPan.x}vw`,
+              "--camera-pan-y": `${cameraPan.y}vh`,
+            } as CSSProperties
+          }
+        >
+          {location.view !== "universe" ? (
+            <>
             <h2
               className="constellation-view__title"
               id="constellation-view-title"
@@ -712,36 +714,29 @@ export default function App() {
             {constellationView === "quotes" ? (
               <QuoteReadout hidden={!wheelCollapsed} quote={selectedQuote} />
             ) : null}
-            <ConstellationMap
-              kind={constellationView}
-              items={constellationItems[constellationView]}
-              connections={destinationBySlug[constellationView].connections}
-              activeSlug={
-                constellationView === "path"
-                  ? selectedPathSlug
-                  : constellationView === "projects"
-                    ? selectedProjectSlug
-                    : selectedQuote.slug
+            </>
+          ) : null}
+          <ConstellationWorld
+            activeSlugs={{
+              path: selectedPathSlug,
+              projects: selectedProjectSlug,
+              quotes: selectedQuote.slug,
+            }}
+            destinations={destinations}
+            items={constellationItems}
+            onEnter={enterConstellation}
+            onSelect={(view, slug) => {
+              if (view === "path") {
+                selectPath(slug);
+              } else if (view === "projects") {
+                openProject(slug);
+              } else {
+                selectQuote(slug);
               }
-              getAccessibleName={(item) =>
-                constellationView === "quotes"
-                  ? `Read quote: ${item.label}`
-                  : constellationView === "path"
-                    ? `Focus ${item.label}`
-                    : `Explore ${item.label}`
-              }
-              onSelect={(slug) => {
-                if (constellationView === "path") {
-                  selectPath(slug);
-                } else if (constellationView === "projects") {
-                  openProject(slug);
-                } else {
-                  selectQuote(slug);
-                }
-              }}
-            />
-          </section>
-        )}
+            }}
+            view={location.view}
+          />
+        </section>
       </div>
 
       <RouteRail
