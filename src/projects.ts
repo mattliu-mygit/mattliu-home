@@ -108,7 +108,7 @@ export const projects = [
     technologies: ["Python", "OpenTelemetry", "Weave"],
     repositoryUrl: "https://github.com/mattliu-mygit/Weave-Agent-Adapter",
     artifact: "trace",
-    position: { x: 74, y: 28 },
+    position: { x: 76, y: 28 },
     stars: [
       [7, 47],
       [29, 20],

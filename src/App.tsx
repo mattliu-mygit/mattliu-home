@@ -6,7 +6,7 @@ import { ProjectLens } from "./components/ProjectLens";
 import { projectBySlug, projects } from "./projects";
 
 export default function App() {
-  const [selectedSlug, setSelectedSlug] = useState(() => {
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(() => {
     const slug = window.location.hash.slice(1);
     return projectBySlug(slug)?.slug ?? null;
   });

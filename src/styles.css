@@ -1,0 +1,795 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap");
+
+:root {
+  color-scheme: dark;
+  font-family: "DM Sans", system-ui, sans-serif;
+  color: #f4f1e8;
+  background: #080a10;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --night: #080a10;
+  --panel: #11141d;
+  --ink: #f4f1e8;
+  --muted: #9299a9;
+  --line: rgba(164, 177, 218, 0.22);
+  --blue: #a5b3ff;
+  --gold: #f0d58a;
+  --green: #9bd7ad;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--night);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--night);
+}
+
+button,
+a {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 1px solid var(--gold);
+  outline-offset: 5px;
+}
+
+.universe {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 51% 56%, rgba(53, 63, 98, 0.16), transparent 27%),
+    radial-gradient(circle at 77% 14%, rgba(81, 74, 44, 0.07), transparent 22%),
+    linear-gradient(140deg, #0a0c13 0%, var(--night) 62%, #090a0f 100%);
+}
+
+.universe::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  opacity: 0.12;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.26) 0.45px, transparent 0.5px);
+  background-size: 7px 7px;
+  mask-image: linear-gradient(to bottom, black, transparent 80%);
+}
+
+.site-nav {
+  position: absolute;
+  z-index: 12;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 100%;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3rem;
+  border-bottom: 1px solid rgba(201, 207, 227, 0.11);
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.site-nav a {
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.site-nav a:hover {
+  color: var(--ink);
+}
+
+.site-nav__name {
+  color: var(--ink);
+  letter-spacing: 0.16em;
+}
+
+.site-nav__links {
+  display: flex;
+  gap: 1.35rem;
+}
+
+.quiet-zone {
+  position: absolute;
+  z-index: 5;
+  top: 55%;
+  left: 50%;
+  width: clamp(25rem, 44vw, 42rem);
+  padding: 2rem;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.quiet-zone h1 {
+  margin: 0;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(3.5rem, 6.4vw, 6.8rem);
+  font-weight: 400;
+  line-height: 0.82;
+  letter-spacing: -0.047em;
+}
+
+.quiet-zone h1 em {
+  color: var(--gold);
+  font-weight: 400;
+}
+
+.introduction {
+  width: min(33rem, 90%);
+  margin: 2rem auto 0;
+  color: #c7c9d0;
+  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
+  font-weight: 300;
+  line-height: 1.65;
+}
+
+.quiet-zone__hint {
+  margin: 1.4rem 0 0;
+  color: #686f7e;
+  font-size: 0.64rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.project-sky {
+  position: absolute;
+  z-index: 4;
+  inset: 4.8rem 2rem 1.5rem;
+}
+
+.constellation {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  display: grid;
+  width: min(11rem, 18vw);
+  min-height: 7rem;
+  padding: 0;
+  border: 0;
+  color: #96a0bd;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transform: translate3d(0, 0, 0);
+  transition:
+    color 220ms ease,
+    filter 220ms ease,
+    transform 220ms ease;
+}
+
+.constellation svg {
+  width: 100%;
+  overflow: visible;
+}
+
+.constellation svg line {
+  stroke: currentColor;
+  stroke-width: 0.5;
+  opacity: 0.42;
+  stroke-dasharray: 130;
+  animation: draw-constellation 1.15s ease-out both;
+}
+
+.constellation svg circle {
+  fill: currentColor;
+  opacity: 0.78;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.constellation svg .constellation__primary {
+  fill: var(--ink);
+  opacity: 1;
+  filter: drop-shadow(0 0 5px rgba(244, 241, 232, 0.5));
+}
+
+.constellation__label,
+.constellation__year {
+  position: absolute;
+  left: 1.7rem;
+  opacity: 0.72;
+  transition: opacity 220ms ease;
+}
+
+.constellation__label {
+  bottom: 0.55rem;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  letter-spacing: -0.02em;
+}
+
+.constellation__year {
+  bottom: -0.25rem;
+  color: var(--muted);
+  font-size: 0.55rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.constellation:is(:hover, :focus-visible) {
+  color: var(--gold);
+  filter: drop-shadow(0 0 10px rgba(240, 213, 138, 0.18));
+  transform: translateY(-3px);
+}
+
+.constellation:is(:hover, :focus-visible) svg circle {
+  opacity: 1;
+  transform: scale(1.28);
+}
+
+.constellation:is(:hover, :focus-visible) .constellation__label,
+.constellation:is(:hover, :focus-visible) .constellation__year {
+  opacity: 1;
+}
+
+.constellation--voyage-into-space {
+  color: #7580a2;
+}
+
+.constellation--focal-point {
+  color: #838db1;
+}
+
+.constellation--otter {
+  width: 8.25rem;
+  min-height: 5.5rem;
+  color: #929dc4;
+}
+
+.constellation--weave-agent-adapter {
+  color: #a9b4dc;
+}
+
+.constellation--monopole {
+  color: var(--gold);
+}
+
+.ambient-stars {
+  position: absolute;
+  z-index: 2;
+  inset: 4.8rem 1.5rem 1.5rem;
+  pointer-events: none;
+}
+
+.ambient-stars span {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #d9deef;
+  box-shadow: 0 0 4px rgba(217, 222, 239, 0.35);
+  animation: breathe 4.8s ease-in-out infinite alternate;
+}
+
+.project-lens {
+  width: min(66rem, calc(100vw - 4rem));
+  max-width: none;
+  max-height: calc(100svh - 4rem);
+  padding: 0;
+  overflow: visible;
+  border: 1px solid rgba(181, 190, 218, 0.24);
+  color: var(--ink);
+  background: transparent;
+  box-shadow: 0 2rem 8rem rgba(0, 0, 0, 0.58);
+}
+
+.project-lens::backdrop {
+  background: rgba(5, 6, 10, 0.78);
+  backdrop-filter: blur(5px);
+}
+
+.project-lens__surface {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(17rem, 0.85fr) minmax(22rem, 1.15fr);
+  min-height: 33rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 74% 20%, rgba(103, 116, 175, 0.09), transparent 38%),
+    #10131b;
+}
+
+.project-lens__copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2.5rem, 5vw, 5rem);
+}
+
+.project-lens__copy h2 {
+  margin: 0;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(2.8rem, 4.3vw, 4.6rem);
+  font-weight: 400;
+  line-height: 0.93;
+  letter-spacing: -0.04em;
+}
+
+.project-lens__description {
+  margin: 1.5rem 0 0;
+  color: #c7cad3;
+  font-size: 0.95rem;
+  font-weight: 300;
+  line-height: 1.65;
+}
+
+.project-lens__contribution {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.technology-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.technology-list li {
+  padding: 0.38rem 0.62rem;
+  border: 1px solid rgba(177, 185, 211, 0.16);
+  border-radius: 100px;
+  color: #aeb3c1;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+}
+
+.project-lens__link {
+  width: fit-content;
+  margin-top: 1.7rem;
+  color: var(--gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.project-lens__close {
+  position: absolute;
+  z-index: 3;
+  top: 1.2rem;
+  right: 1.3rem;
+  padding: 0.4rem;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.project-lens__close span {
+  margin-left: 0.35rem;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.artifact {
+  position: relative;
+  display: grid;
+  min-height: 33rem;
+  place-items: center;
+  overflow: hidden;
+  border-left: 1px solid rgba(181, 190, 218, 0.13);
+  background: #0b0e15;
+}
+
+.artifact__label {
+  position: absolute;
+  z-index: 2;
+  top: 1.4rem;
+  left: 1.5rem;
+  margin: 0;
+  color: #777f92;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.evaluation-window {
+  width: 78%;
+  border: 1px solid rgba(164, 177, 218, 0.24);
+  background: rgba(8, 10, 16, 0.72);
+}
+
+.evaluation-window__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.7rem 0.8rem;
+  border-bottom: 1px solid rgba(164, 177, 218, 0.18);
+}
+
+.evaluation-window__bar i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #697184;
+}
+
+.evaluation-window__bar span {
+  margin-left: auto;
+  color: #7e8596;
+  font-size: 0.48rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.evaluation-row {
+  display: grid;
+  grid-template-columns: 1fr 5rem 2rem;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(164, 177, 218, 0.12);
+  color: #bac0cf;
+  font-size: 0.65rem;
+}
+
+.evaluation-row:last-child {
+  border-bottom: 0;
+}
+
+.evaluation-row b {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background:
+    linear-gradient(90deg, var(--gold) var(--score), rgba(181, 190, 218, 0.12) var(--score));
+}
+
+.evaluation-row small {
+  color: #7e8596;
+  text-align: right;
+}
+
+.trace-tree {
+  display: grid;
+  width: 70%;
+  gap: 0;
+  border: 1px solid rgba(164, 177, 218, 0.2);
+}
+
+.trace-tree span {
+  padding: 0.78rem 1rem;
+  border-bottom: 1px solid rgba(164, 177, 218, 0.11);
+  color: #a8afbf;
+  font-family: ui-monospace, monospace;
+  font-size: 0.64rem;
+}
+
+.trace-tree span:not(:first-child) {
+  padding-left: 2.2rem;
+}
+
+.trace-tree span:last-child {
+  border-bottom: 0;
+}
+
+.trace-tree .trace-tree__accent {
+  color: var(--gold);
+  background: rgba(240, 213, 138, 0.04);
+}
+
+.diff {
+  display: grid;
+  width: 78%;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid rgba(164, 177, 218, 0.18);
+}
+
+.diff > div {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1.2rem;
+}
+
+.diff > div + div {
+  border-left: 1px solid rgba(164, 177, 218, 0.15);
+}
+
+.diff small {
+  color: #747c8f;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.diff code {
+  color: #e08e8e;
+  font-size: clamp(0.55rem, 0.85vw, 0.68rem);
+}
+
+.diff > div + div code {
+  color: var(--green);
+}
+
+.pixel-scene,
+.space-scene {
+  position: relative;
+  width: 78%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid rgba(164, 177, 218, 0.18);
+  background:
+    linear-gradient(transparent 68%, #252943 68%),
+    linear-gradient(#11152b, #17192d);
+}
+
+.pixel-scene {
+  image-rendering: pixelated;
+}
+
+.pixel-scene__moon {
+  position: absolute;
+  top: 18%;
+  right: 16%;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: #dfd5a4;
+  box-shadow: 0 0 2rem rgba(223, 213, 164, 0.2);
+}
+
+.pixel-scene__player {
+  position: absolute;
+  z-index: 2;
+  bottom: 31%;
+  left: 28%;
+  width: 0.9rem;
+  height: 1.8rem;
+  background: #9eadff;
+  box-shadow: 0.9rem 0.9rem 0 #9eadff;
+}
+
+.pixel-scene__beam {
+  position: absolute;
+  bottom: 36%;
+  left: 35%;
+  width: 46%;
+  height: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 1rem var(--gold);
+}
+
+.pixel-scene__ground {
+  position: absolute;
+  bottom: 23%;
+  left: 0;
+  width: 100%;
+  height: 8%;
+  background: repeating-linear-gradient(90deg, #363b62 0 12px, #2b3053 12px 24px);
+}
+
+.space-scene {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 25%, #d9deef 0 1px, transparent 2px),
+    radial-gradient(circle at 80% 36%, #d9deef 0 1px, transparent 2px),
+    radial-gradient(circle at 64% 74%, #d9deef 0 1px, transparent 2px),
+    #0c1020;
+}
+
+.space-scene__orbit {
+  position: absolute;
+  width: 76%;
+  aspect-ratio: 2 / 1;
+  border: 1px solid rgba(165, 179, 255, 0.35);
+  border-radius: 50%;
+  transform: rotate(-16deg);
+}
+
+.space-scene__planet {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 28%, #a9b8ff, transparent 9%),
+    linear-gradient(145deg, #5366b6, #1a244e 62%, #0d1430);
+  box-shadow:
+    inset -1rem -0.6rem 2rem rgba(0, 0, 0, 0.45),
+    0 0 3rem rgba(83, 102, 182, 0.22);
+}
+
+.space-scene__ship {
+  position: absolute;
+  top: 24%;
+  right: 16%;
+  color: var(--gold);
+  font-size: 0.9rem;
+  transform: rotate(34deg);
+}
+
+@keyframes draw-constellation {
+  from {
+    stroke-dashoffset: 130;
+    opacity: 0;
+  }
+}
+
+@keyframes breathe {
+  to {
+    opacity: 0.22;
+  }
+}
+
+@media (max-width: 900px) and (min-width: 761px) {
+  .quiet-zone {
+    width: 42vw;
+    padding-inline: 0.5rem;
+  }
+
+  .quiet-zone h1 {
+    font-size: 4.4rem;
+  }
+
+  .introduction {
+    font-size: 0.86rem;
+  }
+
+  .constellation {
+    width: 9.4rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .universe {
+    min-height: 100svh;
+    overflow: visible;
+    padding-bottom: 4rem;
+  }
+
+  .site-nav {
+    position: relative;
+    min-height: 4.2rem;
+    padding: 0 1.2rem;
+  }
+
+  .site-nav__links {
+    gap: 0.8rem;
+  }
+
+  .site-nav__links a:last-child {
+    display: none;
+  }
+
+  .quiet-zone {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    padding: 5.5rem 1.5rem 4.5rem;
+    transform: none;
+  }
+
+  .quiet-zone h1 {
+    font-size: clamp(3.2rem, 15vw, 5.1rem);
+  }
+
+  .introduction {
+    width: min(31rem, 95%);
+  }
+
+  .project-sky {
+    position: relative;
+    inset: auto;
+    display: grid;
+    gap: 2.5rem;
+    padding: 0 1.25rem;
+  }
+
+  .constellation {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: min(19rem, 82vw);
+    min-height: 12rem;
+  }
+
+  .constellation:nth-child(odd) {
+    justify-self: start;
+  }
+
+  .constellation:nth-child(even) {
+    justify-self: end;
+  }
+
+  .constellation__label {
+    bottom: 1.2rem;
+    left: 2.8rem;
+    font-size: 1.35rem;
+  }
+
+  .constellation__year {
+    bottom: 0.2rem;
+    left: 2.8rem;
+  }
+
+  .ambient-stars {
+    inset: 4.5rem 1rem 1rem;
+  }
+
+  .ambient-stars span:nth-child(3n) {
+    display: none;
+  }
+
+  .project-lens {
+    width: 100vw;
+    height: 100svh;
+    max-height: none;
+    border: 0;
+  }
+
+  .project-lens__surface {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .project-lens__copy {
+    min-height: 29rem;
+    padding: 5rem 1.5rem 3rem;
+  }
+
+  .project-lens__copy h2 {
+    font-size: clamp(3rem, 14vw, 4.7rem);
+  }
+
+  .artifact {
+    min-height: 24rem;
+    border-top: 1px solid rgba(181, 190, 218, 0.13);
+    border-left: 0;
+  }
+
+  .project-lens__close {
+    position: fixed;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
