@@ -120,4 +120,23 @@ describe("portfolio state", () => {
       selections: { projects: "monopole" },
     });
   });
+
+  it("closes a project lens without changing its active project beat", () => {
+    const openedProject = portfolioReducer(
+      createPortfolioState({ view: "projects" }),
+      {
+        type: "select-item",
+        view: "projects",
+        itemSlug: "monopole",
+      },
+    );
+
+    expect(
+      portfolioReducer(openedProject, { type: "close-project" }),
+    ).toEqual({
+      location: { view: "projects" },
+      activeStoryId: "projects/monopole",
+      selections: openedProject.selections,
+    });
+  });
 });

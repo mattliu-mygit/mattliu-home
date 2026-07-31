@@ -21,6 +21,7 @@ export type PortfolioAction =
       itemSlug?: string;
     }
   | { type: "select-item"; view: DestinationSlug; itemSlug: string }
+  | { type: "close-project" }
   | { type: "return-to-universe" };
 
 const locationFor = (
@@ -130,6 +131,12 @@ export const portfolioReducer = (
         selections: selectionsForLocation(state.selections, location),
       };
     }
+    case "close-project":
+      return {
+        location: { view: "projects" },
+        activeStoryId: state.activeStoryId,
+        selections: state.selections,
+      };
     case "return-to-universe":
       return {
         location: { view: "universe" },

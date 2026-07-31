@@ -288,7 +288,7 @@ export default function App() {
   }, [commitLocation, location.view, requestStoryScroll]);
 
   const closeProject = useCallback(() => {
-    dispatchPortfolio({ type: "sync-location", location: { view: "projects" } });
+    dispatchPortfolio({ type: "close-project" });
     commitLocation(
       { view: "projects" },
       { replace: true, focus: { type: "project" } },
