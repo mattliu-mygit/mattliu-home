@@ -3,9 +3,13 @@ import { describe, expect, it } from "vitest";
 import { projectBySlug, projects } from "./projects";
 
 describe("project catalog", () => {
-  it("keeps projects in chronological order with unique slugs", () => {
-    expect(projects.map((project) => project.year)).toEqual([
-      2020, 2021, 2022, 2026, 2026,
+  it("contains only the five selected projects in narrative order", () => {
+    expect(projects.map((project) => project.title)).toEqual([
+      "UCredit",
+      "Model Customization Assistant",
+      "LLM-as-a-Judge",
+      "Weave Agent Adapter",
+      "Monopole",
     ]);
     expect(new Set(projects.map((project) => project.slug)).size).toBe(
       projects.length,
@@ -17,10 +21,20 @@ describe("project catalog", () => {
     expect(projectBySlug("missing")).toBeUndefined();
   });
 
-  it("describes Otter as the OCaml linter in its repository", () => {
-    const otter = projectBySlug("otter");
+  it("uses links only for projects with verified public material", () => {
+    expect(projectBySlug("ucredit")?.repositoryUrl).toBe(
+      "https://github.com/uCredit-Dev/ucredit_frontend_typescript",
+    );
+    expect(projectBySlug("model-customization-assistant")?.repositoryUrl).toBe(
+      "https://aws.amazon.com/blogs/machine-learning/agent-guided-workflows-to-accelerate-model-customization-in-amazon-sagemaker-ai/",
+    );
+    expect(projectBySlug("llm-as-a-judge")?.repositoryUrl).toBeUndefined();
+  });
 
-    expect(otter?.description).toContain("OCaml linter");
-    expect(otter?.technologies).toContain("OCaml");
+  it("keeps current agent work at the end of the path", () => {
+    expect(projects.slice(-2).map((project) => project.slug)).toEqual([
+      "weave-agent-adapter",
+      "monopole",
+    ]);
   });
 });

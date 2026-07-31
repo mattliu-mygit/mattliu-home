@@ -9,92 +9,57 @@ export type Project = {
   description: string;
   contribution: string;
   technologies: readonly string[];
-  repositoryUrl: string;
-  artifact: "interface" | "trace" | "diff" | "pixel" | "space";
-  position: { x: number; y: number };
-  stars: readonly Point[];
-  connections: readonly (readonly [from: number, to: number])[];
+  repositoryUrl?: string;
+  linkLabel?: string;
+  artifact: "ucredit" | "customization" | "judge" | "trace" | "interface";
+  position: Point;
 };
 
-export const projects = [
+export const projects: readonly Project[] = [
   {
-    slug: "voyage-into-space",
-    title: "Voyage into Space",
-    year: 2020,
-    displayYear: "2020",
-    question: "How far can a tiny world carry you?",
-    description:
-      "An early browser game about motion, obstacles, and discovering a world one screen at a time.",
-    contribution: "Game design and implementation",
-    technologies: ["JavaScript", "Canvas", "Game design"],
-    repositoryUrl: "https://github.com/mattliu-mygit/voyage-into-space",
-    artifact: "space",
-    position: { x: 3, y: 72 },
-    stars: [
-      [8, 55],
-      [35, 24],
-      [62, 40],
-      [83, 12],
-    ],
-    connections: [
-      [0, 1],
-      [1, 2],
-      [2, 3],
-    ],
-  },
-  {
-    slug: "focal-point",
-    title: "Focal Point",
+    slug: "ucredit",
+    title: "UCredit",
     year: 2021,
     displayYear: "2021",
-    question: "Can focus become a game mechanic?",
+    question: "Can degree planning feel less uncertain?",
     description:
-      "A compact game experiment that turns attention, timing, and a constrained field of view into play.",
-    contribution: "Game design, art integration, and implementation",
-    technologies: ["JavaScript", "Game design", "Pixel art"],
-    repositoryUrl: "https://github.com/mattliu-mygit/Focal-Point-1",
-    artifact: "pixel",
-    position: { x: 8, y: 32 },
-    stars: [
-      [6, 42],
-      [28, 14],
-      [54, 31],
-      [75, 8],
-      [91, 38],
-    ],
-    connections: [
-      [0, 1],
-      [1, 2],
-      [2, 3],
-      [2, 4],
-    ],
+      "A collaborative advising dashboard built on uCredit to help students and advisors reason about academic plans.",
+    contribution: "Frontend engineering and product development",
+    technologies: ["React", "TypeScript", "Product engineering"],
+    repositoryUrl:
+      "https://github.com/uCredit-Dev/ucredit_frontend_typescript",
+    linkLabel: "View project",
+    artifact: "ucredit",
+    position: [13, 72],
   },
   {
-    slug: "otter",
-    title: "Otter",
-    year: 2022,
-    displayYear: "2022",
-    question: "Can a linter teach a codebase its style?",
+    slug: "model-customization-assistant",
+    title: "Model Customization Assistant",
+    year: 2025,
+    displayYear: "2025–26",
+    question: "Can model training begin with intent, not infrastructure?",
     description:
-      "An OCaml linter and formatter that identifies and fixes style issues using the JHU FPSE course guide.",
-    contribution: "Linter design and implementation",
-    technologies: ["OCaml", "Dune", "Static analysis"],
-    repositoryUrl: "https://github.com/mattliu-mygit/Otter",
-    artifact: "diff",
-    position: { x: 40, y: 3 },
-    stars: [
-      [8, 16],
-      [31, 42],
-      [56, 18],
-      [78, 49],
-      [93, 20],
-    ],
-    connections: [
-      [0, 1],
-      [1, 2],
-      [2, 3],
-      [3, 4],
-    ],
+      "An agent-guided SageMaker workflow that turns a use case into data preparation, fine-tuning, evaluation, and deployment steps.",
+    contribution: "Agent workflow and product engineering",
+    technologies: ["SageMaker AI", "Agent skills", "Model evaluation"],
+    repositoryUrl:
+      "https://aws.amazon.com/blogs/machine-learning/agent-guided-workflows-to-accelerate-model-customization-in-amazon-sagemaker-ai/",
+    linkLabel: "Read the launch",
+    artifact: "customization",
+    position: [31, 43],
+  },
+  {
+    slug: "llm-as-a-judge",
+    title: "LLM-as-a-Judge",
+    year: 2025,
+    displayYear: "2025",
+    question: "How should a model judge work it cannot see all at once?",
+    description:
+      "Evaluation work that turns long agent traces into structured, evidence-linked assessments using raw context, compact digests, and anchored verdicts.",
+    contribution: "Evaluation UX, judging architecture, and implementation",
+    technologies: ["LLM evaluation", "Weave", "Evidence design"],
+    artifact: "judge",
+    position: [51, 64],
   },
   {
     slug: "weave-agent-adapter",
@@ -107,21 +72,9 @@ export const projects = [
     contribution: "Architecture, integrations, and observability",
     technologies: ["Python", "OpenTelemetry", "Weave"],
     repositoryUrl: "https://github.com/mattliu-mygit/Weave-Agent-Adapter",
+    linkLabel: "View source",
     artifact: "trace",
-    position: { x: 76, y: 28 },
-    stars: [
-      [7, 47],
-      [29, 20],
-      [53, 39],
-      [75, 12],
-      [94, 31],
-    ],
-    connections: [
-      [0, 1],
-      [1, 2],
-      [2, 3],
-      [3, 4],
-    ],
+    position: [71, 34],
   },
   {
     slug: "monopole",
@@ -132,25 +85,13 @@ export const projects = [
     description:
       "A local evaluation workspace for reviewing completed agent runs and turning evidence into better future behavior.",
     contribution: "Product direction, evaluation design, and implementation",
-    technologies: ["TypeScript", "React", "Agent evaluation"],
+    technologies: ["Python", "Agent evaluation", "Weave"],
     repositoryUrl: "https://github.com/mattliu-mygit/Monopole",
+    linkLabel: "View source",
     artifact: "interface",
-    position: { x: 82, y: 4 },
-    stars: [
-      [8, 49],
-      [31, 14],
-      [55, 34],
-      [74, 7],
-      [94, 45],
-    ],
-    connections: [
-      [0, 1],
-      [1, 2],
-      [2, 3],
-      [2, 4],
-    ],
+    position: [89, 16],
   },
-] as const satisfies readonly Project[];
+];
 
 export const projectBySlug = (slug: string) =>
   projects.find((project) => project.slug === slug);

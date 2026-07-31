@@ -47,48 +47,88 @@ export function ArtifactPreview({ project }: ArtifactPreviewProps) {
     );
   }
 
-  if (project.artifact === "diff") {
+  if (project.artifact === "ucredit") {
     return (
-      <div className="artifact artifact--diff" data-artifact="diff">
-        <ArtifactLabel>Before-and-after output specimen</ArtifactLabel>
-        <div className="diff">
-          <div>
-            <small>before</small>
-            <code>- let add x y= x+y</code>
-            <code>- let result=add 2 3</code>
+      <div className="artifact artifact--ucredit" data-artifact="ucredit">
+        <ArtifactLabel>Abstract degree-planning specimen</ArtifactLabel>
+        <div className="degree-plan">
+          <div className="degree-plan__progress">
+            <strong>68%</strong>
+            <span>degree mapped</span>
           </div>
-          <div>
-            <small>after</small>
-            <code>+ let add x y = x + y</code>
-            <code>+ let result = add 2 3</code>
-          </div>
+          <ol>
+            <li>
+              <i data-state="complete" />
+              Core requirements
+            </li>
+            <li>
+              <i data-state="active" />
+              Major sequence
+            </li>
+            <li>
+              <i />
+              Elective space
+            </li>
+          </ol>
         </div>
       </div>
     );
   }
 
-  if (project.artifact === "pixel") {
+  if (project.artifact === "customization") {
     return (
-      <div className="artifact artifact--pixel" data-artifact="pixel">
-        <ArtifactLabel>Repository artwork–inspired specimen</ArtifactLabel>
-        <div className="pixel-scene" aria-hidden="true">
-          <i className="pixel-scene__moon" />
-          <i className="pixel-scene__player" />
-          <i className="pixel-scene__beam" />
-          <i className="pixel-scene__ground" />
+      <div
+        className="artifact artifact--customization"
+        data-artifact="customization"
+      >
+        <ArtifactLabel>Abstract model-customization workflow</ArtifactLabel>
+        <div className="customization-flow">
+          {[
+            ["01", "Define intent"],
+            ["02", "Prepare data"],
+            ["03", "Customize"],
+            ["04", "Evaluate"],
+            ["05", "Deploy"],
+          ].map(([number, label], index) => (
+            <div data-active={index === 3 ? "true" : undefined} key={number}>
+              <small>{number}</small>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (project.artifact === "judge") {
+    return (
+      <div className="artifact artifact--judge" data-artifact="judge">
+        <ArtifactLabel>Derived evaluator-context specimen</ArtifactLabel>
+        <div className="judge-context">
+          <div>
+            <small>digest · before</small>
+            <span>Planning and evidence gathered</span>
+          </div>
+          <div className="judge-context__raw">
+            <small>raw window</small>
+            <span>tool.read → model.reason → tool.patch</span>
+          </div>
+          <div>
+            <small>digest · after</small>
+            <span>Verification and outcome recorded</span>
+          </div>
+          <p>
+            <span>Verdict</span>
+            Evidence supports the score
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="artifact artifact--space" data-artifact="space">
-      <ArtifactLabel>Repository artwork–inspired specimen</ArtifactLabel>
-      <div className="space-scene" aria-hidden="true">
-        <i className="space-scene__orbit" />
-        <i className="space-scene__planet" />
-        <i className="space-scene__ship">▲</i>
-      </div>
+    <div className="artifact" data-artifact="unknown">
+      <ArtifactLabel>Abstract project specimen</ArtifactLabel>
     </div>
   );
 }

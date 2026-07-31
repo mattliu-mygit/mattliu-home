@@ -60,9 +60,12 @@ export function ProjectLens({ project, onClose }: ProjectLensProps) {
               <li key={technology}>{technology}</li>
             ))}
           </ul>
-          <a className="project-lens__link" href={project.repositoryUrl}>
-            View source <span aria-hidden="true">↗</span>
-          </a>
+          {project.repositoryUrl ? (
+            <a className="project-lens__link" href={project.repositoryUrl}>
+              {project.linkLabel ?? "View source"}{" "}
+              <span aria-hidden="true">↗</span>
+            </a>
+          ) : null}
         </div>
 
         <ArtifactPreview project={project} />
