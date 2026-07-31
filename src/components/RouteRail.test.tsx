@@ -4,7 +4,10 @@ import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { siteContent } from "../content/site-content";
-import { createStoryBeats } from "../story-navigation";
+import {
+  createRouteChapters,
+  createStoryBeats,
+} from "../story-navigation";
 import { RouteRail, type RouteRailHandle } from "./RouteRail";
 
 const beats = createStoryBeats(siteContent);
@@ -85,6 +88,33 @@ describe("RouteRail", () => {
       screen.getByRole("navigation", { name: "Story scrollbar" }),
     ).toHaveStyle({
       "--route-progress": "73.80952380952381%",
+    });
+  });
+
+  it("renders permanent decorative chapter labels along the route", () => {
+    const { container } = render(
+      <RouteRail
+        activeId="intro/name"
+        beats={beats}
+        initialProgress={0}
+        onSelect={() => undefined}
+      />,
+    );
+
+    const layer = container.querySelector(".route-rail__chapters");
+    const labels = Array.from(
+      container.querySelectorAll<HTMLElement>(".route-rail__chapter"),
+    );
+    const chapters = createRouteChapters(beats);
+
+    expect(layer).toHaveAttribute("aria-hidden", "true");
+    expect(labels.map((label) => label.textContent)).toEqual(
+      chapters.map(({ label }) => label),
+    );
+    labels.forEach((label, index) => {
+      expect(label.style.getPropertyValue("--chapter-position")).toBe(
+        `${chapters[index].position}%`,
+      );
     });
   });
 });

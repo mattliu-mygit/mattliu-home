@@ -86,6 +86,21 @@ test("a universe star zooms with its selection before opening a lens", async ({
   await expect(page.getByRole("dialog", { name: "Monopole" })).toBeVisible();
 });
 
+test("overview connections stay continuous at large map sizes", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 650, height: 650 });
+  await page.goto("/");
+
+  await expect(
+    page
+      .locator(
+        ".constellation-map--overview.constellation-map--path .constellation-map__connections line",
+      )
+      .first(),
+  ).toHaveCSS("stroke-dasharray", "none");
+});
+
 test("a Path star zooms to its matching professional card", async ({ page }) => {
   await page.goto("/");
 

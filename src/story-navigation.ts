@@ -202,3 +202,56 @@ export const routeMarkerPosition = (progress: number, count: number) => {
   const boundedProgress = Math.min(1, Math.max(0, progress));
   return ((boundedProgress * Math.max(0, count - 1) + 0.5) / count) * 100;
 };
+
+export type RouteChapter = {
+  label: "Intro" | "Path" | "Projects" | "Quotes" | "Fin";
+  position: number;
+};
+
+const chapterDefinitions = [
+  { label: "Intro", view: "universe" },
+  { label: "Path", view: "path" },
+  { label: "Projects", view: "projects" },
+  { label: "Quotes", view: "quotes" },
+] as const;
+
+export const createRouteChapters = (
+  beats: readonly StoryBeat[],
+): readonly RouteChapter[] => {
+  if (beats.length === 0) {
+    return [];
+  }
+
+  const positionForIndex = (index: number) =>
+    routeMarkerPosition(
+      beats.length === 1 ? 0 : index / (beats.length - 1),
+      beats.length,
+  );
+  const chapters = chapterDefinitions.flatMap(({ label, view }) => {
+    let firstIndex = -1;
+    let lastIndex = -1;
+    beats.forEach((beat, index) => {
+      if (beat.view !== view) {
+        return;
+      }
+      if (firstIndex < 0) {
+        firstIndex = index;
+      }
+      lastIndex = index;
+    });
+    return firstIndex < 0
+      ? []
+      : [
+          {
+            label,
+            position:
+              (positionForIndex(firstIndex) + positionForIndex(lastIndex)) / 2,
+          },
+        ];
+  });
+
+  return [
+    ...chapters,
+    { label: "Fin", position: positionForIndex(beats.length - 1) },
+  ];
+};

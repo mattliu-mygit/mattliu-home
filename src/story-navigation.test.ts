@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { siteContent } from "./content/site-content";
 import {
   centeredStoryBeat,
+  createRouteChapters,
   createRouteMarks,
   createStoryBeats,
   interpolatedStoryProgress,
@@ -73,6 +74,34 @@ describe("story navigation", () => {
       label: "AWS SageMaker",
       major: false,
     });
+  });
+
+  it("centers permanent labels over each story chapter and ends on Fin", () => {
+    const beats = createStoryBeats(siteContent);
+    const chapters = createRouteChapters(beats);
+    const markPosition = (index: number) =>
+      routeMarkerPosition(index / (beats.length - 1), beats.length);
+
+    expect(chapters.map(({ label }) => label)).toEqual([
+      "Intro",
+      "Path",
+      "Projects",
+      "Quotes",
+      "Fin",
+    ]);
+    expect(chapters).toEqual([
+      { label: "Intro", position: (markPosition(0) + markPosition(2)) / 2 },
+      { label: "Path", position: (markPosition(3) + markPosition(6)) / 2 },
+      {
+        label: "Projects",
+        position: (markPosition(7) + markPosition(12)) / 2,
+      },
+      {
+        label: "Quotes",
+        position: (markPosition(13) + markPosition(20)) / 2,
+      },
+      { label: "Fin", position: markPosition(20) },
+    ]);
   });
 
   it("chooses the beat nearest the viewport center", () => {

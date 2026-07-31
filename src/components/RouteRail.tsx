@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import {
+  createRouteChapters,
   createRouteMarks,
   routeMarkerPosition,
   type StoryBeat,
@@ -28,6 +29,7 @@ export const RouteRail = forwardRef<RouteRailHandle, RouteRailProps>(
     forwardedRef,
   ) {
     const marks = createRouteMarks(beats);
+    const chapters = createRouteChapters(beats);
     const rootRef = useRef<HTMLElement>(null);
     const markerPosition = routeMarkerPosition(initialProgress, marks.length);
 
@@ -72,6 +74,21 @@ export const RouteRail = forwardRef<RouteRailHandle, RouteRailProps>(
             );
           })}
         </ol>
+        <div aria-hidden="true" className="route-rail__chapters">
+          {chapters.map((chapter) => (
+            <span
+              className="route-rail__chapter"
+              key={chapter.label}
+              style={
+                {
+                  "--chapter-position": `${chapter.position}%`,
+                } as CSSProperties
+              }
+            >
+              {chapter.label}
+            </span>
+          ))}
+        </div>
       </nav>
     );
   },
