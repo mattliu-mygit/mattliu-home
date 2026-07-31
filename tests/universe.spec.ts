@@ -31,22 +31,38 @@ test("universe overview enters and leaves the Projects constellation", async ({
     }),
   ).toBeVisible();
 
-  const quietZone = await page.locator(".quiet-zone").boundingBox();
-  expect(quietZone).not.toBeNull();
+  const storyDrawer = await page.locator(".story-drawer").boundingBox();
+  expect(storyDrawer).not.toBeNull();
   for (const destination of await page.locator(".universe-constellation").all()) {
     const box = await destination.boundingBox();
     expect(box).not.toBeNull();
-    expect(overlaps(box!, quietZone!)).toBe(false);
+    expect(overlaps(box!, storyDrawer!)).toBe(false);
   }
 
   await page.getByRole("button", { name: "Explore Projects" }).click();
   await expect(page).toHaveURL(/#projects$/);
+  await expect(page.locator(".story-drawer")).toHaveAttribute(
+    "data-active-beat",
+    "projects",
+  );
   await expect(
     page.getByRole("region", { name: "Projects constellation" }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: /^Explore (?!Projects$)/ }),
   ).toHaveCount(5);
+  await page.locator(".constellation-view").evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
+  const detailMap = await page
+    .locator(".constellation-map--detail")
+    .boundingBox();
+  const expandedDrawer = await page.locator(".story-drawer").boundingBox();
+  expect(detailMap).not.toBeNull();
+  expect(expandedDrawer).not.toBeNull();
+  expect(detailMap!.x).toBeGreaterThanOrEqual(
+    expandedDrawer!.x + expandedDrawer!.width,
+  );
 
   await page.getByRole("button", { name: "Universe" }).click();
   await expect(page).toHaveURL(/\/$/);
@@ -66,14 +82,55 @@ test("a universe star zooms with its selection before opening a lens", async ({
     })
     .click();
 
-  await expect(page).toHaveURL(/#projects$/);
-  const selected = page.getByRole("button", { name: "Explore Monopole" });
-  await expect(selected).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-
-  await selected.click();
   await expect(page).toHaveURL(/#projects\/monopole$/);
   await expect(page.getByRole("dialog", { name: "Monopole" })).toBeVisible();
+});
+
+test("the story drawer can hide and restore without changing navigation", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Monopole" }).click();
+  await expect(page).toHaveURL(/#projects\/monopole$/);
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Hide story" }).click();
+  await expect(page.locator(".story-drawer")).toHaveAttribute(
+    "data-collapsed",
+    "true",
+  );
+  await expect(page.locator(".story-drawer")).toHaveAttribute(
+    "data-active-beat",
+    "projects/monopole",
+  );
+
+  await page.getByRole("button", { name: "Show story" }).click();
+  await expect(page.locator(".story-drawer")).not.toHaveAttribute(
+    "data-collapsed",
+    "true",
+  );
+  await expect(page).toHaveURL(/#projects$/);
+});
+
+test("scrolling the drawer pans directly between constellations", async ({
+  page,
+}) => {
+  await page.goto("/#projects");
+  await page.locator('[data-story-beat="quotes"]').evaluate((element) => {
+    element
+      .closest(".story-drawer__scroll")
+      ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    element.scrollIntoView({ block: "center" });
+    element.closest(".story-drawer__scroll")?.dispatchEvent(
+      new Event("scroll", { bubbles: true }),
+    );
+  });
+
+  await expect(page).toHaveURL(/#quotes$/);
+  await expect(page.locator(".constellation-view")).toHaveAttribute(
+    "data-camera-transition",
+    "pan",
+  );
 });
 
 test("Quotes is a constellation with selectable stars", async ({ page }) => {
@@ -87,12 +144,16 @@ test("Quotes is a constellation with selectable stars", async ({ page }) => {
   await page
     .getByRole("button", { name: "Read quote: Strong opinions, weakly held." })
     .click();
+  await expect(page.locator(".quote-readout")).toHaveCSS("opacity", "0");
   await expect(page.locator(".quote-readout blockquote")).toHaveText(
     "Strong opinions, weakly held.",
   );
   await expect(page.locator(".quote-readout figcaption")).toContainText(
     "Paul Saffo",
   );
+
+  await page.getByRole("button", { name: "Hide story" }).click();
+  await expect(page.locator(".quote-readout")).toHaveCSS("opacity", "1");
 });
 
 test("project lenses preserve URL hierarchy, truthfulness, and focus", async ({
@@ -106,10 +167,13 @@ test("project lenses preserve URL hierarchy, truthfulness, and focus", async ({
 
   await trigger.click();
   await expect(page).toHaveURL(/#projects\/llm-as-a-judge$/);
+  const projectDialog = page.getByRole("dialog", {
+    name: "LLM-as-a-Judge",
+  });
+  await expect(projectDialog).toBeVisible();
   await expect(
-    page.getByRole("dialog", { name: "LLM-as-a-Judge" }),
+    projectDialog.locator('[data-artifact="judge"]'),
   ).toBeVisible();
-  await expect(page.locator('[data-artifact="judge"]')).toBeVisible();
   await expect(page.locator(".project-lens__link")).toHaveCount(0);
 
   await page.keyboard.press("Escape");
@@ -140,6 +204,18 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
     });
 
   expect(await dispatchWheel()).toBe(true);
+  const drawerWheelWasPrevented = await page
+    .locator(".story-drawer__scroll")
+    .evaluate((element) => {
+      const event = new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaY: 120,
+      });
+      element.dispatchEvent(event);
+      return event.defaultPrevented;
+    });
+  expect(drawerWheelWasPrevented).toBe(false);
   await page.getByRole("button", { name: "Explore Projects" }).click();
   expect(await dispatchWheel()).toBe(true);
 
@@ -260,15 +336,15 @@ test("wide overview keeps large constellations inside the composition", async ({
   await page.locator(".universe-overview").evaluate((element) =>
     Promise.all(element.getAnimations().map((animation) => animation.finished)),
   );
-  const quietZone = await page.locator(".quiet-zone").boundingBox();
-  expect(quietZone).not.toBeNull();
+  const storyDrawer = await page.locator(".story-drawer").boundingBox();
+  expect(storyDrawer).not.toBeNull();
 
   for (const destination of await page.locator(".universe-constellation").all()) {
     const box = await destination.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.width).toBeGreaterThanOrEqual(200);
     expect(box!.x + box!.width / 2).toBeLessThanOrEqual(2048 * 0.78);
-    expect(overlaps(box!, quietZone!)).toBe(false);
+    expect(overlaps(box!, storyDrawer!)).toBe(false);
   }
 });
 
@@ -280,12 +356,18 @@ test("mobile overview and project labels remain inside the viewport", async ({
   await page.locator(".universe-overview").evaluate((element) =>
     Promise.all(element.getAnimations().map((animation) => animation.finished)),
   );
+  const drawer = await page.locator(".story-drawer").boundingBox();
+  expect(drawer).not.toBeNull();
+  expect(drawer!.x).toBeGreaterThanOrEqual(0);
+  expect(drawer!.x + drawer!.width).toBeLessThanOrEqual(390);
+  expect(drawer!.y + drawer!.height).toBeLessThanOrEqual(844);
 
   for (const destination of await page.locator(".universe-constellation").all()) {
     const box = await destination.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.x + box!.width).toBeLessThanOrEqual(390);
+    expect(overlaps(box!, drawer!)).toBe(false);
   }
 
   await page.getByRole("button", { name: "Explore Projects" }).click();

@@ -1,4 +1,10 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -6,6 +12,7 @@ import App from "./App";
 
 afterEach(() => {
   cleanup();
+  window.sessionStorage.clear();
   window.history.replaceState(null, "", "/");
 });
 
@@ -14,10 +21,11 @@ describe("personal universe", () => {
     render(<App />);
 
     expect(
-      screen.getByRole("heading", {
-        name: /software should show its work/i,
-      }),
-    ).toBeVisible();
+      screen.getByRole("region", { name: "Portfolio story" }),
+    ).toHaveAttribute("data-active-beat", "intro");
+    expect(screen.getByText("Software should show its work.")).toHaveClass(
+      "sr-only",
+    );
     expect(
       screen.getByRole("button", { name: "Explore Projects" }),
     ).toBeVisible();
@@ -38,6 +46,39 @@ describe("personal universe", () => {
     ).toHaveTextContent("Ludwig Mies van der Rohe");
     expect(screen.queryByRole("tab")).not.toBeInTheDocument();
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+  });
+
+  it("uses a project card to enter its existing constellation selection", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Open Monopole" }));
+
+    expect(window.location.hash).toBe("#projects");
+    expect(
+      screen.getByRole("region", { name: "Portfolio story" }),
+    ).toHaveAttribute("data-active-beat", "projects/monopole");
+    expect(
+      screen.getByRole("button", { name: "Explore Monopole" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("collapses the story without changing its active item", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Open Monopole" }));
+    await user.click(screen.getByRole("button", { name: "Hide story" }));
+
+    expect(screen.getByRole("button", { name: "Show story" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(
+      screen.getByRole("region", { name: "Portfolio story" }),
+    ).toHaveAttribute("data-active-beat", "projects/monopole");
+    expect(window.location.hash).toBe("#projects");
   });
 
   it("carries a universe star selection into its constellation", async () => {
@@ -61,7 +102,10 @@ describe("personal universe", () => {
     expect(selected).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    await user.click(selected);
+    fireEvent.animationEnd(
+      screen.getByRole("region", { name: "Projects constellation" }),
+      { animationName: "camera-arrive" },
+    );
     expect(window.location.hash).toBe("#projects/monopole");
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
   });

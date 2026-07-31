@@ -1,11 +1,22 @@
 import type { Quote } from "../content/site-content";
 
-export function QuoteReadout({ quote }: { quote: Quote }) {
+export function QuoteReadout({
+  hidden,
+  quote,
+}: {
+  hidden: boolean;
+  quote: Quote;
+}) {
   return (
-    <figure className="quote-readout" aria-live="polite">
+    <figure
+      aria-hidden={hidden ? "true" : undefined}
+      aria-live={hidden ? undefined : "polite"}
+      className="quote-readout"
+      data-hidden={hidden ? "true" : undefined}
+    >
       <blockquote>{quote.text}</blockquote>
       <figcaption>
-        <a href={quote.sourceUrl}>
+        <a href={quote.sourceUrl} tabIndex={hidden ? -1 : 0}>
           {quote.author} <span aria-hidden="true">↗</span>
         </a>
       </figcaption>

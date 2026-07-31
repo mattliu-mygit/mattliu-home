@@ -176,8 +176,15 @@ export function CelestialScene({
       if (!interactiveRef.current || event.ctrlKey) {
         return;
       }
-      event.preventDefault();
       motion = applyWheelImpulse(motion, event.deltaY);
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest("[data-story-scroll]")
+      ) {
+        return;
+      }
+      event.preventDefault();
     };
 
     resize();
