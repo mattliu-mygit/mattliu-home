@@ -34,6 +34,7 @@ export type Quote = {
   text: string;
   author: string;
   sourceUrl: string;
+  attributionNote?: string;
   position: Point;
 };
 
@@ -262,6 +263,10 @@ export function validateSiteContent(value: unknown): SiteContent {
       text: text(quote.text, `quotes[${index}].text`),
       author: text(quote.author, `quotes[${index}].author`),
       sourceUrl: httpsUrl(quote.sourceUrl, `quotes[${index}].sourceUrl`),
+      attributionNote: optionalText(
+        quote.attributionNote,
+        `quotes[${index}].attributionNote`,
+      ),
       position: point(quote.position, `quotes[${index}].position`),
     };
   });

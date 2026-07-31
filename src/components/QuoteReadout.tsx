@@ -5,7 +5,9 @@ export function QuoteReadout({ quote }: { quote: Quote }) {
     <figure className="quote-readout" aria-live="polite">
       <blockquote>{quote.text}</blockquote>
       <figcaption>
-        <a href={quote.sourceUrl}>{quote.author}</a>
+        <a href={quote.sourceUrl}>
+          {quote.author} <span aria-hidden="true">↗</span>
+        </a>
       </figcaption>
     </figure>
   );

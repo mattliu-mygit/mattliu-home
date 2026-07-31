@@ -105,6 +105,27 @@ describe("personal universe", () => {
     ).toBeVisible();
   });
 
+  it("links the playful Churchill attribution to its research", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Explore Quotes" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: /read quote: success is going from failure to failure/i,
+      }),
+    );
+
+    const attribution = screen.getByRole("link", {
+      name: "Maybe Churchill",
+    });
+    expect(attribution).toHaveAttribute(
+      "href",
+      "https://quoteinvestigator.com/2014/06/28/success/",
+    );
+    expect(attribution).toHaveTextContent("Maybe Churchill ↗");
+  });
+
   it("links only to verified public profiles", () => {
     render(<App />);
 

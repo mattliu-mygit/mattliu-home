@@ -210,6 +210,9 @@ export function renderPortfolioJson(content: SiteContent): string {
         text: quote.text,
         author: quote.author,
         sourceUrl: quote.sourceUrl,
+        ...(quote.attributionNote
+          ? { attributionNote: quote.attributionNote }
+          : {}),
       })),
     },
     null,

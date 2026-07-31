@@ -536,6 +536,11 @@ a:focus-visible {
   text-decoration: none;
 }
 
+.quote-readout a span {
+  margin-left: 0.2rem;
+  color: var(--gold);
+}
+
 .ambient-stars {
   position: fixed;
   z-index: 2;

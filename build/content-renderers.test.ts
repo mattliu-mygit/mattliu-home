@@ -96,6 +96,15 @@ describe("content renderers", () => {
     expect(portfolio.projects[0]).not.toHaveProperty("position");
     expect(portfolio.projects[0]).not.toHaveProperty("artifact");
     expect(portfolio.projects[0]).not.toHaveProperty("linkLabel");
+    expect(
+      portfolio.quotes.find(
+        (quote: { slug: string }) => quote.slug === "failure-to-failure",
+      ),
+    ).toMatchObject({
+      author: "Maybe Churchill",
+      attributionNote:
+        "Origin unknown; commonly misattributed to Winston Churchill.",
+    });
   });
 
   it("renders concise agent orientation and crawler discovery files", () => {

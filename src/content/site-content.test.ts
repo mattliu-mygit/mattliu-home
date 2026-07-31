@@ -34,6 +34,15 @@ describe("site content", () => {
     ]);
     expect(siteContent.quotes).toHaveLength(7);
     expect(projectBySlug("llm-as-a-judge")?.repositoryUrl).toBeUndefined();
+    const perseverance = siteContent.quotes.find(
+      (quote) => quote.slug === "failure-to-failure",
+    );
+    expect(perseverance).toMatchObject({
+      author: "Maybe Churchill",
+      sourceUrl: "https://quoteinvestigator.com/2014/06/28/success/",
+      attributionNote:
+        "Origin unknown; commonly misattributed to Winston Churchill.",
+    });
   });
 
   it("rejects duplicate project and quote slugs", () => {
