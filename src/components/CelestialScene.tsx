@@ -7,6 +7,7 @@ import {
 } from "react";
 
 import {
+  BACKGROUND_STAR_COUNT,
   advanceCelestialMotion,
   applyWheelImpulse,
   constellationDrift,
@@ -144,7 +145,7 @@ export function CelestialScene({
     }
 
     const nextRandom = createSeededRandom(270731);
-    const stars = createStarField(310, nextRandom);
+    const stars = createStarField(BACKGROUND_STAR_COUNT, nextRandom);
     let width = 0;
     let height = 0;
     let pixelRatio = 1;
@@ -174,7 +175,7 @@ export function CelestialScene({
         const y = wrap(star.y * height + displacement.y, height + 80) - 40;
         const parallax = 1 / star.depth;
         const twinkle =
-          0.72 + Math.sin(now * 0.00085 + star.phase) * star.twinkle;
+          0.94 + Math.sin(now * 0.00055 + star.phase) * star.twinkle;
         const alpha = Math.min(
           star.tier === "anchor" ? 0.92 : 0.78,
           (0.24 + 0.4 * parallax) * twinkle,
@@ -192,6 +193,29 @@ export function CelestialScene({
           context.shadowColor = `rgba(${red},${green},${blue},${alpha * 0.65})`;
           context.shadowBlur = star.tier === "anchor" ? 9 : 4;
         }
+        const haloRadius = radius * (star.tier === "anchor" ? 3.1 : 2.35);
+        const halo = context.createRadialGradient(
+          x,
+          y,
+          0,
+          x,
+          y,
+          haloRadius,
+        );
+        halo.addColorStop(
+          0,
+          `rgba(${red},${green},${blue},${alpha * 0.46})`,
+        );
+        halo.addColorStop(
+          0.42,
+          `rgba(${red},${green},${blue},${alpha * 0.14})`,
+        );
+        halo.addColorStop(1, `rgba(${red},${green},${blue},0)`);
+        context.beginPath();
+        context.fillStyle = halo;
+        context.arc(x, y, haloRadius, 0, Math.PI * 2);
+        context.fill();
+
         context.beginPath();
         context.fillStyle = `rgba(${red},${green},${blue},${alpha})`;
         context.arc(x, y, radius, 0, Math.PI * 2);

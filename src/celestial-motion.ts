@@ -1,5 +1,7 @@
 import type { UniverseView } from "./navigation";
 
+export const BACKGROUND_STAR_COUNT = 365;
+
 export type CelestialMotion = {
   travel: number;
   travelVelocity: number;
@@ -218,12 +220,12 @@ export function createStarField(
         ? 0.48 + (nextRandom() - 0.5) * 0.52
         : nextRandom(),
       depth,
-      size: profile.minimumSize + nextRandom() * profile.sizeRange,
+      size: (profile.minimumSize + nextRandom() * profile.sizeRange) * 1.07,
       light: profile.minimumLight + Math.round(nextRandom() * 35),
       phase: nextRandom() * Math.PI * 2,
       tier,
       temperature,
-      twinkle: 0.02 + nextRandom() * (tier === "faint" ? 0.1 : 0.055),
+      twinkle: 0.006 + nextRandom() * (tier === "faint" ? 0.024 : 0.012),
       double:
         (tier === "anchor" && index % 2 === 0) ||
         (tier === "medium" && nextRandom() < 0.05),

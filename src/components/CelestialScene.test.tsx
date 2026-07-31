@@ -15,6 +15,8 @@ afterEach(() => {
 describe("CelestialScene motion ownership", () => {
   it("draws one varied static field when reduced motion is requested", () => {
     const arc = vi.fn();
+    const addColorStop = vi.fn();
+    const createRadialGradient = vi.fn(() => ({ addColorStop }));
     const requestFrame = vi.spyOn(window, "requestAnimationFrame");
     vi.spyOn(window, "matchMedia").mockReturnValue({
       matches: true,
@@ -23,6 +25,7 @@ describe("CelestialScene motion ownership", () => {
       arc,
       beginPath: vi.fn(),
       clearRect: vi.fn(),
+      createRadialGradient,
       fill: vi.fn(),
       lineTo: vi.fn(),
       moveTo: vi.fn(),
@@ -42,6 +45,8 @@ describe("CelestialScene motion ownership", () => {
     );
 
     expect(arc).toHaveBeenCalled();
+    expect(createRadialGradient).toHaveBeenCalled();
+    expect(addColorStop).toHaveBeenCalled();
     expect(requestFrame).not.toHaveBeenCalled();
   });
 

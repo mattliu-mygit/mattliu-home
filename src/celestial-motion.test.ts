@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BACKGROUND_STAR_COUNT,
   advanceCelestialMotion,
   applyWheelImpulse,
   constellationFocusOffset,
@@ -202,9 +203,9 @@ describe("celestial motion", () => {
 
   it("uses all three entry edges in the deterministic runtime schedule", () => {
     const next = createSeededRandom(270731);
-    createStarField(310, next);
+    createStarField(BACKGROUND_STAR_COUNT, next);
     const edges = Array.from(
-      { length: 9 },
+      { length: 10 },
       () => createMeteor(next, 1200, 800, 0).edge,
     );
 
@@ -214,6 +215,7 @@ describe("celestial motion", () => {
   it("builds a restrained field of faint, medium, and anchor stars", () => {
     const stars = createStarField(500, createSeededRandom(270731));
 
+    expect(BACKGROUND_STAR_COUNT).toBe(365);
     expect(stars.filter(({ tier }) => tier === "anchor")).toHaveLength(20);
     expect(stars.filter(({ tier }) => tier === "medium")).toHaveLength(80);
     expect(stars.filter(({ tier }) => tier === "faint")).toHaveLength(400);
@@ -221,7 +223,7 @@ describe("celestial motion", () => {
       new Set(["warm", "neutral", "cool"]),
     );
     expect(
-      stars.every(({ twinkle }) => twinkle >= 0.02 && twinkle <= 0.12),
+      stars.every(({ twinkle }) => twinkle >= 0.006 && twinkle <= 0.03),
     ).toBe(true);
 
     const anchors = stars.filter(({ tier }) => tier === "anchor");
@@ -240,18 +242,18 @@ describe("celestial motion", () => {
       maximum: Math.max(...anchors.map(({ size }) => size)),
     };
 
-    expect(faintBounds.minimum).toBeGreaterThanOrEqual(0.264);
-    expect(faintBounds.minimum).toBeLessThanOrEqual(0.266);
-    expect(faintBounds.maximum).toBeGreaterThanOrEqual(0.57);
-    expect(faintBounds.maximum).toBeLessThanOrEqual(0.572);
-    expect(mediumBounds.minimum).toBeGreaterThanOrEqual(0.616);
-    expect(mediumBounds.minimum).toBeLessThanOrEqual(0.618);
-    expect(mediumBounds.maximum).toBeGreaterThanOrEqual(0.92);
-    expect(mediumBounds.maximum).toBeLessThanOrEqual(0.924);
-    expect(anchorBounds.minimum).toBeGreaterThanOrEqual(1.045);
-    expect(anchorBounds.minimum).toBeLessThanOrEqual(1.07);
-    expect(anchorBounds.maximum).toBeGreaterThanOrEqual(1.5);
-    expect(anchorBounds.maximum).toBeLessThanOrEqual(1.507);
+    expect(faintBounds.minimum).toBeGreaterThanOrEqual(0.282);
+    expect(faintBounds.minimum).toBeLessThanOrEqual(0.285);
+    expect(faintBounds.maximum).toBeGreaterThanOrEqual(0.609);
+    expect(faintBounds.maximum).toBeLessThanOrEqual(0.611);
+    expect(mediumBounds.minimum).toBeGreaterThanOrEqual(0.659);
+    expect(mediumBounds.minimum).toBeLessThanOrEqual(0.662);
+    expect(mediumBounds.maximum).toBeGreaterThanOrEqual(0.984);
+    expect(mediumBounds.maximum).toBeLessThanOrEqual(0.989);
+    expect(anchorBounds.minimum).toBeGreaterThanOrEqual(1.118);
+    expect(anchorBounds.minimum).toBeLessThanOrEqual(1.145);
+    expect(anchorBounds.maximum).toBeGreaterThanOrEqual(1.605);
+    expect(anchorBounds.maximum).toBeLessThanOrEqual(1.613);
     expect(faintBounds.maximum).toBeLessThan(mediumBounds.minimum);
     expect(mediumBounds.maximum).toBeLessThan(anchorBounds.minimum);
   });
