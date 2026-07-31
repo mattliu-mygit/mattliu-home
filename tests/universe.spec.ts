@@ -114,6 +114,37 @@ test("constellation stars use luminous cores instead of bordered circles", async
   await expect(star).not.toHaveCSS("border-radius", "0px");
 });
 
+test("header identity follows the story and external links open separately", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const identity = page.locator(".site-nav__identity");
+
+  await expect(identity).toHaveAttribute("aria-hidden", "true");
+  await expect(identity).toHaveCSS("opacity", "0");
+  await page.getByRole("button", { name: "Go to Context" }).click();
+  await expect(identity).toHaveAttribute("aria-hidden", "true");
+  await page.getByRole("button", { name: "Go to Path" }).click();
+  await expect(identity).not.toHaveAttribute("aria-hidden");
+  await expect(identity).toHaveCSS("opacity", "1");
+
+  const github = page.getByRole("link", { name: "GitHub" });
+  await expect(github).toHaveAttribute("target", "_blank");
+  await expect(github).toHaveAttribute("rel", "noopener noreferrer");
+
+  await page.getByRole("button", { name: "Go to Quotes" }).click();
+  const quoteSource = page.locator(".narrative-card--quote a").first();
+  await expect(quoteSource).toHaveAttribute("target", "_blank");
+  await expect(quoteSource).toHaveAttribute(
+    "rel",
+    "noopener noreferrer",
+  );
+
+  await page.getByRole("button", { name: "Go to Origin" }).click();
+  await expect(identity).toHaveAttribute("aria-hidden", "true");
+  await expect(identity).toHaveCSS("opacity", "0");
+});
+
 test("route chapter labels align above their opening ticks at desktop and mobile widths", async ({
   page,
 }) => {
