@@ -9,6 +9,7 @@ import {
   createMeteor,
   createSeededRandom,
   createStarField,
+  dampPoint,
   directionalConstellationDrift,
   meteorSegment,
   parallaxDisplacement,
@@ -73,6 +74,28 @@ describe("celestial motion", () => {
       x: 0,
       y: 0,
     });
+  });
+
+  it("damps a constellation pull through a direction reversal", () => {
+    const current = { x: 10, y: 0 };
+    const target = { x: -8, y: 6 };
+    const first = dampPoint(current, target, 16);
+
+    expect(first.x).toBeGreaterThan(target.x);
+    expect(first.x).toBeLessThan(current.x);
+    expect(first.y).toBeGreaterThan(0);
+
+    let settled = first;
+    for (let frame = 0; frame < 120; frame += 1) {
+      settled = dampPoint(settled, target, 16);
+    }
+    expect(settled.x).toBeCloseTo(target.x, 3);
+    expect(settled.y).toBeCloseTo(target.y, 3);
+
+    const twoFrames = dampPoint(dampPoint(current, target, 16), target, 16);
+    const oneFrame = dampPoint(current, target, 32);
+    expect(oneFrame.x).toBeCloseTo(twoFrames.x, 10);
+    expect(oneFrame.y).toBeCloseTo(twoFrames.y, 10);
   });
 
   it("projects shallow star depth without changing the base constellation", () => {

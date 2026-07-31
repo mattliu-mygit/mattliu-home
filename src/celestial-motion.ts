@@ -110,6 +110,19 @@ export function directionalConstellationDrift(
   };
 }
 
+export function dampPoint(
+  current: Point2d,
+  target: Point2d,
+  elapsedMs: number,
+  responseMs = 120,
+): Point2d {
+  const alpha = 1 - Math.exp(-Math.max(0, elapsedMs) / responseMs);
+  return {
+    x: current.x + (target.x - current.x) * alpha,
+    y: current.y + (target.y - current.y) * alpha,
+  };
+}
+
 export function constellationFocusPoint(
   from: Point2d,
   to: Point2d,

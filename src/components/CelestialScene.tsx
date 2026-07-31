@@ -13,6 +13,7 @@ import {
   createMeteor,
   createSeededRandom,
   createStarField,
+  dampPoint,
   directionalConstellationDrift,
   meteorSegment,
   parallaxDisplacement,
@@ -80,9 +81,6 @@ export function CelestialScene({
     directionRef.current = constellationDirection;
     if (viewRef.current !== view) {
       localMotionRef.current = { travel: 0, travelVelocity: 0 };
-      motionChannel.publish({ x: 0, y: 0 });
-      rootRef.current?.style.setProperty("--constellation-pull-x", "0px");
-      rootRef.current?.style.setProperty("--constellation-pull-y", "0px");
       if (view !== "universe") {
         backgroundMotionRef.current = {
           ...backgroundMotionRef.current,
@@ -154,6 +152,7 @@ export function CelestialScene({
     let lastTime = performance.now();
     let meteor: Meteor | null = null;
     let nextMeteorAt = lastTime + 1_000;
+    let renderedPull = { x: 0, y: 0 };
 
     const resize = () => {
       pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
@@ -289,25 +288,26 @@ export function CelestialScene({
         localMotionRef.current,
         elapsed,
       );
-      const drift =
+      const targetPull =
         viewRef.current === "universe"
           ? constellationDrift(backgroundMotionRef.current.travelVelocity)
           : directionalConstellationDrift(
               localMotionRef.current.travelVelocity,
               directionRef.current,
             );
+      renderedPull = dampPoint(renderedPull, targetPull, elapsed);
       context.clearRect(0, 0, width, height);
       drawStars(now);
       drawMeteor(now);
       root.style.setProperty(
         "--constellation-pull-x",
-        `${drift.x}px`,
+        `${renderedPull.x}px`,
       );
       root.style.setProperty(
         "--constellation-pull-y",
-        `${drift.y}px`,
+        `${renderedPull.y}px`,
       );
-      motionChannel.publish(drift);
+      motionChannel.publish(renderedPull);
       frameId = window.requestAnimationFrame(drawFrame);
     };
 

@@ -45,7 +45,7 @@ describe("CelestialScene motion ownership", () => {
     expect(requestFrame).not.toHaveBeenCalled();
   });
 
-  it("clears the previous view pull before the next view paints", () => {
+  it("keeps the previous view pull until the animation publishes the next frame", () => {
     const channelRef: { current: CelestialMotionChannel | null } = {
       current: null,
     };
@@ -81,12 +81,12 @@ describe("CelestialScene motion ownership", () => {
     });
     rerender(renderScene("projects"));
 
-    expect(channel.current()).toEqual({ x: 0, y: 0 });
+    expect(channel.current()).toEqual({ x: 10, y: 4 });
     expect(universe.style.getPropertyValue("--constellation-pull-x")).toBe(
-      "0px",
+      "10px",
     );
     expect(universe.style.getPropertyValue("--constellation-pull-y")).toBe(
-      "0px",
+      "4px",
     );
   });
 });
