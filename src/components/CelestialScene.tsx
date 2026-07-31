@@ -40,6 +40,12 @@ type CelestialSceneProps = PropsWithChildren<{
 const wrap = (value: number, extent: number) =>
   ((value % extent) + extent) % extent;
 
+const starTemperature = {
+  warm: [255, 224, 190],
+  neutral: [225, 232, 245],
+  cool: [190, 208, 255],
+} as const;
+
 export function CelestialScene({
   cameraOrigin,
   children,
@@ -171,18 +177,52 @@ export function CelestialScene({
         const x = wrap(star.x * width + displacement.x, width + 80) - 40;
         const y = wrap(star.y * height + displacement.y, height + 80) - 40;
         const parallax = 1 / star.depth;
-        const twinkle = 0.62 + Math.sin(now * 0.0011 + star.phase) * 0.16;
+        const twinkle =
+          0.72 + Math.sin(now * 0.00085 + star.phase) * star.twinkle;
         const alpha = Math.min(
-          0.82,
-          (0.28 + 0.43 * parallax) * twinkle,
+          star.tier === "anchor" ? 0.92 : 0.78,
+          (0.24 + 0.4 * parallax) * twinkle,
         );
         const radius =
           star.size * Math.min(1.35, 0.62 + parallax * 0.35);
+        const temperature = starTemperature[star.temperature];
+        const brightness = star.light / 255;
+        const red = Math.round(temperature[0] * brightness);
+        const green = Math.round(temperature[1] * brightness);
+        const blue = Math.round(temperature[2] * brightness);
 
+        context.save();
+        if (star.tier !== "faint") {
+          context.shadowColor = `rgba(${red},${green},${blue},${alpha * 0.65})`;
+          context.shadowBlur = star.tier === "anchor" ? 9 : 4;
+        }
         context.beginPath();
-        context.fillStyle = `rgba(${star.light},${star.light + 5},${Math.min(255, star.light + 18)},${alpha})`;
+        context.fillStyle = `rgba(${red},${green},${blue},${alpha})`;
         context.arc(x, y, radius, 0, Math.PI * 2);
         context.fill();
+
+        if (star.double) {
+          const separation = radius * 2.8;
+          const companionX = x + Math.cos(star.phase) * separation;
+          const companionY = y + Math.sin(star.phase) * separation;
+          context.beginPath();
+          context.arc(companionX, companionY, radius * 0.48, 0, Math.PI * 2);
+          context.fill();
+        }
+
+        if (star.tier === "anchor") {
+          const ray = radius * 4.2;
+          context.shadowBlur = 0;
+          context.strokeStyle = `rgba(${red},${green},${blue},${alpha * 0.2})`;
+          context.lineWidth = 0.45;
+          context.beginPath();
+          context.moveTo(x - ray, y);
+          context.lineTo(x + ray, y);
+          context.moveTo(x, y - ray);
+          context.lineTo(x, y + ray);
+          context.stroke();
+        }
+        context.restore();
       }
     };
 

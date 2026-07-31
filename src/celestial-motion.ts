@@ -13,11 +13,18 @@ export type ViewportSize = {
   height: number;
 };
 
+export type BackgroundStarTier = "faint" | "medium" | "anchor";
+export type BackgroundStarTemperature = "warm" | "neutral" | "cool";
+
 export type BackgroundStar = Point2d & {
   depth: number;
   size: number;
   light: number;
   phase: number;
+  tier: BackgroundStarTier;
+  temperature: BackgroundStarTemperature;
+  twinkle: number;
+  double: boolean;
 };
 
 export type MeteorEdge = "top" | "left" | "right";
@@ -136,9 +143,31 @@ export function createStarField(
   count: number,
   nextRandom: () => number,
 ): BackgroundStar[] {
+  const anchorCount = Math.round(count * 0.04);
+  const mediumCount = Math.round(count * 0.16);
+
   return Array.from({ length: count }, (_, index) => {
     const depth = 0.35 + nextRandom() * 1.9;
-    const inDensePocket = index < Math.round(count * 0.24);
+    const inDensePocket = nextRandom() < 0.24;
+    const tier: BackgroundStarTier =
+      index < anchorCount
+        ? "anchor"
+        : index < anchorCount + mediumCount
+          ? "medium"
+          : "faint";
+    const temperatureRoll = nextRandom();
+    const temperature: BackgroundStarTemperature =
+      temperatureRoll < 0.14
+        ? "warm"
+        : temperatureRoll < 0.48
+          ? "cool"
+          : "neutral";
+    const profile =
+      tier === "anchor"
+        ? { minimumSize: 0.95, sizeRange: 0.42, minimumLight: 215 }
+        : tier === "medium"
+          ? { minimumSize: 0.56, sizeRange: 0.28, minimumLight: 175 }
+          : { minimumSize: 0.24, sizeRange: 0.28, minimumLight: 125 };
     return {
       x: inDensePocket
         ? 0.48 + (nextRandom() - 0.5) * 0.7
@@ -147,9 +176,15 @@ export function createStarField(
         ? 0.48 + (nextRandom() - 0.5) * 0.52
         : nextRandom(),
       depth,
-      size: 0.35 + nextRandom() * (depth < 0.7 ? 1.25 : 0.7),
-      light: 135 + Math.round(nextRandom() * 95),
+      size: profile.minimumSize + nextRandom() * profile.sizeRange,
+      light: profile.minimumLight + Math.round(nextRandom() * 35),
       phase: nextRandom() * Math.PI * 2,
+      tier,
+      temperature,
+      twinkle: 0.02 + nextRandom() * (tier === "faint" ? 0.1 : 0.055),
+      double:
+        (tier === "anchor" && index % 2 === 0) ||
+        (tier === "medium" && nextRandom() < 0.05),
     };
   });
 }

@@ -160,4 +160,32 @@ describe("celestial motion", () => {
 
     expect(new Set(edges)).toEqual(new Set(["top", "left", "right"]));
   });
+
+  it("builds a restrained field of faint, medium, and anchor stars", () => {
+    const stars = createStarField(500, createSeededRandom(270731));
+
+    expect(stars.filter(({ tier }) => tier === "anchor")).toHaveLength(20);
+    expect(stars.filter(({ tier }) => tier === "medium")).toHaveLength(80);
+    expect(stars.filter(({ tier }) => tier === "faint")).toHaveLength(400);
+    expect(new Set(stars.map(({ temperature }) => temperature))).toEqual(
+      new Set(["warm", "neutral", "cool"]),
+    );
+    expect(
+      stars.every(({ twinkle }) => twinkle >= 0.02 && twinkle <= 0.12),
+    ).toBe(true);
+
+    const anchors = stars.filter(({ tier }) => tier === "anchor");
+    const faint = stars.filter(({ tier }) => tier === "faint");
+    expect(Math.min(...anchors.map(({ size }) => size))).toBeGreaterThan(
+      Math.max(...faint.map(({ size }) => size)),
+    );
+  });
+
+  it("repeats the same visual star profiles for the same seed", () => {
+    const first = createStarField(40, createSeededRandom(17));
+    const second = createStarField(40, createSeededRandom(17));
+
+    expect(second).toEqual(first);
+    expect(first.some(({ double }) => double)).toBe(true);
+  });
 });
