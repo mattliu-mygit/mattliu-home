@@ -168,13 +168,19 @@ export function renderFallbackHtml(content: SiteContent): string {
       ].join("");
     })
     .join("");
+  const path = content.path
+    .map(
+      (entry) =>
+        `<li><h3>${escapeHtml(entry.organization)}</h3><p>${escapeHtml(entry.area)}</p><p>${escapeHtml(entry.summary)}</p></li>`,
+    )
+    .join("");
 
   return [
     '<main class="seo-fallback" data-static-fallback>',
-    `<header><p>${escapeHtml(content.person.eyebrow)}</p>`,
-    `<h1>${escapeHtml(content.person.name)} — ${escapeHtml(content.person.headline)}</h1>`,
+    `<header><h1>${escapeHtml(content.person.name)} — ${escapeHtml(content.person.headline)}</h1>`,
     `<p>${escapeHtml(content.person.introduction)}</p>`,
     `<ul aria-label="Profiles">${links}</ul></header>`,
+    `<section aria-labelledby="fallback-path"><h2 id="fallback-path">Path</h2><ol>${path}</ol></section>`,
     `<section aria-labelledby="fallback-projects"><h2 id="fallback-projects">Projects</h2><ol>${projects}</ol></section>`,
     "</main>",
   ].join("");
@@ -194,6 +200,7 @@ export function renderPortfolioJson(content: SiteContent): string {
         introduction: content.person.introduction,
         profiles: content.person.links,
       },
+      path: content.path.map(({ position: _position, ...entry }) => entry),
       projects: content.projects.map((project) => ({
         slug: project.slug,
         title: project.title,
@@ -221,6 +228,12 @@ export function renderPortfolioJson(content: SiteContent): string {
 }
 
 export function renderLlmsTxt(content: SiteContent): string {
+  const path = content.path
+    .map(
+      (entry) =>
+        `- ${entry.organization} — ${entry.area}: ${entry.summary}`,
+    )
+    .join("\n");
   const projects = content.projects
     .map((project) => {
       const title = project.repositoryUrl
@@ -240,6 +253,10 @@ export function renderLlmsTxt(content: SiteContent): string {
     "",
     "This is a personal portfolio. The JSON endpoint is the authoritative",
     "machine-readable representation of its public content.",
+    "",
+    "## Path",
+    "",
+    path,
     "",
     "## Portfolio",
     "",

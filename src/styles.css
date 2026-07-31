@@ -148,6 +148,7 @@ a:focus-visible {
   transform-origin: var(--camera-origin-x) var(--camera-origin-y);
 }
 
+.universe[data-view="path"] .celestial-field,
 .universe[data-view="projects"] .celestial-field,
 .universe[data-view="quotes"] .celestial-field {
   animation: sky-camera-arrive 760ms linear both;
@@ -178,7 +179,7 @@ a:focus-visible {
   width: 100%;
   min-height: 4.5rem;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 3rem;
   border-bottom: 1px solid rgba(201, 207, 227, 0.11);
   color: var(--muted);
@@ -196,11 +197,6 @@ a:focus-visible {
   color: var(--ink);
 }
 
-.site-nav__name {
-  color: var(--ink);
-  letter-spacing: 0.16em;
-}
-
 .site-nav__links {
   display: flex;
   gap: 1.35rem;
@@ -213,23 +209,23 @@ a:focus-visible {
   overflow: hidden;
 }
 
-.story-drawer {
+.narrative-wheel {
   position: absolute;
   z-index: 8;
-  top: max(7.5rem, 16%);
-  bottom: 4%;
+  top: 4.6rem;
+  bottom: 4.9rem;
   left: clamp(2.5rem, 5.5vw, 6.5rem);
-  width: min(31vw, 27rem);
+  width: min(32vw, 29rem);
   transition: transform 520ms cubic-bezier(0.22, 0.7, 0.18, 1);
 }
 
-.story-drawer[data-collapsed="true"] {
+.narrative-wheel[data-collapsed="true"] {
   transform: translateX(
     calc(-100% - clamp(2.5rem, 5.5vw, 6.5rem))
   );
 }
 
-.story-drawer__toggle {
+.narrative-wheel__toggle {
   position: absolute;
   z-index: 3;
   top: 1.25rem;
@@ -250,13 +246,13 @@ a:focus-visible {
     background 180ms ease;
 }
 
-.story-drawer__toggle:is(:hover, :focus-visible) {
+.narrative-wheel__toggle:is(:hover, :focus-visible) {
   border-color: rgba(240, 213, 138, 0.38);
   color: var(--gold);
   background: rgba(12, 15, 23, 0.92);
 }
 
-.story-drawer__scroll {
+.narrative-wheel__scroll {
   height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -271,37 +267,38 @@ a:focus-visible {
   );
 }
 
-.story-drawer__scroll::-webkit-scrollbar {
+.narrative-wheel__scroll::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
 }
 
-.story-drawer__sequence {
+.narrative-wheel__sequence {
   display: grid;
-  gap: 1.1rem;
+  gap: 1rem;
   margin: 0;
-  padding: 30vh 0;
+  padding: 38vh 0;
   list-style: none;
 }
 
-.story-drawer__beat {
+.narrative-wheel__beat {
   min-width: 0;
   scroll-snap-align: center;
   scroll-snap-stop: normal;
-  opacity: 0.22;
-  transform: perspective(42rem) translateY(0) rotateX(-4deg) scale(0.94);
+  opacity: 0.16;
+  transform: perspective(48rem) rotateX(-3deg) scale(0.955);
   transition:
     opacity 260ms ease,
     transform 520ms cubic-bezier(0.22, 0.7, 0.18, 1);
 }
 
-.story-drawer__beat[data-active="true"] {
+.narrative-wheel__beat[data-active="true"] {
   opacity: 1;
   transform: perspective(42rem) rotateX(0) scale(1);
 }
 
-.story-card {
+.narrative-card {
+  position: relative;
   width: 100%;
   padding: 0;
   overflow: hidden;
@@ -319,16 +316,12 @@ a:focus-visible {
   text-align: left;
 }
 
-.story-card--destination,
-.story-card__project-action {
+.narrative-card--destination,
+.narrative-card__action {
   cursor: pointer;
 }
 
-.story-card--project {
-  position: relative;
-}
-
-.story-card__project-action {
+.narrative-card__action {
   position: absolute;
   z-index: 2;
   inset: 0;
@@ -336,19 +329,74 @@ a:focus-visible {
   background: transparent;
 }
 
-.story-card__project-action:focus-visible {
+.narrative-card__action:focus-visible {
   outline: 1px solid var(--gold);
   outline-offset: -0.35rem;
 }
 
-.story-card--intro {
-  min-height: 36vh;
+.narrative-card--intro {
+  display: flex;
+  min-height: 8.5rem;
+  flex-direction: column;
+  justify-content: center;
   border-color: transparent;
   background: transparent;
   box-shadow: none;
 }
 
-.story-card--destination {
+.narrative-card--intro p,
+.narrative-card--intro h1 {
+  margin: 0;
+}
+
+.narrative-card--name > p,
+.narrative-card__eyebrow {
+  color: #7c8496;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.narrative-card--name h1 {
+  margin-top: 0.65rem;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(3.3rem, 5.7vw, 5.9rem);
+  font-weight: 400;
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+}
+
+.narrative-card--headline p {
+  color: #e6e2d8;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(2.25rem, 3.7vw, 4.1rem);
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+}
+
+.narrative-card--headline em {
+  color: var(--gold);
+  font-weight: 400;
+}
+
+.narrative-card--context p {
+  max-width: 30rem;
+  color: #b7bcc8;
+  font-size: clamp(0.82rem, 1.05vw, 1rem);
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+.narrative-card--context > span {
+  margin-top: 1rem;
+  color: #626a7b;
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.narrative-card--destination {
   display: grid;
   min-height: 9rem;
   place-items: center;
@@ -359,7 +407,7 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.story-card--destination span::after {
+.narrative-card--destination span::after {
   display: block;
   width: 2.5rem;
   height: 1px;
@@ -368,34 +416,64 @@ a:focus-visible {
   content: "";
 }
 
-.story-card .artifact {
+.narrative-card--path {
+  display: grid;
+  min-height: 12rem;
+  align-content: center;
+  gap: 0.6rem;
+  padding: 1.5rem;
+}
+
+.narrative-card--path h2,
+.narrative-card--path p {
+  margin: 0;
+}
+
+.narrative-card--path h2 {
+  max-width: 22rem;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(1.7rem, 2.4vw, 2.5rem);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+}
+
+.narrative-card--path p {
+  max-width: 23rem;
+  color: #9ea5b5;
+  font-size: 0.72rem;
+  font-weight: 300;
+  line-height: 1.55;
+}
+
+.narrative-card .artifact {
   min-height: 9.5rem;
   border: 0;
   border-bottom: 1px solid rgba(181, 190, 218, 0.13);
   pointer-events: none;
 }
 
-.story-card .artifact__label {
+.narrative-card .artifact__label {
   top: 0.75rem;
   left: 0.85rem;
   font-size: 0.4rem;
 }
 
-.story-card .evaluation-window,
-.story-card .degree-plan,
-.story-card .customization-flow,
-.story-card .judge-context,
-.story-card .trace-tree {
+.narrative-card .evaluation-window,
+.narrative-card .degree-plan,
+.narrative-card .customization-flow,
+.narrative-card .judge-context,
+.narrative-card .trace-tree {
   transform: scale(0.72);
 }
 
-.story-card__copy {
+.narrative-card__copy {
   display: grid;
   gap: 0.55rem;
   padding: 1rem 1.1rem 1.15rem;
 }
 
-.story-card__meta {
+.narrative-card__meta {
   display: flex;
   min-width: 0;
   justify-content: space-between;
@@ -406,14 +484,14 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.story-card__meta span:last-child {
+.narrative-card__meta span:last-child {
   overflow: hidden;
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.story-card__copy strong {
+.narrative-card__copy strong {
   font-family: "Instrument Serif", Georgia, serif;
   font-size: clamp(1.55rem, 2.2vw, 2.2rem);
   font-weight: 400;
@@ -421,14 +499,14 @@ a:focus-visible {
   letter-spacing: -0.025em;
 }
 
-.story-card__question {
+.narrative-card__question {
   color: #b4b8c2;
   font-size: 0.72rem;
   font-weight: 300;
   line-height: 1.5;
 }
 
-.story-card--quote {
+.narrative-card--quote {
   display: grid;
   min-height: 12rem;
   align-content: center;
@@ -436,7 +514,7 @@ a:focus-visible {
   padding: 1.4rem;
 }
 
-.story-card__quote-action {
+.narrative-card__quote-action {
   padding: 0;
   border: 0;
   color: inherit;
@@ -445,7 +523,7 @@ a:focus-visible {
   text-align: left;
 }
 
-.story-card--quote blockquote {
+.narrative-card--quote blockquote {
   margin: 0;
   color: #dedcd5;
   font-family: "Instrument Serif", Georgia, serif;
@@ -454,7 +532,7 @@ a:focus-visible {
   letter-spacing: -0.02em;
 }
 
-.story-card--quote > a {
+.narrative-card--quote > a {
   width: fit-content;
   color: #777f91;
   font-size: 0.5rem;
@@ -463,9 +541,126 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.story-card--quote > a span {
+.narrative-card--quote > a span {
   margin-left: 0.2rem;
   color: var(--gold);
+}
+
+.route-rail {
+  position: fixed;
+  z-index: 14;
+  right: clamp(1.5rem, 4vw, 4rem);
+  bottom: calc(1.15rem + env(safe-area-inset-bottom, 0px));
+  left: clamp(1.5rem, 4vw, 4rem);
+  height: 2.6rem;
+  color: #697184;
+}
+
+.route-rail__position {
+  position: absolute;
+  z-index: 2;
+  top: 1.18rem;
+  left: var(--route-progress);
+  width: 0.34rem;
+  height: 0.34rem;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: var(--night);
+  box-shadow: 0 0 0.85rem rgba(240, 213, 138, 0.5);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: left 320ms cubic-bezier(0.22, 0.7, 0.18, 1);
+}
+
+.route-rail::before {
+  position: absolute;
+  top: 1.4rem;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(164, 177, 218, 0.12);
+  content: "";
+}
+
+.route-rail ol {
+  position: relative;
+  display: grid;
+  height: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-rail li,
+.route-rail button {
+  min-width: 0;
+  height: 100%;
+}
+
+.route-rail button {
+  position: relative;
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.route-rail__tick {
+  position: absolute;
+  top: 1.05rem;
+  width: 1px;
+  height: 0.65rem;
+  background: currentColor;
+  transform-origin: 50% 100%;
+  transition:
+    height 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.route-rail button[data-major="true"] .route-rail__tick {
+  top: 0.82rem;
+  height: 0.9rem;
+  color: #939bad;
+}
+
+.route-rail button:is(:hover, :focus-visible) .route-rail__tick,
+.route-rail button[data-active="true"] .route-rail__tick {
+  height: 1.25rem;
+  color: var(--gold);
+  box-shadow: 0 0 0.8rem rgba(240, 213, 138, 0.45);
+  transform: scaleX(1.5);
+}
+
+.route-rail__label {
+  position: absolute;
+  bottom: 2rem;
+  width: max-content;
+  max-width: 12rem;
+  padding: 0.25rem 0.4rem;
+  color: #aeb4c1;
+  background: rgba(8, 10, 16, 0.84);
+  font-size: 0.48rem;
+  letter-spacing: 0.11em;
+  opacity: 0;
+  pointer-events: none;
+  text-transform: uppercase;
+  transform: translateY(0.25rem);
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+.route-rail button:is(:hover, :focus-visible, [data-active="true"])
+  .route-rail__label {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .constellation-view[data-camera-transition="pan"] {
@@ -549,31 +744,6 @@ a:focus-visible {
   animation: camera-arrive 760ms linear both;
 }
 
-.universe-return {
-  position: absolute;
-  z-index: 8;
-  top: 1.8rem;
-  left: clamp(2rem, 4vw, 4rem);
-  padding: 0.55rem 0;
-  border: 0;
-  color: #8e96a8;
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.62rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  transition: color 180ms ease;
-}
-
-.universe-return span {
-  margin-right: 0.45rem;
-  color: var(--gold);
-}
-
-.universe-return:hover {
-  color: var(--ink);
-}
-
 .constellation-view__title {
   position: absolute;
   z-index: 7;
@@ -606,11 +776,11 @@ a:focus-visible {
 }
 
 @media (min-width: 761px) {
-  .universe-stage:not([data-drawer-collapsed="true"])
+  .universe-stage:not([data-wheel-collapsed="true"])
     .constellation-map--detail {
     right: clamp(2.5rem, 5vw, 5rem);
     left: calc(
-      clamp(2.5rem, 5.5vw, 6.5rem) + min(31vw, 27rem) + 2.5rem
+      clamp(2.5rem, 5.5vw, 6.5rem) + min(32vw, 29rem) + 2.5rem
     );
   }
 }
@@ -650,9 +820,21 @@ a:focus-visible {
     stroke 240ms ease;
 }
 
+.constellation-map--detail .constellation-map__connections line {
+  stroke-width: 0.8;
+  opacity: 0.52;
+  stroke-dasharray: 2.5 4;
+  animation: none;
+}
+
 .constellation-map--quotes .constellation-map__connections line {
   stroke: #7e88aa;
   opacity: 0.25;
+}
+
+.constellation-map--detail.constellation-map--quotes
+  .constellation-map__connections line {
+  opacity: 0.42;
 }
 
 .constellation-map--overview .constellation-map__connections line {
@@ -754,6 +936,9 @@ a:focus-visible {
 
 .constellation-map--detail.constellation-map--projects
   .constellation-star:is([data-index="3"], [data-index="4"])
+  .constellation-star__copy,
+.constellation-map--detail.constellation-map--path
+  .constellation-star[data-index="2"]
   .constellation-star__copy,
 .constellation-map--detail.constellation-map--quotes
   .constellation-star:is([data-index="5"], [data-index="6"])
@@ -1303,7 +1488,7 @@ a:focus-visible {
 }
 
 @media (max-width: 900px) and (min-width: 761px) {
-  .story-drawer {
+  .narrative-wheel {
     left: 2rem;
     width: 36vw;
   }
@@ -1350,7 +1535,7 @@ a:focus-visible {
     overflow: hidden;
   }
 
-  .story-drawer {
+  .narrative-wheel {
     position: absolute;
     top: auto;
     right: 1rem;
@@ -1361,46 +1546,46 @@ a:focus-visible {
     transition: transform 420ms cubic-bezier(0.22, 0.7, 0.18, 1);
   }
 
-  .story-drawer[data-collapsed="true"] {
+  .narrative-wheel[data-collapsed="true"] {
     transform: translateY(calc(100% + 1rem));
   }
 
-  .story-drawer__toggle {
+  .narrative-wheel__toggle {
     top: -2.55rem;
     right: 0;
   }
 
-  .story-drawer__sequence {
+  .narrative-wheel__sequence {
     gap: 0.8rem;
     padding: 14vh 0;
   }
 
-  .story-card--intro {
+  .narrative-card--intro {
     min-height: 20vh;
   }
 
-  .story-card .artifact {
+  .narrative-card .artifact {
     min-height: 6.5rem;
   }
 
-  .story-card__copy {
+  .narrative-card__copy {
     gap: 0.4rem;
     padding: 0.75rem 0.9rem 0.85rem;
   }
 
-  .story-card__copy strong {
+  .narrative-card__copy strong {
     font-size: 1.45rem;
   }
 
-  .story-card__question {
+  .narrative-card__question {
     font-size: 0.66rem;
   }
 
-  .story-card--destination {
+  .narrative-card--destination {
     min-height: 6.5rem;
   }
 
-  .story-card--quote {
+  .narrative-card--quote {
     min-height: 9rem;
     padding: 1.1rem;
   }
@@ -1415,23 +1600,23 @@ a:focus-visible {
   }
 
   .constellation-map--overview:nth-child(1) {
-    top: 22%;
-    left: 28%;
+    top: 18%;
+    left: 25%;
   }
 
   .constellation-map--overview:nth-child(2) {
-    top: 44%;
+    top: 25%;
     left: 72%;
+  }
+
+  .constellation-map--overview:nth-child(3) {
+    top: 43%;
+    left: 44%;
   }
 
   .constellation-view {
     inset: 4.2rem 0 0;
     min-height: calc(100svh - 4.2rem);
-  }
-
-  .universe-return {
-    top: 1.1rem;
-    left: 1.25rem;
   }
 
   .constellation-view__title {
@@ -1539,7 +1724,8 @@ a:focus-visible {
 
   .constellation-map--detail .constellation-map__plane,
   .constellation-view,
-  .universe-overview {
+  .universe-overview,
+  .narrative-wheel__beat {
     transform: none;
   }
 

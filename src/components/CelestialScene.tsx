@@ -18,11 +18,13 @@ import {
   type Meteor,
 } from "../celestial-motion";
 import type { Point } from "../content/site-content";
+import type { UniverseView } from "../navigation";
 
 type CelestialSceneProps = PropsWithChildren<{
   cameraOrigin: Point;
   interactive: boolean;
-  view: "universe" | "projects" | "quotes";
+  view: UniverseView;
+  onOpenSkyWheel?: (deltaY: number) => void;
 }>;
 
 const wrap = (value: number, extent: number) =>
@@ -32,15 +34,40 @@ export function CelestialScene({
   cameraOrigin,
   children,
   interactive,
+  onOpenSkyWheel,
   view,
 }: CelestialSceneProps) {
   const rootRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const interactiveRef = useRef(interactive);
+  const openSkyWheelRef = useRef(onOpenSkyWheel);
+  const motionRef = useRef<CelestialMotion>({
+    travel: 0,
+    travelVelocity: 0,
+  });
 
   useEffect(() => {
     interactiveRef.current = interactive;
-  }, [interactive]);
+    openSkyWheelRef.current = onOpenSkyWheel;
+  }, [interactive, onOpenSkyWheel]);
+
+  useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      if (!interactiveRef.current || event.ctrlKey) {
+        return;
+      }
+      motionRef.current = applyWheelImpulse(motionRef.current, event.deltaY);
+      const target = event.target;
+      if (target instanceof Element && target.closest("[data-story-scroll]")) {
+        return;
+      }
+      openSkyWheelRef.current?.(event.deltaY);
+      event.preventDefault();
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, []);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -68,10 +95,6 @@ export function CelestialScene({
     let pixelRatio = 1;
     let frameId = 0;
     let lastTime = performance.now();
-    let motion: CelestialMotion = {
-      travel: 0,
-      travelVelocity: 0,
-    };
     let meteor: Meteor | null = null;
     let nextMeteorAt = lastTime + 1_000;
 
@@ -87,7 +110,7 @@ export function CelestialScene({
     const drawStars = (now: number) => {
       for (const star of stars) {
         const displacement = parallaxDisplacement(
-          motion.travel,
+          motionRef.current.travel,
           star.depth,
           star.phase,
         );
@@ -156,8 +179,8 @@ export function CelestialScene({
     const drawFrame = (now: number) => {
       const elapsed = now - lastTime;
       lastTime = now;
-      motion = advanceCelestialMotion(motion, elapsed);
-      const drift = constellationDrift(motion.travelVelocity);
+      motionRef.current = advanceCelestialMotion(motionRef.current, elapsed);
+      const drift = constellationDrift(motionRef.current.travelVelocity);
       context.clearRect(0, 0, width, height);
       drawStars(now);
       drawMeteor(now);
@@ -172,30 +195,13 @@ export function CelestialScene({
       frameId = window.requestAnimationFrame(drawFrame);
     };
 
-    const handleWheel = (event: WheelEvent) => {
-      if (!interactiveRef.current || event.ctrlKey) {
-        return;
-      }
-      motion = applyWheelImpulse(motion, event.deltaY);
-      const target = event.target;
-      if (
-        target instanceof Element &&
-        target.closest("[data-story-scroll]")
-      ) {
-        return;
-      }
-      event.preventDefault();
-    };
-
     resize();
     window.addEventListener("resize", resize);
-    window.addEventListener("wheel", handleWheel, { passive: false });
     frameId = window.requestAnimationFrame(drawFrame);
 
     return () => {
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("resize", resize);
-      window.removeEventListener("wheel", handleWheel);
     };
   }, []);
 

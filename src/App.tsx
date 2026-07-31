@@ -5,12 +5,13 @@ import {
   ConstellationMap,
   type ConstellationItem,
 } from "./components/ConstellationMap";
+import {
+  NarrativeWheel,
+  type NarrativeWheelHandle,
+} from "./components/NarrativeWheel";
 import { ProjectLens } from "./components/ProjectLens";
 import { QuoteReadout } from "./components/QuoteReadout";
-import {
-  StoryDrawer,
-  type StoryScrollRequest,
-} from "./components/StoryDrawer";
+import { RouteRail } from "./components/RouteRail";
 import { UniverseOverview } from "./components/UniverseOverview";
 import {
   projectBySlug,
@@ -22,6 +23,7 @@ import {
   parseUniverseLocation,
   serializeUniverseLocation,
   type UniverseLocation,
+  type UniverseView,
 } from "./navigation";
 import {
   createStoryBeats,
@@ -29,18 +31,22 @@ import {
   type StoryBeat,
 } from "./story-navigation";
 
-const { person, projects, quotes, destinations } = siteContent;
-const projectDestination = destinations.find(
-  (destination) => destination.slug === "projects",
-)!;
-const quoteDestination = destinations.find(
-  (destination) => destination.slug === "quotes",
-)!;
+const { person, path, projects, quotes, destinations } = siteContent;
+const destinationBySlug = Object.fromEntries(
+  destinations.map((destination) => [destination.slug, destination]),
+) as Record<DestinationSlug, (typeof destinations)[number]>;
 const storyBeats = createStoryBeats(siteContent);
 const constellationItems: Record<
   DestinationSlug,
   readonly ConstellationItem[]
 > = {
+  path: path.map((entry) => ({
+    slug: entry.slug,
+    label: entry.organization,
+    overviewLabel: entry.shortLabel,
+    meta: entry.area,
+    position: entry.position,
+  })),
   projects: projects.map((project) => ({
     slug: project.slug,
     label: project.title,
@@ -68,38 +74,62 @@ const locationUrl = (location: UniverseLocation) =>
 const prefersReducedMotion = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
+const locationFor = (
+  view: DestinationSlug,
+  itemSlug?: string,
+): UniverseLocation => {
+  if (view === "path") {
+    return { view, pathSlug: itemSlug };
+  }
+  if (view === "projects") {
+    return { view };
+  }
+  return { view, quoteSlug: itemSlug };
+};
+
+const viewOrder: Record<DestinationSlug, number> = {
+  path: 0,
+  projects: 1,
+  quotes: 2,
+};
+
 export default function App() {
-  const [location, setLocation] = useState(() =>
-    parseUniverseLocation(window.location.hash),
+  const initialLocation = useRef(parseUniverseLocation(window.location.hash));
+  const [location, setLocation] = useState(initialLocation.current);
+  const [selectedPathSlug, setSelectedPathSlug] = useState(
+    initialLocation.current.view === "path"
+      ? initialLocation.current.pathSlug
+      : path[0].slug,
   );
   const [selectedProjectSlug, setSelectedProjectSlug] = useState<
     string | undefined
-  >(() => {
-    const initialLocation = parseUniverseLocation(window.location.hash);
-    return initialLocation.view === "projects"
-      ? initialLocation.projectSlug
-      : undefined;
-  });
+  >(
+    initialLocation.current.view === "projects"
+      ? initialLocation.current.projectSlug
+      : undefined,
+  );
   const [selectedQuoteSlug, setSelectedQuoteSlug] = useState(
-    siteContent.quotes[0].slug,
+    initialLocation.current.view === "quotes"
+      ? (initialLocation.current.quoteSlug ?? quotes[0].slug)
+      : quotes[0].slug,
   );
-  const [cameraOrigin, setCameraOrigin] = useState<Point>([50, 50]);
+  const [cameraOrigin, setCameraOrigin] = useState<Point>(() =>
+    initialLocation.current.view === "universe"
+      ? [50, 50]
+      : destinationBySlug[initialLocation.current.view].position,
+  );
   const [activeStoryId, setActiveStoryId] = useState(() =>
-    storyBeatForLocation(
-      parseUniverseLocation(window.location.hash),
-      siteContent.quotes[0].slug,
-    ),
+    storyBeatForLocation(initialLocation.current),
   );
-  const [drawerCollapsed, setDrawerCollapsed] = useState(
-    () => window.sessionStorage.getItem("story-drawer-collapsed") === "true",
+  const [wheelCollapsed, setWheelCollapsed] = useState(
+    () => window.sessionStorage.getItem("narrative-wheel-collapsed") === "true",
   );
-  const [scrollRequest, setScrollRequest] =
-    useState<StoryScrollRequest | null>(null);
-  const [cameraTransition, setCameraTransition] = useState<
-    "arrive" | "pan"
-  >("arrive");
+  const [cameraTransition, setCameraTransition] = useState<"arrive" | "pan">(
+    "arrive",
+  );
   const [cameraPan, setCameraPan] = useState<"forward" | "back">("forward");
   const viewHeading = useRef<HTMLHeadingElement>(null);
+  const wheelRef = useRef<NarrativeWheelHandle>(null);
   const lastUniverseTarget = useRef<{
     slug: DestinationSlug;
     itemSlug?: string;
@@ -107,7 +137,6 @@ export default function App() {
   const lastProjectTrigger = useRef<HTMLElement | null>(null);
   const pendingFocus = useRef<PendingFocus>(null);
   const pendingProjectOpen = useRef<string | null>(null);
-  const scrollRequestKey = useRef(0);
   const selectedProject =
     location.view === "projects" && location.projectSlug
       ? projectBySlug(location.projectSlug)
@@ -117,13 +146,10 @@ export default function App() {
 
   const requestStoryScroll = useCallback(
     (id: string, behavior?: ScrollBehavior) => {
-      scrollRequestKey.current += 1;
-      setScrollRequest({
+      wheelRef.current?.scrollToBeat(
         id,
-        key: scrollRequestKey.current,
-        behavior:
-          behavior ?? (prefersReducedMotion() ? "auto" : "smooth"),
-      });
+        behavior ?? (prefersReducedMotion() ? "auto" : "smooth"),
+      );
     },
     [],
   );
@@ -144,39 +170,51 @@ export default function App() {
     [],
   );
 
+  const configureCamera = useCallback(
+    (nextView: DestinationSlug, origin?: Point) => {
+      setCameraOrigin(origin ?? destinationBySlug[nextView].position);
+      const previousView = location.view;
+      const shouldPan = previousView !== "universe" && previousView !== nextView;
+      setCameraTransition(shouldPan ? "pan" : "arrive");
+      if (shouldPan) {
+        setCameraPan(
+          viewOrder[nextView] > viewOrder[previousView] ? "forward" : "back",
+        );
+      }
+    },
+    [location.view],
+  );
+
   const enterConstellation = useCallback(
     (view: DestinationSlug, itemSlug?: string, origin?: Point) => {
       lastUniverseTarget.current = { slug: view, itemSlug };
-      const destination = destinations.find(
-        (candidate) => candidate.slug === view,
-      );
-      setCameraOrigin(origin ?? destination?.position ?? [50, 50]);
-      setCameraTransition("arrive");
-      if (view === "projects" && itemSlug) {
+      configureCamera(view, origin);
+      pendingProjectOpen.current = null;
+      if (view === "path" && itemSlug) {
+        setSelectedPathSlug(itemSlug);
+      } else if (view === "projects" && itemSlug) {
         setSelectedProjectSlug(itemSlug);
         pendingProjectOpen.current = itemSlug;
       } else if (view === "quotes" && itemSlug) {
         setSelectedQuoteSlug(itemSlug);
-        pendingProjectOpen.current = null;
-      } else {
-        pendingProjectOpen.current = null;
       }
       const storyId = itemSlug ? `${view}/${itemSlug}` : view;
       setActiveStoryId(storyId);
       requestStoryScroll(storyId);
-      commitLocation({ view }, { focus: { type: "heading" } });
+      commitLocation(locationFor(view, view === "projects" ? undefined : itemSlug), {
+        focus: { type: "heading" },
+      });
     },
-    [commitLocation, requestStoryScroll],
+    [commitLocation, configureCamera, requestStoryScroll],
   );
 
   const returnToUniverse = useCallback(() => {
-    const destination =
-      location.view === "universe" ? "projects" : location.view;
+    const destination = location.view === "universe" ? "path" : location.view;
     const previousTarget = lastUniverseTarget.current;
     pendingProjectOpen.current = null;
     setCameraTransition("arrive");
-    setActiveStoryId("intro");
-    requestStoryScroll("intro");
+    setActiveStoryId("intro/name");
+    requestStoryScroll("intro/name");
     commitLocation(
       { view: "universe" },
       {
@@ -212,15 +250,38 @@ export default function App() {
     );
   }, [commitLocation]);
 
+  useEffect(() => {
+    if (
+      prefersReducedMotion() &&
+      location.view === "projects" &&
+      pendingProjectOpen.current
+    ) {
+      openProject(pendingProjectOpen.current);
+    }
+  }, [location, openProject]);
+
+  const selectPath = useCallback(
+    (slug: string, scroll = true) => {
+      setSelectedPathSlug(slug);
+      setActiveStoryId(`path/${slug}`);
+      if (scroll) {
+        requestStoryScroll(`path/${slug}`);
+      }
+      commitLocation({ view: "path", pathSlug: slug }, { replace: true });
+    },
+    [commitLocation, requestStoryScroll],
+  );
+
   const selectQuote = useCallback(
-    (slug: string, options: { scroll?: boolean } = {}) => {
+    (slug: string, scroll = true) => {
       setSelectedQuoteSlug(slug);
       setActiveStoryId(`quotes/${slug}`);
-      if (options.scroll !== false) {
+      if (scroll) {
         requestStoryScroll(`quotes/${slug}`);
       }
+      commitLocation({ view: "quotes", quoteSlug: slug }, { replace: true });
     },
-    [requestStoryScroll],
+    [commitLocation, requestStoryScroll],
   );
 
   const handleStoryBeat = useCallback(
@@ -229,58 +290,58 @@ export default function App() {
         return;
       }
       pendingProjectOpen.current = null;
-      const previousView = location.view;
       setActiveStoryId(beat.id);
 
       if (beat.kind === "intro") {
-        setCameraTransition("arrive");
-        commitLocation({ view: "universe" }, { replace: true });
+        if (location.view !== "universe") {
+          setCameraTransition("arrive");
+          commitLocation({ view: "universe" }, { replace: true });
+        }
         return;
       }
 
-      const destination = destinations.find(
-        ({ slug }) => slug === beat.view,
-      );
-      setCameraOrigin(destination?.position ?? [50, 50]);
-      setCameraTransition(
-        previousView !== "universe" && previousView !== beat.view
-          ? "pan"
-          : "arrive",
-      );
-      if (previousView !== "universe" && previousView !== beat.view) {
-        setCameraPan(beat.view === "quotes" ? "forward" : "back");
-      }
-
-      if (beat.kind === "project") {
+      configureCamera(beat.view);
+      if (beat.kind === "path") {
+        setSelectedPathSlug(beat.itemSlug);
+      } else if (beat.kind === "project") {
         setSelectedProjectSlug(beat.itemSlug);
       } else if (beat.kind === "quote") {
         setSelectedQuoteSlug(beat.itemSlug);
       }
-      commitLocation({ view: beat.view }, { replace: true });
+      commitLocation(
+        locationFor(
+          beat.view,
+          beat.kind === "project" || beat.kind === "destination"
+            ? undefined
+            : beat.itemSlug,
+        ),
+        { replace: true },
+      );
     },
-    [activeStoryId, commitLocation, location.view],
+    [activeStoryId, commitLocation, configureCamera, location.view],
   );
 
   const activateStoryBeat = useCallback(
     (beat: StoryBeat) => {
-      setActiveStoryId(beat.id);
       requestStoryScroll(beat.id);
-
       if (beat.kind === "intro") {
         returnToUniverse();
       } else if (beat.kind === "destination") {
         enterConstellation(beat.view);
+      } else if (beat.kind === "path") {
+        if (location.view === "path") {
+          selectPath(beat.itemSlug, false);
+        } else {
+          enterConstellation("path", beat.itemSlug);
+        }
       } else if (beat.kind === "project") {
         if (location.view === "projects") {
           openProject(beat.itemSlug);
         } else {
           enterConstellation("projects", beat.itemSlug);
-          if (prefersReducedMotion()) {
-            queueMicrotask(() => openProject(beat.itemSlug));
-          }
         }
       } else if (location.view === "quotes") {
-        selectQuote(beat.itemSlug);
+        selectQuote(beat.itemSlug, false);
       } else {
         enterConstellation("quotes", beat.itemSlug);
       }
@@ -291,16 +352,26 @@ export default function App() {
       openProject,
       requestStoryScroll,
       returnToUniverse,
+      selectPath,
       selectQuote,
     ],
   );
 
+  const selectRouteBeat = useCallback(
+    (beat: StoryBeat) => {
+      requestStoryScroll(beat.id);
+      if (beat.kind === "intro" && beat.line === "name") {
+        returnToUniverse();
+      } else {
+        handleStoryBeat(beat);
+      }
+    },
+    [handleStoryBeat, requestStoryScroll, returnToUniverse],
+  );
+
   const finishCameraArrival = useCallback(
     (event: React.AnimationEvent<HTMLElement>) => {
-      if (
-        event.target !== event.currentTarget ||
-        !pendingProjectOpen.current
-      ) {
+      if (event.target !== event.currentTarget || !pendingProjectOpen.current) {
         return;
       }
       openProject(pendingProjectOpen.current);
@@ -308,12 +379,9 @@ export default function App() {
     [openProject],
   );
 
-  const changeDrawerVisibility = useCallback((collapsed: boolean) => {
-    setDrawerCollapsed(collapsed);
-    window.sessionStorage.setItem(
-      "story-drawer-collapsed",
-      String(collapsed),
-    );
+  const changeWheelVisibility = useCallback((collapsed: boolean) => {
+    setWheelCollapsed(collapsed);
+    window.sessionStorage.setItem("narrative-wheel-collapsed", String(collapsed));
   }, []);
 
   useEffect(() => {
@@ -328,13 +396,18 @@ export default function App() {
       }
       pendingFocus.current = null;
       pendingProjectOpen.current = null;
-      if (nextLocation.view === "projects" && nextLocation.projectSlug) {
+      if (nextLocation.view === "path" && nextLocation.pathSlug) {
+        setSelectedPathSlug(nextLocation.pathSlug);
+      } else if (nextLocation.view === "projects" && nextLocation.projectSlug) {
         setSelectedProjectSlug(nextLocation.projectSlug);
+      } else if (nextLocation.view === "quotes" && nextLocation.quoteSlug) {
+        setSelectedQuoteSlug(nextLocation.quoteSlug);
       }
-      const nextStoryId = storyBeatForLocation(
-        nextLocation,
-        selectedQuoteSlug,
-      );
+      if (nextLocation.view !== "universe") {
+        setCameraOrigin(destinationBySlug[nextLocation.view].position);
+        setCameraTransition("arrive");
+      }
+      const nextStoryId = storyBeatForLocation(nextLocation);
       setActiveStoryId(nextStoryId);
       requestStoryScroll(nextStoryId, "auto");
       setLocation(nextLocation);
@@ -347,7 +420,7 @@ export default function App() {
       window.removeEventListener("hashchange", syncFromUrl);
       window.removeEventListener("popstate", syncFromUrl);
     };
-  }, [requestStoryScroll, selectedQuoteSlug]);
+  }, [requestStoryScroll]);
 
   useEffect(() => {
     const target = pendingFocus.current;
@@ -380,21 +453,24 @@ export default function App() {
         returnToUniverse();
       }
     };
-
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [closeProject, location, returnToUniverse]);
+
+  const constellationView = location.view as Exclude<UniverseView, "universe">;
 
   return (
     <CelestialScene
       cameraOrigin={cameraOrigin}
       interactive={!selectedProject}
+      onOpenSkyWheel={(deltaY) => {
+        if (!wheelCollapsed) {
+          wheelRef.current?.scrollBy(deltaY);
+        }
+      }}
       view={location.view}
     >
-      <nav className="site-nav" aria-label="Primary navigation">
-        <a className="site-nav__name" href="/" aria-label="Matthew Liu home">
-          {person.name}
-        </a>
+      <nav className="site-nav" aria-label="Profile links">
         <div className="site-nav__links">
           {person.links.map((link) => (
             <a href={link.url} key={link.label}>
@@ -406,19 +482,17 @@ export default function App() {
 
       <div
         className="universe-stage"
-        data-drawer-collapsed={drawerCollapsed ? "true" : undefined}
+        data-wheel-collapsed={wheelCollapsed ? "true" : undefined}
         data-view={location.view}
       >
-        <h1 className="sr-only">{person.headline}</h1>
-        <p className="sr-only">{person.introduction}</p>
-        <StoryDrawer
+        <NarrativeWheel
           activeId={activeStoryId}
           beats={storyBeats}
-          collapsed={drawerCollapsed}
+          collapsed={wheelCollapsed}
           onActivate={activateStoryBeat}
           onActiveBeat={handleStoryBeat}
-          onCollapsedChange={changeDrawerVisibility}
-          scrollRequest={scrollRequest}
+          onCollapsedChange={changeWheelVisibility}
+          ref={wheelRef}
         />
 
         {location.view === "universe" ? (
@@ -429,59 +503,63 @@ export default function App() {
           />
         ) : (
           <section
-            className={`constellation-view constellation-view--${location.view}`}
+            className={`constellation-view constellation-view--${constellationView}`}
             data-camera-pan={cameraPan}
             data-camera-transition={cameraTransition}
             onAnimationEnd={finishCameraArrival}
             role="region"
             aria-labelledby="constellation-view-title"
+            key={constellationView}
           >
-            <button
-              className="universe-return"
-              type="button"
-              onClick={returnToUniverse}
-            >
-              <span aria-hidden="true">←</span> Universe
-            </button>
             <h2
               className="constellation-view__title"
               id="constellation-view-title"
               ref={viewHeading}
               tabIndex={-1}
             >
-              {location.view === "projects"
-                ? "Projects constellation"
-                : "Quotes constellation"}
+              {destinationBySlug[constellationView].label} constellation
             </h2>
 
-            {location.view === "projects" ? (
-              <ConstellationMap
-                kind="projects"
-                items={constellationItems.projects}
-                connections={projectDestination.connections}
-                activeSlug={selectedProjectSlug}
-                getAccessibleName={(project) => `Explore ${project.label}`}
-                onSelect={openProject}
-              />
-            ) : (
-              <>
-                <QuoteReadout
-                  hidden={!drawerCollapsed}
-                  quote={selectedQuote}
-                />
-                <ConstellationMap
-                  kind="quotes"
-                  items={constellationItems.quotes}
-                  connections={quoteDestination.connections}
-                  activeSlug={selectedQuote.slug}
-                  getAccessibleName={(quote) => `Read quote: ${quote.label}`}
-                  onSelect={(slug) => selectQuote(slug)}
-                />
-              </>
-            )}
+            {constellationView === "quotes" ? (
+              <QuoteReadout hidden={!wheelCollapsed} quote={selectedQuote} />
+            ) : null}
+            <ConstellationMap
+              kind={constellationView}
+              items={constellationItems[constellationView]}
+              connections={destinationBySlug[constellationView].connections}
+              activeSlug={
+                constellationView === "path"
+                  ? selectedPathSlug
+                  : constellationView === "projects"
+                    ? selectedProjectSlug
+                    : selectedQuote.slug
+              }
+              getAccessibleName={(item) =>
+                constellationView === "quotes"
+                  ? `Read quote: ${item.label}`
+                  : constellationView === "path"
+                    ? `Focus ${item.label}`
+                    : `Explore ${item.label}`
+              }
+              onSelect={(slug) => {
+                if (constellationView === "path") {
+                  selectPath(slug);
+                } else if (constellationView === "projects") {
+                  openProject(slug);
+                } else {
+                  selectQuote(slug);
+                }
+              }}
+            />
           </section>
         )}
       </div>
+
+      <RouteRail
+        activeId={activeStoryId}
+        beats={storyBeats}
+        onSelect={selectRouteBeat}
+      />
 
       {selectedProject ? (
         <ProjectLens project={selectedProject} onClose={closeProject} />

@@ -4,33 +4,40 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   window.sessionStorage.clear();
   window.history.replaceState(null, "", "/");
 });
 
 describe("personal universe", () => {
-  it("starts at a sparse universe with two labeled constellations", () => {
+  it("starts with the intro, route, and three labeled constellations", () => {
     render(<App />);
 
     expect(
       screen.getByRole("region", { name: "Portfolio story" }),
-    ).toHaveAttribute("data-active-beat", "intro");
-    expect(screen.getByText("Software should show its work.")).toHaveClass(
-      "sr-only",
-    );
+    ).toHaveAttribute("data-active-beat", "intro/name");
+    expect(screen.getByRole("heading", { name: "Matthew Liu" })).toBeVisible();
+    expect(screen.getByText(/keep intelligent software/i)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Explore Path" }),
+    ).toBeVisible();
     expect(
       screen.getByRole("button", { name: "Explore Projects" }),
     ).toBeVisible();
     expect(
       screen.getByRole("button", { name: "Explore Quotes" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("navigation", { name: "Story scrollbar" }),
     ).toBeVisible();
     expect(
       screen.getByRole("button", {
@@ -93,8 +100,8 @@ describe("personal universe", () => {
 
     expect(window.location.hash).toBe("#projects");
     expect(screen.getByRole("main")).toHaveStyle({
-      "--camera-origin-x": "64%",
-      "--camera-origin-y": "40%",
+      "--camera-origin-x": "77%",
+      "--camera-origin-y": "48%",
     });
     const selected = screen.getByRole("button", {
       name: "Explore Monopole",
@@ -110,6 +117,75 @@ describe("personal universe", () => {
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
   });
 
+  it("uses a Path star to zoom to the matching professional card", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Path with AWS SageMaker selected",
+      }),
+    );
+
+    expect(window.location.hash).toBe("#path/aws-sagemaker");
+    const pathRegion = screen.getByRole("region", {
+      name: "Path constellation",
+    });
+    expect(
+      within(pathRegion).getByRole("button", { name: "Focus AWS SageMaker" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("region", { name: "Portfolio story" }),
+    ).toHaveAttribute("data-active-beat", "path/aws-sagemaker");
+  });
+
+  it("uses the route as passive focus without opening project content", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Go to Monopole" }));
+
+    expect(window.location.hash).toBe("#projects");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Portfolio story" }),
+    ).toHaveAttribute("data-active-beat", "projects/monopole");
+  });
+
+  it("remounts the constellation stage so consecutive pans can animate", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Go to Path" }));
+    const pathRegion = screen.getByRole("region", { name: "Path constellation" });
+    await user.click(screen.getByRole("button", { name: "Go to Projects" }));
+    const projectRegion = screen.getByRole("region", {
+      name: "Projects constellation",
+    });
+    await user.click(screen.getByRole("button", { name: "Go to Quotes" }));
+    const quoteRegion = screen.getByRole("region", {
+      name: "Quotes constellation",
+    });
+
+    expect(projectRegion).not.toBe(pathRegion);
+    expect(quoteRegion).not.toBe(projectRegion);
+    expect(quoteRegion).toHaveAttribute("data-camera-transition", "pan");
+  });
+
+  it("opens a universe project star without waiting for animation in reduced motion", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    render(<App />);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Projects with Monopole selected",
+      }),
+    );
+
+    expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
+  });
+
   it("returns focus to the universe star that opened a constellation", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -118,7 +194,7 @@ describe("personal universe", () => {
       name: "Open Projects with Monopole selected",
     });
     await user.click(origin);
-    await user.click(screen.getByRole("button", { name: "Universe" }));
+    await user.click(screen.getByRole("button", { name: "Go to Universe" }));
 
     expect(
       screen.getByRole("button", {
@@ -153,7 +229,7 @@ describe("personal universe", () => {
       name: "Explore Projects",
     });
     await user.click(trigger);
-    await user.click(screen.getByRole("button", { name: "Universe" }));
+    await user.click(screen.getByRole("button", { name: "Go to Universe" }));
 
     expect(window.location.hash).toBe("");
     expect(

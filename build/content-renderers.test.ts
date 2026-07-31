@@ -92,6 +92,15 @@ describe("content renderers", () => {
       "https://mattliu-home.vercel.app/",
     );
     expect(portfolio.projects).toHaveLength(5);
+    expect(portfolio.path).toEqual([
+      expect.objectContaining({
+        slug: "johns-hopkins",
+        organization: "Johns Hopkins Whiting School of Engineering",
+      }),
+      expect.objectContaining({ slug: "aws-sagemaker" }),
+      expect.objectContaining({ slug: "wandb-weave" }),
+    ]);
+    expect(portfolio.path[0]).not.toHaveProperty("position");
     expect(portfolio.quotes).toHaveLength(7);
     expect(portfolio.projects[0]).not.toHaveProperty("position");
     expect(portfolio.projects[0]).not.toHaveProperty("artifact");
@@ -113,6 +122,12 @@ describe("content renderers", () => {
     const sitemap = renderSitemapXml(siteContent);
 
     expect(llms).toContain("# Matthew Liu");
+    expect(llms).toContain(
+      "## Path\n\n- Johns Hopkins Whiting School of Engineering",
+    );
+    expect(renderFallbackHtml(siteContent)).toContain(
+      "Johns Hopkins Whiting School of Engineering",
+    );
     expect(llms).toContain(
       "[Machine-readable portfolio](https://mattliu-home.vercel.app/portfolio.json)",
     );

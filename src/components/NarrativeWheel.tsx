@@ -1,52 +1,75 @@
-import { useEffect, useRef } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from "react";
 
 import { centeredStoryBeat, type StoryBeat } from "../story-navigation";
 import { ArtifactPreview } from "./ArtifactPreview";
 
-export type StoryScrollRequest = {
-  id: string;
-  key: number;
-  behavior?: ScrollBehavior;
+export type NarrativeWheelHandle = {
+  scrollBy: (deltaY: number) => void;
+  scrollToBeat: (id: string, behavior?: ScrollBehavior) => void;
 };
 
-type StoryDrawerProps = {
+type NarrativeWheelProps = {
   beats: readonly StoryBeat[];
   activeId: string;
   collapsed: boolean;
-  scrollRequest: StoryScrollRequest | null;
   onActiveBeat: (beat: StoryBeat) => void;
   onActivate: (beat: StoryBeat) => void;
   onCollapsedChange: (collapsed: boolean) => void;
 };
 
-export function StoryDrawer({
-  beats,
-  activeId,
-  collapsed,
-  scrollRequest,
-  onActiveBeat,
-  onActivate,
-  onCollapsedChange,
-}: StoryDrawerProps) {
+export const NarrativeWheel = forwardRef<
+  NarrativeWheelHandle,
+  NarrativeWheelProps
+>(function NarrativeWheel(
+  {
+    beats,
+    activeId,
+    collapsed,
+    onActiveBeat,
+    onActivate,
+    onCollapsedChange,
+  },
+  forwardedRef,
+) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeIdRef = useRef(activeId);
   const requestedIdRef = useRef<string | null>(null);
   activeIdRef.current = activeId;
 
-  useEffect(() => {
-    if (!scrollRequest || collapsed) {
-      return;
-    }
-    requestedIdRef.current = scrollRequest.id;
+  const scrollToBeat = (id: string, behavior: ScrollBehavior = "smooth") => {
+    requestedIdRef.current = id;
     const target = Array.from(
       scrollRef.current?.querySelectorAll<HTMLElement>("[data-story-beat]") ??
         [],
-    ).find((element) => element.dataset.storyBeat === scrollRequest.id);
-    target?.scrollIntoView?.({
-      block: "center",
-      behavior: scrollRequest.behavior ?? "smooth",
-    });
-  }, [collapsed, scrollRequest]);
+    ).find((element) => element.dataset.storyBeat === id);
+    target?.scrollIntoView?.({ block: "center", behavior });
+  };
+
+  useImperativeHandle(
+    forwardedRef,
+    () => ({
+      scrollBy: (deltaY) => {
+        if (requestedIdRef.current) {
+          scrollToBeat(requestedIdRef.current, "auto");
+        }
+        requestedIdRef.current = null;
+        scrollRef.current?.scrollBy({ top: deltaY, behavior: "auto" });
+      },
+      scrollToBeat,
+    }),
+    [],
+  );
+
+  useEffect(() => {
+    if (!collapsed) {
+      scrollToBeat(activeId, "auto");
+    }
+  }, [collapsed]);
 
   const handleScroll = () => {
     const scroll = scrollRef.current;
@@ -55,15 +78,15 @@ export function StoryDrawer({
     }
     const scrollBox = scroll.getBoundingClientRect();
     const id = centeredStoryBeat(
-      Array.from(
-        scroll.querySelectorAll<HTMLElement>("[data-story-beat]"),
-      ).map((element) => {
-        const box = element.getBoundingClientRect();
-        return {
-          id: element.dataset.storyBeat ?? "",
-          center: box.top + box.height / 2,
-        };
-      }),
+      Array.from(scroll.querySelectorAll<HTMLElement>("[data-story-beat]")).map(
+        (element) => {
+          const box = element.getBoundingClientRect();
+          return {
+            id: element.dataset.storyBeat ?? "",
+            center: box.top + box.height / 2,
+          };
+        },
+      ),
       scrollBox.top + scrollBox.height / 2,
     );
     if (!id || id === activeIdRef.current) {
@@ -85,7 +108,7 @@ export function StoryDrawer({
   return (
     <aside
       aria-label="Portfolio story"
-      className="story-drawer"
+      className="narrative-wheel"
       data-active-beat={activeId}
       data-collapsed={collapsed ? "true" : undefined}
       role="region"
@@ -93,7 +116,7 @@ export function StoryDrawer({
       <button
         aria-expanded={!collapsed}
         aria-label={collapsed ? "Show story" : "Hide story"}
-        className="story-drawer__toggle"
+        className="narrative-wheel__toggle"
         onClick={() => onCollapsedChange(!collapsed)}
         type="button"
       >
@@ -101,9 +124,9 @@ export function StoryDrawer({
       </button>
 
       <div
-        aria-label="Story sequence"
         aria-hidden={collapsed ? "true" : undefined}
-        className="story-drawer__scroll"
+        aria-label="Story sequence"
+        className="narrative-wheel__scroll"
         data-story-scroll
         onPointerDown={() => {
           requestedIdRef.current = null;
@@ -115,15 +138,15 @@ export function StoryDrawer({
         ref={scrollRef}
         tabIndex={collapsed ? -1 : 0}
       >
-        <ol className="story-drawer__sequence">
+        <ol className="narrative-wheel__sequence">
           {beats.map((beat) => (
             <li
-              className="story-drawer__beat"
+              className="narrative-wheel__beat"
               data-active={beat.id === activeId ? "true" : undefined}
               data-story-beat={beat.id}
               key={beat.id}
             >
-              <StoryCard
+              <NarrativeCard
                 beat={beat}
                 disabled={collapsed}
                 onActivate={onActivate}
@@ -134,9 +157,9 @@ export function StoryDrawer({
       </div>
     </aside>
   );
-}
+});
 
-function StoryCard({
+function NarrativeCard({
   beat,
   disabled,
   onActivate,
@@ -146,9 +169,25 @@ function StoryCard({
   onActivate: (beat: StoryBeat) => void;
 }) {
   if (beat.kind === "intro") {
+    if (beat.line === "name") {
+      return (
+        <div className="narrative-card narrative-card--intro narrative-card--name">
+          <p>{beat.kicker}</p>
+          <h1>{beat.content}</h1>
+        </div>
+      );
+    }
+    if (beat.line === "headline") {
+      return (
+        <div className="narrative-card narrative-card--intro narrative-card--headline">
+          <EmphasizedFinalWord>{beat.content}</EmphasizedFinalWord>
+        </div>
+      );
+    }
     return (
-      <div className="story-card story-card--intro">
-        <span className="sr-only">Universe overview</span>
+      <div className="narrative-card narrative-card--intro narrative-card--context">
+        <p>{beat.content}</p>
+        <span aria-hidden="true">Continue along the route ↓</span>
       </div>
     );
   }
@@ -157,7 +196,7 @@ function StoryCard({
     return (
       <button
         aria-label={`Open ${beat.view} constellation`}
-        className="story-card story-card--destination"
+        className="narrative-card narrative-card--destination"
         onClick={() => onActivate(beat)}
         tabIndex={disabled ? -1 : 0}
         type="button"
@@ -167,34 +206,51 @@ function StoryCard({
     );
   }
 
+  if (beat.kind === "path") {
+    return (
+      <article className="narrative-card narrative-card--path">
+        <button
+          aria-label={`Focus ${beat.entry.organization}`}
+          className="narrative-card__action"
+          onClick={() => onActivate(beat)}
+          tabIndex={disabled ? -1 : 0}
+          type="button"
+        />
+        <span className="narrative-card__eyebrow">{beat.entry.area}</span>
+        <h2>{beat.entry.organization}</h2>
+        <p>{beat.entry.summary}</p>
+      </article>
+    );
+  }
+
   if (beat.kind === "project") {
     return (
-      <article className="story-card story-card--project">
+      <article className="narrative-card narrative-card--project">
         <button
           aria-label={`Open ${beat.project.title}`}
-          className="story-card__project-action"
+          className="narrative-card__action"
           onClick={() => onActivate(beat)}
           tabIndex={disabled ? -1 : 0}
           type="button"
         />
         <ArtifactPreview project={beat.project} />
-        <span className="story-card__copy">
-          <span className="story-card__meta">
+        <span className="narrative-card__copy">
+          <span className="narrative-card__meta">
             <span>{beat.project.displayYear}</span>
             <span>{beat.project.contribution}</span>
           </span>
           <strong>{beat.project.title}</strong>
-          <span className="story-card__question">{beat.project.question}</span>
+          <span className="narrative-card__question">{beat.project.question}</span>
         </span>
       </article>
     );
   }
 
   return (
-    <article className="story-card story-card--quote">
+    <article className="narrative-card narrative-card--quote">
       <button
         aria-label={`Select quote: ${beat.quote.text}`}
-        className="story-card__quote-action"
+        className="narrative-card__quote-action"
         onClick={() => onActivate(beat)}
         tabIndex={disabled ? -1 : 0}
         type="button"
@@ -205,5 +261,18 @@ function StoryCard({
         {beat.quote.author} <span aria-hidden="true">↗</span>
       </a>
     </article>
+  );
+}
+
+function EmphasizedFinalWord({ children }: { children: string }) {
+  const finalSpace = children.lastIndexOf(" ");
+  if (finalSpace < 0) {
+    return <p>{children}</p>;
+  }
+  return (
+    <p>
+      {children.slice(0, finalSpace + 1)}
+      <em>{children.slice(finalSpace + 1)}</em>
+    </p>
   );
 }

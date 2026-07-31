@@ -2,7 +2,7 @@ import rawSiteContent from "./site-content.json";
 
 export type Point = readonly [x: number, y: number];
 export type Connection = readonly [from: string, to: string];
-export type DestinationSlug = "projects" | "quotes";
+export type DestinationSlug = "path" | "projects" | "quotes";
 export type ArtifactType =
   | "ucredit"
   | "customization"
@@ -39,6 +39,15 @@ export type Quote = {
   position: Point;
 };
 
+export type PathEntry = {
+  slug: string;
+  organization: string;
+  shortLabel: string;
+  area: string;
+  summary: string;
+  position: Point;
+};
+
 export type SiteContent = {
   site: {
     canonicalUrl: string;
@@ -54,10 +63,7 @@ export type SiteContent = {
     alternateName: string;
     role: string;
     location: string;
-    eyebrow: string;
     headline: string;
-    headlineLead: string;
-    headlineEmphasis: string;
     introduction: string;
     links: readonly PublicLink[];
   };
@@ -67,6 +73,7 @@ export type SiteContent = {
     position: Point;
     connections: readonly Connection[];
   }[];
+  path: readonly PathEntry[];
   projects: readonly Project[];
   quotes: readonly Quote[];
 };
@@ -199,7 +206,7 @@ export function validateSiteContent(value: unknown): SiteContent {
         destination.slug,
         `destinations[${index}].slug`,
       ) as DestinationSlug;
-      if (slug !== "projects" && slug !== "quotes") {
+      if (slug !== "path" && slug !== "projects" && slug !== "quotes") {
         throw new Error(`destinations[${index}].slug is not supported`);
       }
       return {
@@ -222,14 +229,28 @@ export function validateSiteContent(value: unknown): SiteContent {
     },
   );
   if (
-    destinations.length !== 2 ||
+    destinations.length !== 3 ||
+    destinations.filter(({ slug }) => slug === "path").length !== 1 ||
     destinations.filter(({ slug }) => slug === "projects").length !== 1 ||
     destinations.filter(({ slug }) => slug === "quotes").length !== 1
   ) {
     throw new Error(
-      "destinations must contain exactly one projects and one quotes destination",
+      "destinations must contain exactly one path, projects, and quotes destination",
     );
   }
+
+  const path = array(root.path, "path").map((value, index) => {
+    const entry = record(value, `path[${index}]`);
+    return {
+      slug: text(entry.slug, `path[${index}].slug`),
+      organization: text(entry.organization, `path[${index}].organization`),
+      shortLabel: text(entry.shortLabel, `path[${index}].shortLabel`),
+      area: text(entry.area, `path[${index}].area`),
+      summary: text(entry.summary, `path[${index}].summary`),
+      position: point(entry.position, `path[${index}].position`),
+    };
+  });
+  assertUniqueSlugs(path, "path entry");
 
   const projects = array(root.projects, "projects").map((value, index) => {
     const project = record(value, `projects[${index}]`);
@@ -296,11 +317,14 @@ export function validateSiteContent(value: unknown): SiteContent {
   });
   assertUniqueSlugs(quotes, "quote");
 
+  const itemsByDestination: Record<
+    DestinationSlug,
+    readonly { slug: string }[]
+  > = { path, projects, quotes };
+
   destinations.forEach((destination, destinationIndex) => {
     const itemSlugs = new Set(
-      (destination.slug === "projects" ? projects : quotes).map(
-        ({ slug }) => slug,
-      ),
+      itemsByDestination[destination.slug].map(({ slug }) => slug),
     );
     destination.connections.forEach(([from, to], connectionIndex) => {
       if (!itemSlugs.has(from) || !itemSlugs.has(to)) {
@@ -329,17 +353,12 @@ export function validateSiteContent(value: unknown): SiteContent {
       alternateName: text(rawPerson.alternateName, "person.alternateName"),
       role: text(rawPerson.role, "person.role"),
       location: text(rawPerson.location, "person.location"),
-      eyebrow: text(rawPerson.eyebrow, "person.eyebrow"),
       headline: text(rawPerson.headline, "person.headline"),
-      headlineLead: text(rawPerson.headlineLead, "person.headlineLead"),
-      headlineEmphasis: text(
-        rawPerson.headlineEmphasis,
-        "person.headlineEmphasis",
-      ),
       introduction: text(rawPerson.introduction, "person.introduction"),
       links,
     },
     destinations,
+    path,
     projects,
     quotes,
   };
@@ -349,3 +368,9 @@ export const siteContent = validateSiteContent(rawSiteContent);
 
 export const projectBySlug = (slug: string) =>
   siteContent.projects.find((project) => project.slug === slug);
+
+export const pathBySlug = (slug: string) =>
+  siteContent.path.find((entry) => entry.slug === slug);
+
+export const quoteBySlug = (slug: string) =>
+  siteContent.quotes.find((quote) => quote.slug === slug);

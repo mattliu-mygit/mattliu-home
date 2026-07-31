@@ -1,9 +1,9 @@
 {
   "site": {
     "canonicalUrl": "https://mattliu-home.vercel.app/",
-    "title": "Matthew Liu — Software should show its work.",
-    "description": "Matthew Liu builds tools that help people inspect, evaluate, and improve intelligent systems.",
-    "socialDescription": "A constellation of work on inspectable, evaluable, and improvable intelligent systems.",
+    "title": "Matthew Liu — AI evaluation and infrastructure",
+    "description": "Matthew Liu turns ideas and research in AI evaluation, observability, and infrastructure into production services built to scale.",
+    "socialDescription": "A constellation of work across AI evaluation, observability, and production infrastructure.",
     "language": "en",
     "locale": "en_US",
     "themeColor": "#080a10"
@@ -13,11 +13,8 @@
     "alternateName": "mattliu-mygit",
     "role": "Software engineer",
     "location": "Seattle, Washington",
-    "eyebrow": "Software engineer · Seattle",
-    "headline": "Software should show its work.",
-    "headlineLead": "Software should",
-    "headlineEmphasis": "show its work.",
-    "introduction": "I build tools that help people inspect, evaluate, and improve intelligent systems.",
+    "headline": "I build the systems that keep intelligent software honest.",
+    "introduction": "Working across AI evaluation, observability, and infrastructure, I turn ideas and research into production services built to scale, endure, and evolve.",
     "links": [
       {
         "label": "GitHub",
@@ -31,9 +28,18 @@
   },
   "destinations": [
     {
+      "slug": "path",
+      "label": "Path",
+      "position": [61, 25],
+      "connections": [
+        ["johns-hopkins", "aws-sagemaker"],
+        ["aws-sagemaker", "wandb-weave"]
+      ]
+    },
+    {
       "slug": "projects",
       "label": "Projects",
-      "position": [64, 40],
+      "position": [77, 48],
       "connections": [
         ["ucredit", "model-customization-assistant"],
         ["model-customization-assistant", "llm-as-a-judge"],
@@ -44,7 +50,7 @@
     {
       "slug": "quotes",
       "label": "Quotes",
-      "position": [74, 68],
+      "position": [63, 72],
       "connections": [
         ["less-is-more", "failure-to-failure"],
         ["failure-to-failure", "strong-opinions"],
@@ -55,6 +61,32 @@
         ["failure-to-failure", "simplicity-follows"],
         ["simplicity-follows", "computing-is-insight"]
       ]
+    }
+  ],
+  "path": [
+    {
+      "slug": "johns-hopkins",
+      "organization": "Johns Hopkins Whiting School of Engineering",
+      "shortLabel": "Johns Hopkins",
+      "area": "Foundation",
+      "summary": "Learning across systems thinking, research, and building.",
+      "position": [12, 72]
+    },
+    {
+      "slug": "aws-sagemaker",
+      "organization": "AWS SageMaker",
+      "shortLabel": "AWS SageMaker",
+      "area": "AI Platforms",
+      "summary": "Production model-customization workflows spanning preparation, training, evaluation, and deployment.",
+      "position": [48, 28]
+    },
+    {
+      "slug": "wandb-weave",
+      "organization": "Weights & Biases · Weave",
+      "shortLabel": "W&B · Weave",
+      "area": "Evaluation and observability",
+      "summary": "Systems that make agent behavior inspectable and easier to improve.",
+      "position": [88, 58]
     }
   ],
   "projects": [

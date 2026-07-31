@@ -1,11 +1,16 @@
-import { projectBySlug } from "./content/site-content";
+import {
+  pathBySlug,
+  projectBySlug,
+  quoteBySlug,
+} from "./content/site-content";
 
-export type UniverseView = "universe" | "projects" | "quotes";
+export type UniverseView = "universe" | "path" | "projects" | "quotes";
 
 export type UniverseLocation =
   | { view: "universe" }
+  | { view: "path"; pathSlug?: string }
   | { view: "projects"; projectSlug?: string }
-  | { view: "quotes" };
+  | { view: "quotes"; quoteSlug?: string };
 
 export function parseUniverseLocation(hash: string): UniverseLocation {
   const fragment = hash.replace(/^#/, "");
@@ -14,6 +19,9 @@ export function parseUniverseLocation(hash: string): UniverseLocation {
   }
   if (fragment === "projects") {
     return { view: "projects" };
+  }
+  if (fragment === "path") {
+    return { view: "path" };
   }
   if (fragment === "quotes") {
     return { view: "quotes" };
@@ -26,6 +34,14 @@ export function parseUniverseLocation(hash: string): UniverseLocation {
       projectSlug: projectMatch[1],
     };
   }
+  const pathMatch = /^path\/([a-z0-9-]+)$/.exec(fragment);
+  if (pathMatch && pathBySlug(pathMatch[1])) {
+    return { view: "path", pathSlug: pathMatch[1] };
+  }
+  const quoteMatch = /^quotes\/([a-z0-9-]+)$/.exec(fragment);
+  if (quoteMatch && quoteBySlug(quoteMatch[1])) {
+    return { view: "quotes", quoteSlug: quoteMatch[1] };
+  }
   return { view: "universe" };
 }
 
@@ -35,8 +51,13 @@ export function serializeUniverseLocation(
   if (location.view === "universe") {
     return "";
   }
+  if (location.view === "path") {
+    return location.pathSlug ? `#path/${location.pathSlug}` : "#path";
+  }
   if (location.view === "quotes") {
-    return "#quotes";
+    return location.quoteSlug
+      ? `#quotes/${location.quoteSlug}`
+      : "#quotes";
   }
   return location.projectSlug
     ? `#projects/${location.projectSlug}`

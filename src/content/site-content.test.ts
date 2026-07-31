@@ -20,8 +20,22 @@ describe("site content", () => {
       },
       person: {
         name: "Matthew Liu",
+        headline:
+          "I build the systems that keep intelligent software honest.",
+        introduction:
+          "Working across AI evaluation, observability, and infrastructure, I turn ideas and research into production services built to scale, endure, and evolve.",
       },
     });
+    expect(siteContent.destinations.map(({ slug }) => slug)).toEqual([
+      "path",
+      "projects",
+      "quotes",
+    ]);
+    expect(siteContent.path.map(({ slug }) => slug)).toEqual([
+      "johns-hopkins",
+      "aws-sagemaker",
+      "wandb-weave",
+    ]);
   });
 
   it("contains the selected projects and quotes in narrative order", () => {
@@ -94,7 +108,7 @@ describe("site content", () => {
     );
   });
 
-  it("requires exactly one projects and one quotes destination", () => {
+  it("requires exactly one path, projects, and quotes destination", () => {
     const missingQuotes = cloneContent();
     const destinations = missingQuotes.destinations as Array<
       Record<string, unknown>
@@ -102,22 +116,32 @@ describe("site content", () => {
     destinations.pop();
 
     expect(() => validateSiteContent(missingQuotes)).toThrow(
-      /destinations must contain exactly one projects and one quotes destination/i,
+      /destinations must contain exactly one path, projects, and quotes destination/i,
     );
 
     const duplicateProjects = cloneContent();
     const duplicateDestinations = duplicateProjects.destinations as Array<
       Record<string, unknown>
     >;
-    duplicateDestinations[1].slug = "projects";
+    duplicateDestinations[2].slug = "projects";
 
     expect(() => validateSiteContent(duplicateProjects)).toThrow(
-      /destinations must contain exactly one projects and one quotes destination/i,
+      /destinations must contain exactly one path, projects, and quotes destination/i,
     );
   });
 
   it("validates shared constellation connection topology", () => {
-    expect(siteContent.destinations[0].connections).toEqual([
+    expect(
+      siteContent.destinations.find(({ slug }) => slug === "path")
+        ?.connections,
+    ).toEqual([
+      ["johns-hopkins", "aws-sagemaker"],
+      ["aws-sagemaker", "wandb-weave"],
+    ]);
+    expect(
+      siteContent.destinations.find(({ slug }) => slug === "projects")
+        ?.connections,
+    ).toEqual([
       ["ucredit", "model-customization-assistant"],
       ["model-customization-assistant", "llm-as-a-judge"],
       ["llm-as-a-judge", "weave-agent-adapter"],
@@ -128,10 +152,10 @@ describe("site content", () => {
     const destinations = invalid.destinations as Array<
       Record<string, unknown>
     >;
-    destinations[0].connections = [["ucredit", "missing-project"]];
+    destinations[0].connections = [["johns-hopkins", "missing-stop"]];
 
     expect(() => validateSiteContent(invalid)).toThrow(
-      /destinations\[0\]\.connections\[0\].*existing projects/i,
+      /destinations\[0\]\.connections\[0\].*existing path/i,
     );
   });
 

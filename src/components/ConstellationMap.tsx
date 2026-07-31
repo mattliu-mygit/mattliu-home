@@ -1,6 +1,10 @@
 import { type CSSProperties, useRef } from "react";
 
-import type { Connection, Point } from "../content/site-content";
+import type {
+  Connection,
+  DestinationSlug,
+  Point,
+} from "../content/site-content";
 
 export type ConstellationItem = {
   slug: string;
@@ -11,7 +15,7 @@ export type ConstellationItem = {
 };
 
 type ConstellationMapProps = {
-  kind: "projects" | "quotes";
+  kind: DestinationSlug;
   variant?: "detail" | "overview";
   items: readonly ConstellationItem[];
   connections: readonly Connection[];

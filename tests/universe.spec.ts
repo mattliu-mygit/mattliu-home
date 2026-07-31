@@ -31,17 +31,17 @@ test("universe overview enters and leaves the Projects constellation", async ({
     }),
   ).toBeVisible();
 
-  const storyDrawer = await page.locator(".story-drawer").boundingBox();
-  expect(storyDrawer).not.toBeNull();
+  const narrativeWheel = await page.locator(".narrative-wheel").boundingBox();
+  expect(narrativeWheel).not.toBeNull();
   for (const destination of await page.locator(".universe-constellation").all()) {
     const box = await destination.boundingBox();
     expect(box).not.toBeNull();
-    expect(overlaps(box!, storyDrawer!)).toBe(false);
+    expect(overlaps(box!, narrativeWheel!)).toBe(false);
   }
 
   await page.getByRole("button", { name: "Explore Projects" }).click();
   await expect(page).toHaveURL(/#projects$/);
-  await expect(page.locator(".story-drawer")).toHaveAttribute(
+  await expect(page.locator(".narrative-wheel")).toHaveAttribute(
     "data-active-beat",
     "projects",
   );
@@ -57,14 +57,14 @@ test("universe overview enters and leaves the Projects constellation", async ({
   const detailMap = await page
     .locator(".constellation-map--detail")
     .boundingBox();
-  const expandedDrawer = await page.locator(".story-drawer").boundingBox();
+  const expandedWheel = await page.locator(".narrative-wheel").boundingBox();
   expect(detailMap).not.toBeNull();
-  expect(expandedDrawer).not.toBeNull();
+  expect(expandedWheel).not.toBeNull();
   expect(detailMap!.x).toBeGreaterThanOrEqual(
-    expandedDrawer!.x + expandedDrawer!.width,
+    expandedWheel!.x + expandedWheel!.width,
   );
 
-  await page.getByRole("button", { name: "Universe" }).click();
+  await page.getByRole("button", { name: "Go to Universe" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(
     page.getByRole("button", { name: "Explore Projects" }),
@@ -86,7 +86,33 @@ test("a universe star zooms with its selection before opening a lens", async ({
   await expect(page.getByRole("dialog", { name: "Monopole" })).toBeVisible();
 });
 
-test("the story drawer can hide and restore without changing navigation", async ({
+test("a Path star zooms to its matching professional card", async ({ page }) => {
+  await page.goto("/");
+
+  await page
+    .getByRole("button", {
+      name: "Open Path with AWS SageMaker selected",
+    })
+    .click();
+
+  await expect(page).toHaveURL(/#path\/aws-sagemaker$/);
+  await expect(page.locator(".narrative-wheel")).toHaveAttribute(
+    "data-active-beat",
+    "path/aws-sagemaker",
+  );
+  await expect(
+    page
+      .getByRole("region", { name: "Path constellation" })
+      .getByRole("button", { name: "Focus AWS SageMaker" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.locator(
+      ".constellation-view--path .constellation-map__connections line",
+    ).first(),
+  ).toHaveCSS("stroke-dasharray", "2.5px, 4px");
+});
+
+test("the narrative wheel can hide and restore without changing navigation", async ({
   page,
 }) => {
   await page.goto("/");
@@ -95,33 +121,46 @@ test("the story drawer can hide and restore without changing navigation", async 
   await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: "Hide story" }).click();
-  await expect(page.locator(".story-drawer")).toHaveAttribute(
+  await expect(page.locator(".narrative-wheel")).toHaveAttribute(
     "data-collapsed",
     "true",
   );
-  await expect(page.locator(".story-drawer")).toHaveAttribute(
+  await expect(page.locator(".narrative-wheel")).toHaveAttribute(
+    "data-active-beat",
+    "projects/monopole",
+  );
+  await page.evaluate(() => {
+    window.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaY: 480,
+      }),
+    );
+  });
+  await expect(page.locator(".narrative-wheel")).toHaveAttribute(
     "data-active-beat",
     "projects/monopole",
   );
 
   await page.getByRole("button", { name: "Show story" }).click();
-  await expect(page.locator(".story-drawer")).not.toHaveAttribute(
+  await expect(page.locator(".narrative-wheel")).not.toHaveAttribute(
     "data-collapsed",
     "true",
   );
   await expect(page).toHaveURL(/#projects$/);
 });
 
-test("scrolling the drawer pans directly between constellations", async ({
+test("scrolling the narrative wheel pans directly between constellations", async ({
   page,
 }) => {
   await page.goto("/#projects");
   await page.locator('[data-story-beat="quotes"]').evaluate((element) => {
     element
-      .closest(".story-drawer__scroll")
+      .closest(".narrative-wheel__scroll")
       ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
     element.scrollIntoView({ block: "center" });
-    element.closest(".story-drawer__scroll")?.dispatchEvent(
+    element.closest(".narrative-wheel__scroll")?.dispatchEvent(
       new Event("scroll", { bubbles: true }),
     );
   });
@@ -204,8 +243,8 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
     });
 
   expect(await dispatchWheel()).toBe(true);
-  const drawerWheelWasPrevented = await page
-    .locator(".story-drawer__scroll")
+  const wheelInputWasPrevented = await page
+    .locator(".narrative-wheel__scroll")
     .evaluate((element) => {
       const event = new WheelEvent("wheel", {
         bubbles: true,
@@ -215,7 +254,7 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
       element.dispatchEvent(event);
       return event.defaultPrevented;
     });
-  expect(drawerWheelWasPrevented).toBe(false);
+  expect(wheelInputWasPrevented).toBe(false);
   await page.getByRole("button", { name: "Explore Projects" }).click();
   expect(await dispatchWheel()).toBe(true);
 
@@ -224,7 +263,7 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
   expect(await dispatchWheel()).toBe(false);
 
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Universe" }).click();
+  await page.getByRole("button", { name: "Go to Universe" }).click();
   await page.getByRole("button", { name: "Explore Quotes" }).click();
   expect(await dispatchWheel()).toBe(true);
 
@@ -336,15 +375,15 @@ test("wide overview keeps large constellations inside the composition", async ({
   await page.locator(".universe-overview").evaluate((element) =>
     Promise.all(element.getAnimations().map((animation) => animation.finished)),
   );
-  const storyDrawer = await page.locator(".story-drawer").boundingBox();
-  expect(storyDrawer).not.toBeNull();
+  const narrativeWheel = await page.locator(".narrative-wheel").boundingBox();
+  expect(narrativeWheel).not.toBeNull();
 
   for (const destination of await page.locator(".universe-constellation").all()) {
     const box = await destination.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.width).toBeGreaterThanOrEqual(200);
     expect(box!.x + box!.width / 2).toBeLessThanOrEqual(2048 * 0.78);
-    expect(overlaps(box!, storyDrawer!)).toBe(false);
+    expect(overlaps(box!, narrativeWheel!)).toBe(false);
   }
 });
 
@@ -356,18 +395,18 @@ test("mobile overview and project labels remain inside the viewport", async ({
   await page.locator(".universe-overview").evaluate((element) =>
     Promise.all(element.getAnimations().map((animation) => animation.finished)),
   );
-  const drawer = await page.locator(".story-drawer").boundingBox();
-  expect(drawer).not.toBeNull();
-  expect(drawer!.x).toBeGreaterThanOrEqual(0);
-  expect(drawer!.x + drawer!.width).toBeLessThanOrEqual(390);
-  expect(drawer!.y + drawer!.height).toBeLessThanOrEqual(844);
+  const wheel = await page.locator(".narrative-wheel").boundingBox();
+  expect(wheel).not.toBeNull();
+  expect(wheel!.x).toBeGreaterThanOrEqual(0);
+  expect(wheel!.x + wheel!.width).toBeLessThanOrEqual(390);
+  expect(wheel!.y + wheel!.height).toBeLessThanOrEqual(844);
 
   for (const destination of await page.locator(".universe-constellation").all()) {
     const box = await destination.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.x + box!.width).toBeLessThanOrEqual(390);
-    expect(overlaps(box!, drawer!)).toBe(false);
+    expect(overlaps(box!, wheel!)).toBe(false);
   }
 
   await page.getByRole("button", { name: "Explore Projects" }).click();
@@ -412,6 +451,7 @@ test("discovery files expose the shared portfolio content", async ({
   );
   const portfolio = await portfolioResponse.json();
   expect(portfolio.schemaVersion).toBe(1);
+  expect(portfolio.path).toHaveLength(3);
   expect(portfolio.projects).toHaveLength(5);
   expect(portfolio.projects[0]).not.toHaveProperty("position");
 
@@ -419,6 +459,7 @@ test("discovery files expose the shared portfolio content", async ({
   const robots = await (await request.get("/robots.txt")).text();
   const sitemap = await (await request.get("/sitemap.xml")).text();
   expect(llms).toContain("# Matthew Liu");
+  expect(llms).toContain("## Path");
   expect(robots).toContain("User-agent: OAI-SearchBot");
   expect(sitemap).toContain(
     "<loc>https://mattliu-home.vercel.app/</loc>",
