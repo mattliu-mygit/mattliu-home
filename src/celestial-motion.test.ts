@@ -227,27 +227,33 @@ describe("celestial motion", () => {
     const anchors = stars.filter(({ tier }) => tier === "anchor");
     const medium = stars.filter(({ tier }) => tier === "medium");
     const faint = stars.filter(({ tier }) => tier === "faint");
-    expect(Math.min(...faint.map(({ size }) => size))).toBeGreaterThanOrEqual(
-      0.264,
-    );
-    expect(Math.min(...medium.map(({ size }) => size))).toBeGreaterThanOrEqual(
-      0.616,
-    );
-    expect(Math.min(...anchors.map(({ size }) => size))).toBeGreaterThanOrEqual(
-      1.045,
-    );
-    expect(Math.max(...faint.map(({ size }) => size))).toBeGreaterThanOrEqual(
-      0.57,
-    );
-    expect(Math.max(...medium.map(({ size }) => size))).toBeGreaterThanOrEqual(
-      0.92,
-    );
-    expect(Math.max(...anchors.map(({ size }) => size))).toBeGreaterThanOrEqual(
-      1.5,
-    );
-    expect(Math.min(...anchors.map(({ size }) => size))).toBeGreaterThan(
-      Math.max(...faint.map(({ size }) => size)),
-    );
+    const faintBounds = {
+      minimum: Math.min(...faint.map(({ size }) => size)),
+      maximum: Math.max(...faint.map(({ size }) => size)),
+    };
+    const mediumBounds = {
+      minimum: Math.min(...medium.map(({ size }) => size)),
+      maximum: Math.max(...medium.map(({ size }) => size)),
+    };
+    const anchorBounds = {
+      minimum: Math.min(...anchors.map(({ size }) => size)),
+      maximum: Math.max(...anchors.map(({ size }) => size)),
+    };
+
+    expect(faintBounds.minimum).toBeGreaterThanOrEqual(0.264);
+    expect(faintBounds.minimum).toBeLessThanOrEqual(0.266);
+    expect(faintBounds.maximum).toBeGreaterThanOrEqual(0.57);
+    expect(faintBounds.maximum).toBeLessThanOrEqual(0.572);
+    expect(mediumBounds.minimum).toBeGreaterThanOrEqual(0.616);
+    expect(mediumBounds.minimum).toBeLessThanOrEqual(0.618);
+    expect(mediumBounds.maximum).toBeGreaterThanOrEqual(0.92);
+    expect(mediumBounds.maximum).toBeLessThanOrEqual(0.924);
+    expect(anchorBounds.minimum).toBeGreaterThanOrEqual(1.045);
+    expect(anchorBounds.minimum).toBeLessThanOrEqual(1.07);
+    expect(anchorBounds.maximum).toBeGreaterThanOrEqual(1.5);
+    expect(anchorBounds.maximum).toBeLessThanOrEqual(1.507);
+    expect(faintBounds.maximum).toBeLessThan(mediumBounds.minimum);
+    expect(mediumBounds.maximum).toBeLessThan(anchorBounds.minimum);
   });
 
   it("repeats the same visual star profiles for the same seed", () => {
