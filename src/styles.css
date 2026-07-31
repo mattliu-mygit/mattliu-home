@@ -686,10 +686,6 @@ a:focus-visible {
     gap: 0.8rem;
   }
 
-  .site-nav__links a:last-child {
-    display: none;
-  }
-
   .quiet-zone {
     position: relative;
     top: auto;

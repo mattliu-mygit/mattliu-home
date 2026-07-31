@@ -68,7 +68,6 @@ export default function App() {
         <div className="site-nav__links">
           <a href="https://github.com/mattliu-mygit">GitHub</a>
           <a href="https://www.linkedin.com/in/mattliuhew/">LinkedIn</a>
-          <a href="mailto:matthewliuhew@gmail.com">Email</a>
         </div>
       </nav>
 

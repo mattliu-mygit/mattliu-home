@@ -31,6 +31,20 @@ describe("personal universe", () => {
     ).toEqual(["2020", "2021", "2022", "2026", "Now"]);
   });
 
+  it("links only to verified public profiles", () => {
+    render(<App />);
+
+    expect(screen.getByRole("link", { name: "GitHub" })).toHaveAttribute(
+      "href",
+      "https://github.com/mattliu-mygit",
+    );
+    expect(screen.getByRole("link", { name: "LinkedIn" })).toHaveAttribute(
+      "href",
+      "https://www.linkedin.com/in/mattliuhew/",
+    );
+    expect(screen.queryByRole("link", { name: "Email" })).not.toBeInTheDocument();
+  });
+
   it("opens and closes a project lens while restoring focus", async () => {
     const user = userEvent.setup();
     render(<App />);

@@ -16,7 +16,7 @@ The visual metaphor supports the story rather than replacing it. Visitors should
 
 The desktop experience is one bounded universe with no panning, zooming, or dragging.
 
-- A central quiet zone contains Matthew's name, the core line, one short supporting sentence, and links to GitHub, LinkedIn, and email.
+- A central quiet zone contains Matthew's name, the core line, one short supporting sentence, and verified links to GitHub and LinkedIn.
 - Five project constellations occupy a broad arc around the quiet zone. They move clockwise from older work at the lower left to current work at the upper right.
 - Each constellation contains one named primary star and two to five smaller connected stars. Its shape is unique and stable across visits.
 - Sparse ambient stars fill the remaining field. They are decorative, dim, deterministic, and never compete with project constellations.
