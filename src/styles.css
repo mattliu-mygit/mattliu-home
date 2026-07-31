@@ -922,21 +922,26 @@ a:focus-visible {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: calc(0.5rem * var(--star-prominence));
-  height: calc(0.5rem * var(--star-prominence));
-  border: 1px solid currentColor;
+  width: calc(0.46rem * var(--star-prominence));
+  height: calc(0.46rem * var(--star-prominence));
+  border: 0;
   border-radius: 50%;
   color: rgb(var(--star-color));
-  background: color-mix(in srgb, rgb(var(--star-color)) 8%, var(--night));
+  background: radial-gradient(
+    circle at 38% 34%,
+    rgb(255 255 255 / 0.98) 0 9%,
+    rgb(var(--star-color)) 24%,
+    rgb(var(--star-color) / 0.82) 48%,
+    transparent 74%
+  );
   box-shadow:
-    0 0 0 calc(0.33rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.035),
-    0 0 calc(0.88rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.24);
+    0 0 calc(0.28rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.78),
+    0 0 calc(1.05rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.3);
   transform: translate(-50%, -50%);
   transition:
-    color 220ms ease,
-    background 220ms ease,
+    filter 220ms ease,
     box-shadow 220ms ease,
     transform 220ms ease;
 }
@@ -1017,12 +1022,13 @@ a:focus-visible {
 
 .constellation-star:is(:hover, :focus-visible) .constellation-star__point,
 .constellation-star[data-active="true"] .constellation-star__point {
-  color: var(--gold);
-  background: var(--gold);
+  filter: brightness(1.26);
   box-shadow:
-    0 0 0 0.6rem rgba(240, 213, 138, 0.055),
-    0 0 1.75rem rgba(240, 213, 138, 0.5);
-  transform: translate(-50%, -50%) scale(1.35);
+    0 0 calc(0.38rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.92),
+    0 0 calc(1.5rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.46);
+  transform: translate(-50%, -50%) scale(1.22);
 }
 
 .constellation-star:is(:hover, :focus-visible) .constellation-star__label,

@@ -101,6 +101,19 @@ test("overview connections stay continuous at large map sizes", async ({
   ).toHaveCSS("stroke-dasharray", "none");
 });
 
+test("constellation stars use luminous cores instead of bordered circles", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const star = page
+    .getByRole("button", { name: "Open Projects with Monopole selected" })
+    .locator(".constellation-star__point");
+
+  await expect(star).toHaveCSS("border-top-width", "0px");
+  await expect(star).toHaveCSS("background-image", /radial-gradient/);
+  await expect(star).not.toHaveCSS("border-radius", "0px");
+});
+
 test("route chapter labels align above their opening ticks at desktop and mobile widths", async ({
   page,
 }) => {
