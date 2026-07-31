@@ -364,9 +364,7 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
         deltaY: 120,
       }),
     );
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-    });
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 300));
     const styles = getComputedStyle(element);
     return Math.hypot(
       Number.parseFloat(styles.getPropertyValue("--constellation-pull-x")),
