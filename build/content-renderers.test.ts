@@ -1,0 +1,119 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  renderFallbackHtml,
+  renderHeadTags,
+  renderLlmsTxt,
+  renderPortfolioJson,
+  renderRobotsTxt,
+  renderSitemapXml,
+} from "./content-renderers";
+import {
+  siteContent,
+  type SiteContent,
+} from "../src/content/site-content";
+
+describe("content renderers", () => {
+  it("renders canonical metadata and parseable ProfilePage JSON-LD", () => {
+    const tags = renderHeadTags(siteContent);
+    const canonical = tags.find(
+      (tag) => tag.tag === "link" && tag.attrs?.rel === "canonical",
+    );
+    const jsonLd = tags.find(
+      (tag) =>
+        tag.tag === "script" &&
+        tag.attrs?.type === "application/ld+json",
+    );
+
+    expect(canonical?.attrs?.href).toBe(
+      "https://mattliu-home.vercel.app/",
+    );
+    expect(tags).toContainEqual(
+      expect.objectContaining({
+        tag: "meta",
+        attrs: {
+          property: "og:url",
+          content: "https://mattliu-home.vercel.app/",
+        },
+      }),
+    );
+
+    const structuredData = JSON.parse(jsonLd?.children ?? "");
+    expect(structuredData).toMatchObject({
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      url: "https://mattliu-home.vercel.app/",
+      mainEntity: {
+        "@type": "Person",
+        name: "Matthew Liu",
+      },
+    });
+    expect(structuredData.mainEntity.sameAs).toEqual([
+      "https://github.com/mattliu-mygit",
+      "https://www.linkedin.com/in/mattliuhew/",
+    ]);
+    expect(structuredData.hasPart).toHaveLength(5);
+  });
+
+  it("escapes fallback HTML and inline JSON for their output contexts", () => {
+    const unsafe = structuredClone(siteContent) as SiteContent;
+    (unsafe.person as { name: string }).name =
+      'Matthew <script>alert("x")</script>';
+    (unsafe.person as { introduction: string }).introduction =
+      "</script><img src=x onerror=alert(1)>";
+
+    const fallback = renderFallbackHtml(unsafe);
+    const jsonLd = renderHeadTags(unsafe).find(
+      (tag) => tag.attrs?.type === "application/ld+json",
+    )?.children;
+
+    expect(fallback).not.toContain("<script>alert");
+    expect(fallback).toContain("&lt;script&gt;");
+    expect(jsonLd).not.toContain("</script>");
+    expect(JSON.parse(jsonLd ?? "").mainEntity.name).toContain("<script>");
+  });
+
+  it("renders a semantic fallback containing identity and every project", () => {
+    const html = renderFallbackHtml(siteContent);
+
+    expect(html).toContain("<h1>Matthew Liu");
+    expect(html).toContain(siteContent.person.introduction);
+    for (const project of siteContent.projects) {
+      expect(html).toContain(project.title);
+      expect(html).toContain(project.description);
+    }
+  });
+
+  it("renders stable public JSON without presentation-only fields", () => {
+    const portfolio = JSON.parse(renderPortfolioJson(siteContent));
+
+    expect(portfolio.schemaVersion).toBe(1);
+    expect(portfolio.canonicalUrl).toBe(
+      "https://mattliu-home.vercel.app/",
+    );
+    expect(portfolio.projects).toHaveLength(5);
+    expect(portfolio.quotes).toHaveLength(7);
+    expect(portfolio.projects[0]).not.toHaveProperty("position");
+    expect(portfolio.projects[0]).not.toHaveProperty("artifact");
+    expect(portfolio.projects[0]).not.toHaveProperty("linkLabel");
+  });
+
+  it("renders concise agent orientation and crawler discovery files", () => {
+    const llms = renderLlmsTxt(siteContent);
+    const robots = renderRobotsTxt(siteContent);
+    const sitemap = renderSitemapXml(siteContent);
+
+    expect(llms).toContain("# Matthew Liu");
+    expect(llms).toContain(
+      "[Machine-readable portfolio](https://mattliu-home.vercel.app/portfolio.json)",
+    );
+    expect(robots).toContain("User-agent: OAI-SearchBot");
+    expect(robots).toContain("Allow: /");
+    expect(robots).toContain(
+      "Sitemap: https://mattliu-home.vercel.app/sitemap.xml",
+    );
+    expect(sitemap).toContain(
+      "<loc>https://mattliu-home.vercel.app/</loc>",
+    );
+  });
+});

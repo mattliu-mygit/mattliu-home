@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import type { Project } from "../projects";
+import type { Project } from "../content/site-content";
 import { ArtifactPreview } from "./ArtifactPreview";
 
 type ProjectLensProps = {

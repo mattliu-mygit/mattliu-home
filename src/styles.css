@@ -49,9 +49,72 @@ a:focus-visible {
   outline-offset: 5px;
 }
 
+.seo-fallback {
+  width: min(72rem, calc(100% - 3rem));
+  margin: 0 auto;
+  padding: 7rem 0;
+  color: var(--ink);
+}
+
+.seo-fallback header {
+  max-width: 48rem;
+}
+
+.seo-fallback h1,
+.seo-fallback h2,
+.seo-fallback h3 {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
+}
+
+.seo-fallback h1 {
+  margin: 0.6rem 0 1rem;
+  font-size: clamp(3rem, 7vw, 6rem);
+  line-height: 0.95;
+}
+
+.seo-fallback h2 {
+  margin-top: 5rem;
+  font-size: 2.6rem;
+}
+
+.seo-fallback header > p,
+.seo-fallback li p {
+  color: #b2b6c2;
+  line-height: 1.6;
+}
+
+.seo-fallback ul,
+.seo-fallback ol {
+  padding: 0;
+  list-style: none;
+}
+
+.seo-fallback header ul {
+  display: flex;
+  gap: 1rem;
+}
+
+.seo-fallback ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(164, 177, 218, 0.15);
+}
+
+.seo-fallback ol > li {
+  padding: 2rem;
+  background: var(--night);
+}
+
+.seo-fallback h3 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
 .universe {
   position: relative;
-  min-height: 180svh;
+  min-height: 100svh;
   overflow: clip;
   isolation: isolate;
   background:
@@ -110,9 +173,8 @@ a:focus-visible {
 }
 
 .universe-stage {
-  position: sticky;
+  position: relative;
   z-index: 3;
-  top: 0;
   min-height: 100svh;
   overflow: hidden;
 }
@@ -125,6 +187,10 @@ a:focus-visible {
   width: clamp(22rem, 31vw, 31rem);
   padding: 0;
   text-align: left;
+  transition:
+    opacity 540ms ease,
+    filter 740ms ease,
+    transform 820ms cubic-bezier(0.18, 0.75, 0.18, 1);
 }
 
 .eyebrow {
@@ -159,82 +225,161 @@ a:focus-visible {
   line-height: 1.65;
 }
 
-.universe-tabs {
-  display: flex;
-  width: min(23rem, 100%);
-  gap: 1.8rem;
-  margin-top: 2.3rem;
-  border-bottom: 1px solid rgba(201, 207, 227, 0.12);
+.universe-stage:not([data-view="universe"]) .quiet-zone {
+  opacity: 0;
+  filter: blur(8px);
+  pointer-events: none;
+  transform: translate3d(-8vw, 2vh, 0) scale(0.72);
 }
 
-.universe-tabs button {
-  position: relative;
-  display: flex;
-  flex: 1;
-  gap: 0.6rem;
-  align-items: baseline;
-  padding: 0 0 0.75rem;
+.universe-overview {
+  position: absolute;
+  z-index: 4;
+  inset: 4.6rem 0 0;
+  animation: universe-arrive 680ms ease-out both;
+}
+
+.universe-destination {
+  position: absolute;
+  top: var(--destination-y);
+  left: var(--destination-x);
+  display: grid;
+  width: clamp(8rem, 12vw, 11rem);
+  height: clamp(8rem, 12vw, 11rem);
+  place-items: center;
+  padding: 0;
   border: 0;
-  color: #737b8e;
+  color: var(--blue);
   background: transparent;
   cursor: pointer;
-  font-size: 0.69rem;
-  letter-spacing: 0.14em;
-  text-align: left;
+  transform: translate(-50%, -50%);
+}
+
+.universe-destination::before {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  content: "";
+  box-shadow: 0 0 4rem 1.4rem rgba(165, 179, 255, 0.09);
+  transition: box-shadow 320ms ease;
+}
+
+.universe-destination__glyph {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.universe-destination__glyph polyline {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.65;
+  opacity: 0.28;
+  vector-effect: non-scaling-stroke;
+}
+
+.universe-destination__glyph circle {
+  fill: var(--night);
+  stroke: currentColor;
+  stroke-width: 1.1;
+  transition:
+    fill 220ms ease,
+    filter 220ms ease,
+    r 220ms ease;
+}
+
+.universe-destination > span {
+  position: relative;
+  z-index: 1;
+  padding: 0.35rem 0.55rem;
+  color: #d9dbe3;
+  background: rgba(8, 10, 16, 0.72);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   transition: color 220ms ease;
 }
 
-.universe-tabs button::after {
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  height: 1px;
-  content: "";
-  background: var(--gold);
-  opacity: 0;
-  transform: scaleX(0.35);
-  transform-origin: left;
-  transition:
-    opacity 220ms ease,
-    transform 320ms ease;
+.universe-destination:is(:hover, :focus-visible) {
+  color: var(--gold);
 }
 
-.universe-tabs button span {
-  color: #555d6e;
-  font-size: 0.5rem;
+.universe-destination:is(:hover, :focus-visible)::before {
+  box-shadow: 0 0 5rem 2rem rgba(240, 213, 138, 0.13);
 }
 
-.universe-tabs button[aria-selected="true"] {
+.universe-destination:is(:hover, :focus-visible)
+  .universe-destination__glyph
+  circle {
+  fill: currentColor;
+  filter: drop-shadow(0 0 0.35rem currentColor);
+  r: 3;
+}
+
+.universe-destination:is(:hover, :focus-visible) > span {
   color: var(--ink);
 }
 
-.universe-tabs button[aria-selected="true"]::after {
-  opacity: 1;
-  transform: scaleX(1);
-}
-
-.universe-panel {
+.constellation-view {
   position: absolute;
   z-index: 4;
   inset: 4.6rem 0 0;
-  animation: camera-arrive 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: camera-arrive 820ms cubic-bezier(0.18, 0.75, 0.18, 1) both;
+}
+
+.universe-return {
+  position: absolute;
+  z-index: 8;
+  top: 1.8rem;
+  left: clamp(2rem, 4vw, 4rem);
+  padding: 0.55rem 0;
+  border: 0;
+  color: #8e96a8;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: color 180ms ease;
+}
+
+.universe-return span {
+  margin-right: 0.45rem;
+  color: var(--gold);
+}
+
+.universe-return:hover {
+  color: var(--ink);
+}
+
+.constellation-view__title {
+  position: absolute;
+  z-index: 7;
+  top: 1.95rem;
+  left: 50%;
+  margin: 0;
+  color: #626a7e;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
 }
 
 .constellation-map {
   position: absolute;
   z-index: 3;
-  inset: 1.5rem 1.5rem 1.5rem 35%;
-  transform-origin: 58% 46%;
+  inset: 3.8rem clamp(2.5rem, 7vw, 7rem) 1.5rem;
+  transform-origin: 50% 50%;
 }
 
 .constellation-map__plane {
   position: absolute;
   inset: 0;
-  transform: rotate(var(--constellation-rotation)) scale(var(--constellation-scale));
-  transform-origin: 56% 46%;
-  will-change: transform;
+  transform-origin: 50% 50%;
 }
 
 .constellation-map__connections {
@@ -275,8 +420,7 @@ a:focus-visible {
   background: transparent;
   cursor: pointer;
   text-align: left;
-  transform: translate(-50%, -50%)
-    rotate(calc(var(--constellation-rotation) * -1));
+  transform: translate(-50%, -50%);
 }
 
 .constellation-star__point {
@@ -407,6 +551,27 @@ a:focus-visible {
   background: #d9deef;
   box-shadow: 0 0 4px rgba(217, 222, 239, 0.35);
   animation: breathe 4.8s ease-in-out infinite alternate;
+}
+
+.shooting-stars {
+  position: fixed;
+  z-index: 2;
+  inset: 4.6rem 0 0;
+  width: 100%;
+  height: calc(100% - 4.6rem);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.shooting-stars line {
+  opacity: 0;
+  stroke: rgba(210, 220, 255, 0.78);
+  stroke-width: 0.12;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 0.22rem rgba(181, 198, 255, 0.7));
+  animation: shooting-star var(--shooting-duration) linear
+    var(--shooting-delay) infinite;
 }
 
 .project-lens {
@@ -777,7 +942,7 @@ a:focus-visible {
   from {
     opacity: 0;
     filter: blur(5px);
-    transform: translate3d(1.5rem, 0, 0) scale(0.88);
+    transform: translate3d(6vw, 2vh, 0) scale(0.42);
   }
 
   to {
@@ -787,9 +952,41 @@ a:focus-visible {
   }
 }
 
+@keyframes universe-arrive {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    transform: scale(1.38);
+  }
+}
+
 @keyframes breathe {
   to {
     opacity: 0.22;
+  }
+}
+
+@keyframes shooting-star {
+  0%,
+  84% {
+    opacity: 0;
+    stroke-dasharray: 0 24;
+    stroke-dashoffset: 16;
+  }
+
+  86% {
+    opacity: 0.82;
+    stroke-dasharray: 7 17;
+  }
+
+  90% {
+    opacity: 0;
+    stroke-dasharray: 0 24;
+    stroke-dashoffset: -12;
+  }
+
+  100% {
+    opacity: 0;
   }
 }
 
@@ -808,7 +1005,8 @@ a:focus-visible {
   }
 
   .constellation-map {
-    left: 38%;
+    right: 2rem;
+    left: 2rem;
   }
 
   .quote-readout {
@@ -818,8 +1016,17 @@ a:focus-visible {
 }
 
 @media (max-width: 760px) {
+  .seo-fallback {
+    width: min(100% - 2.5rem, 36rem);
+    padding: 6rem 0 3rem;
+  }
+
+  .seo-fallback ol {
+    grid-template-columns: 1fr;
+  }
+
   .universe {
-    min-height: auto;
+    min-height: 100svh;
     overflow: clip;
   }
 
@@ -835,9 +1042,8 @@ a:focus-visible {
 
   .universe-stage {
     position: relative;
-    min-height: auto;
-    overflow: visible;
-    padding-bottom: 3rem;
+    min-height: 100svh;
+    overflow: hidden;
   }
 
   .quiet-zone {
@@ -845,8 +1051,12 @@ a:focus-visible {
     top: auto;
     left: auto;
     width: auto;
-    padding: 8rem 1.25rem 2.5rem;
+    padding: 7.5rem 1.25rem 1.5rem;
     text-align: left;
+  }
+
+  .universe-stage:not([data-view="universe"]) .quiet-zone {
+    position: absolute;
   }
 
   .quiet-zone h1 {
@@ -857,20 +1067,45 @@ a:focus-visible {
     width: min(31rem, 100%);
   }
 
-  .universe-tabs {
-    width: 100%;
-    margin-top: 2rem;
+  .universe-overview {
+    inset: 4.2rem 0 0;
   }
 
-  .universe-panel {
-    position: relative;
-    inset: auto;
-    min-height: 36rem;
+  .universe-destination {
+    width: 8.6rem;
+    height: 8.6rem;
+  }
+
+  .universe-destination:nth-child(1) {
+    top: 67%;
+    left: 28%;
+  }
+
+  .universe-destination:nth-child(2) {
+    top: 80%;
+    left: 72%;
+  }
+
+  .constellation-view {
+    inset: 4.2rem 0 0;
+    min-height: calc(100svh - 4.2rem);
+  }
+
+  .universe-return {
+    top: 1.1rem;
+    left: 1.25rem;
+  }
+
+  .constellation-view__title {
+    top: 1.35rem;
+    right: 1.25rem;
+    left: auto;
+    transform: none;
   }
 
   .constellation-map {
-    inset: 0 -1.5rem 0 -1.5rem;
-    min-height: 36rem;
+    inset: 4.2rem -1.25rem 0;
+    min-height: auto;
   }
 
   .constellation-map__plane {
@@ -903,24 +1138,21 @@ a:focus-visible {
   }
 
   .quote-readout {
-    position: relative;
+    top: 5.2rem;
+    right: 1.25rem;
     bottom: auto;
-    left: auto;
+    left: 1.25rem;
     width: auto;
     min-height: 8rem;
-    margin: 0 1.25rem 0.5rem;
+    margin: 0;
   }
 
   .quote-readout blockquote {
     font-size: clamp(1.7rem, 8vw, 2.35rem);
   }
 
-  #panel-quotes {
-    min-height: 44rem;
-  }
-
-  #panel-quotes .constellation-map {
-    top: 8rem;
+  .constellation-view--quotes .constellation-map {
+    top: 11rem;
   }
 
   .ambient-stars {
@@ -929,6 +1161,11 @@ a:focus-visible {
 
   .ambient-stars span:nth-child(3n) {
     display: none;
+  }
+
+  .shooting-stars {
+    top: 4.2rem;
+    height: calc(100% - 4.2rem);
   }
 
   .project-lens {
@@ -970,27 +1207,21 @@ a:focus-visible {
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
   }
 
   .constellation-map__plane,
-  .universe-panel {
+  .constellation-view,
+  .universe-overview {
     transform: none;
   }
 
   .constellation-star {
     transform: translate(-50%, -50%);
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation: none !important;
-    transition: none !important;
+  .shooting-stars {
+    display: none;
   }
 }

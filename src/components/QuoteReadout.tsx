@@ -1,4 +1,4 @@
-import type { Quote } from "../quotes";
+import type { Quote } from "../content/site-content";
 
 export function QuoteReadout({ quote }: { quote: Quote }) {
   return (

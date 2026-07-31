@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-import type { Point } from "../projects";
+import type { Point } from "../content/site-content";
 
 type ConstellationItem = {
   slug: string;

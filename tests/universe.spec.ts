@@ -9,39 +9,55 @@ const overlaps = (
   first.y + first.height > second.y &&
   first.y < second.y + second.height;
 
-test("desktop tabs move between two intentional constellations", async ({
+test("universe overview enters and leaves the Projects constellation", async ({
   page,
 }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("tab", { name: "Projects" })).toHaveAttribute(
-    "aria-selected",
-    "true",
+  await expect(page.locator(".universe-stage")).toHaveAttribute(
+    "data-view",
+    "universe",
   );
+  await expect(page.getByRole("tab")).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: /^Explore / }),
-  ).toHaveCount(5);
+    page.getByRole("button", { name: "Explore Projects" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Explore Quotes" }),
+  ).toBeVisible();
 
   const quietZone = await page.locator(".quiet-zone").boundingBox();
   expect(quietZone).not.toBeNull();
-  const projectLabels = page.locator(
-    "#panel-projects .constellation-star__copy",
-  );
-  const collisions: number[] = [];
-  for (let index = 0; index < (await projectLabels.count()); index += 1) {
-    const label = await projectLabels.nth(index).boundingBox();
-    if (label && overlaps(label, quietZone!)) {
-      collisions.push(index);
-    }
+  for (const destination of await page.locator(".universe-destination").all()) {
+    const box = await destination.boundingBox();
+    expect(box).not.toBeNull();
+    expect(overlaps(box!, quietZone!)).toBe(false);
   }
-  expect(collisions).toEqual([]);
 
-  await page.getByRole("tab", { name: "Quotes" }).click();
-  await expect(page.getByRole("tabpanel", { name: "Quotes" })).toBeVisible();
+  await page.getByRole("button", { name: "Explore Projects" }).click();
+  await expect(page).toHaveURL(/#projects$/);
+  await expect(
+    page.getByRole("region", { name: "Projects constellation" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^Explore (?!Projects$)/ }),
+  ).toHaveCount(5);
+
+  await page.getByRole("button", { name: "Universe" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(
+    page.getByRole("button", { name: "Explore Projects" }),
+  ).toBeFocused();
+});
+
+test("Quotes is a constellation with selectable stars", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Explore Quotes" }).click();
+
+  await expect(page).toHaveURL(/#quotes$/);
   await expect(
     page.getByRole("button", { name: /^Read quote:/ }),
   ).toHaveCount(7);
-
   await page
     .getByRole("button", { name: "Read quote: Strong opinions, weakly held." })
     .click();
@@ -53,43 +69,17 @@ test("desktop tabs move between two intentional constellations", async ({
   );
 });
 
-test("scroll produces bounded constellation rotation and zoom", async ({
+test("project lenses preserve URL hierarchy, truthfulness, and focus", async ({
   page,
 }) => {
   await page.goto("/");
-  const stage = page.locator(".universe-stage");
-  await expect(stage).toHaveAttribute("data-scroll-progress", "0.000");
-
-  const initialTransform = await page
-    .locator(".constellation-map__plane")
-    .evaluate((element) => getComputedStyle(element).transform);
-
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await expect
-    .poll(() => stage.getAttribute("data-scroll-progress"))
-    .not.toBe("0.000");
-
-  const finalTransform = await page
-    .locator(".constellation-map__plane")
-    .evaluate((element) => getComputedStyle(element).transform);
-  expect(finalTransform).not.toBe(initialTransform);
-
-  const rotation = await stage.evaluate((element) =>
-    getComputedStyle(element)
-      .getPropertyValue("--constellation-rotation")
-      .trim(),
-  );
-  expect(Number.parseFloat(rotation)).toBeGreaterThanOrEqual(-7);
-  expect(Number.parseFloat(rotation)).toBeLessThanOrEqual(7);
-});
-
-test("projects open truthful lenses and restore focus", async ({ page }) => {
-  await page.goto("/");
+  await page.getByRole("button", { name: "Explore Projects" }).click();
   const trigger = page.getByRole("button", {
     name: "Explore LLM-as-a-Judge",
   });
 
   await trigger.click();
+  await expect(page).toHaveURL(/#projects\/llm-as-a-judge$/);
   await expect(
     page.getByRole("dialog", { name: "LLM-as-a-Judge" }),
   ).toBeVisible();
@@ -97,15 +87,50 @@ test("projects open truthful lenses and restore focus", async ({ page }) => {
   await expect(page.locator(".project-lens__link")).toHaveCount(0);
 
   await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(/#projects$/);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(trigger).toBeFocused();
+
+  await trigger.click();
+  await page.goBack();
+  await expect(page).toHaveURL(/#projects$/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-test("mobile keeps star labels within the viewport", async ({ page }) => {
+test("the camera never captures wheel input", async ({ page }) => {
+  await page.goto("/");
+
+  const wasPrevented = await page.evaluate(() => {
+    const event = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+      deltaY: 120,
+    });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+
+  expect(wasPrevented).toBe(false);
+  await expect(page.locator(".universe")).toHaveCSS("min-height", "720px");
+});
+
+test("mobile overview and project labels remain inside the viewport", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
 
-  const labels = page.locator("#panel-projects .constellation-star__copy");
+  for (const destination of await page.locator(".universe-destination").all()) {
+    const box = await destination.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390);
+  }
+
+  await page.getByRole("button", { name: "Explore Projects" }).click();
+  const labels = page.locator(
+    ".constellation-view--projects .constellation-star__copy",
+  );
   const escaped: number[] = [];
   for (let index = 0; index < (await labels.count()); index += 1) {
     const box = await labels.nth(index).boundingBox();
@@ -114,22 +139,45 @@ test("mobile keeps star labels within the viewport", async ({ page }) => {
     }
   }
   expect(escaped).toEqual([]);
-
-  await page.getByRole("button", { name: "Explore UCredit" }).click();
-  await expect(page.getByRole("dialog", { name: "UCredit" })).toBeVisible();
 });
 
-test("reduced motion removes spatial transforms", async ({ page }) => {
+test("reduced motion removes camera transforms and shooting stars", async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
 
+  await expect(page.locator(".shooting-stars")).toHaveCSS("display", "none");
+  await page.getByRole("button", { name: "Explore Projects" }).click();
+  await expect(page.locator(".constellation-view")).toHaveCSS(
+    "transform",
+    "none",
+  );
   await expect(page.locator(".constellation-map__plane")).toHaveCSS(
     "transform",
     "none",
   );
-  await page.getByRole("tab", { name: "Quotes" }).click();
-  await expect(page.getByRole("tabpanel", { name: "Quotes" })).toHaveCSS(
-    "transform",
-    "none",
+});
+
+test("discovery files expose the shared portfolio content", async ({
+  request,
+}) => {
+  const portfolioResponse = await request.get("/portfolio.json");
+  expect(portfolioResponse.ok()).toBe(true);
+  expect(portfolioResponse.headers()["content-type"]).toContain(
+    "application/json",
+  );
+  const portfolio = await portfolioResponse.json();
+  expect(portfolio.schemaVersion).toBe(1);
+  expect(portfolio.projects).toHaveLength(5);
+  expect(portfolio.projects[0]).not.toHaveProperty("position");
+
+  const llms = await (await request.get("/llms.txt")).text();
+  const robots = await (await request.get("/robots.txt")).text();
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(llms).toContain("# Matthew Liu");
+  expect(robots).toContain("User-agent: OAI-SearchBot");
+  expect(sitemap).toContain(
+    "<loc>https://mattliu-home.vercel.app/</loc>",
   );
 });

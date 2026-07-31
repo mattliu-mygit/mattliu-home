@@ -1,4 +1,4 @@
-import type { Project } from "../projects";
+import type { Project } from "../content/site-content";
 
 type ArtifactPreviewProps = {
   project: Project;
