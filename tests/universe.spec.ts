@@ -108,10 +108,19 @@ test("constellation stars use luminous cores instead of bordered circles", async
   const star = page
     .getByRole("button", { name: "Open Projects with Monopole selected" })
     .locator(".constellation-star__point");
+  const baselineStar = page
+    .getByRole("button", { name: "Open Projects with UCredit selected" })
+    .locator(".constellation-star__point");
 
   await expect(star).toHaveCSS("border-top-width", "0px");
   await expect(star).toHaveCSS("background-image", /radial-gradient/);
   await expect(star).not.toHaveCSS("border-radius", "0px");
+  const background = await star.evaluate(
+    (element) => getComputedStyle(element).backgroundImage,
+  );
+  expect(background).toContain("radial-gradient(circle,");
+  expect(background).not.toContain("38% 34%");
+  await expect(baselineStar).toHaveCSS("width", "5.4375px");
 });
 
 test("header identity follows the story and external links open separately", async ({

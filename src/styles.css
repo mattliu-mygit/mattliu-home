@@ -922,23 +922,23 @@ a:focus-visible {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: calc(0.46rem * var(--star-prominence));
-  height: calc(0.46rem * var(--star-prominence));
+  width: calc(0.34rem * var(--star-prominence));
+  height: calc(0.34rem * var(--star-prominence));
   border: 0;
   border-radius: 50%;
   color: rgb(var(--star-color));
   background: radial-gradient(
-    circle at 38% 34%,
-    rgb(255 255 255 / 0.98) 0 9%,
-    rgb(var(--star-color)) 24%,
-    rgb(var(--star-color) / 0.82) 48%,
-    transparent 74%
+    circle at 50% 50%,
+    rgb(255 255 255 / 0.98) 0 12%,
+    rgb(var(--star-color)) 30%,
+    rgb(var(--star-color) / 0.78) 52%,
+    transparent 78%
   );
   box-shadow:
-    0 0 calc(0.28rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.78),
-    0 0 calc(1.05rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.3);
+    0 0 calc(0.24rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.82),
+    0 0 calc(0.96rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.28);
   transform: translate(-50%, -50%);
   transition:
     filter 220ms ease,
@@ -1028,7 +1028,7 @@ a:focus-visible {
       rgb(var(--star-color) / 0.92),
     0 0 calc(1.5rem * var(--star-prominence))
       rgb(var(--star-color) / 0.46);
-  transform: translate(-50%, -50%) scale(1.22);
+  transform: translate(-50%, -50%) scale(1.18);
 }
 
 .constellation-star:is(:hover, :focus-visible) .constellation-star__label,
