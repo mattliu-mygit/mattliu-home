@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import {
   constellationFocusOffset,
@@ -30,6 +30,10 @@ import {
   type UniverseLocation,
   type UniverseView,
 } from "./navigation";
+import {
+  createPortfolioState,
+  portfolioReducer,
+} from "./portfolio-state";
 import {
   createStoryBeats,
   storyBeatForLocation,
@@ -133,27 +137,17 @@ const directionForSelection = (
 
 export default function App() {
   const initialLocation = useRef(parseUniverseLocation(window.location.hash));
-  const [location, setLocation] = useState(initialLocation.current);
-  const [selectedPathSlug, setSelectedPathSlug] = useState(
-    initialLocation.current.view === "path"
-      ? initialLocation.current.pathSlug
-      : path[0].slug,
+  const [portfolioState, dispatchPortfolio] = useReducer(
+    portfolioReducer,
+    initialLocation.current,
+    createPortfolioState,
   );
-  const [selectedProjectSlug, setSelectedProjectSlug] = useState<
-    string | undefined
-  >(
-    initialLocation.current.view === "projects"
-      ? initialLocation.current.projectSlug
-      : undefined,
-  );
-  const [selectedQuoteSlug, setSelectedQuoteSlug] = useState(
-    initialLocation.current.view === "quotes"
-      ? (initialLocation.current.quoteSlug ?? quotes[0].slug)
-      : quotes[0].slug,
-  );
-  const [activeStoryId, setActiveStoryId] = useState(() =>
-    storyBeatForLocation(initialLocation.current),
-  );
+  const { location, activeStoryId, selections } = portfolioState;
+  const {
+    path: selectedPathSlug,
+    projects: selectedProjectSlug,
+    quotes: selectedQuoteSlug,
+  } = selections;
   const initialStoryProgress = useRef(
     (() => {
       const initialId = storyBeatForLocation(initialLocation.current);
@@ -230,7 +224,6 @@ export default function App() {
         "",
         locationUrl(nextLocation),
       );
-      setLocation(nextLocation);
     },
     [],
   );
@@ -240,8 +233,7 @@ export default function App() {
       pendingProjectOpen.current = null;
       lastProjectTrigger.current = document.activeElement as HTMLElement | null;
       aimConstellation("projects", slug);
-      setSelectedProjectSlug(slug);
-      setActiveStoryId(`projects/${slug}`);
+      dispatchPortfolio({ type: "select-item", view: "projects", itemSlug: slug });
       requestStoryScroll(`projects/${slug}`);
       commitLocation({ view: "projects", projectSlug: slug });
     },
@@ -254,19 +246,16 @@ export default function App() {
       pendingProjectOpen.current = null;
       if (view === "path" && itemSlug) {
         aimConstellation(view, itemSlug);
-        setSelectedPathSlug(itemSlug);
       } else if (view === "projects" && itemSlug) {
         aimConstellation(view, itemSlug);
-        setSelectedProjectSlug(itemSlug);
         pendingProjectOpen.current = itemSlug;
       } else if (view === "quotes" && itemSlug) {
         aimConstellation(view, itemSlug);
-        setSelectedQuoteSlug(itemSlug);
       } else {
         aimConstellation(view);
       }
       const storyId = itemSlug ? `${view}/${itemSlug}` : view;
-      setActiveStoryId(storyId);
+      dispatchPortfolio({ type: "enter-constellation", view, itemSlug });
       requestStoryScroll(storyId, "auto");
       commitLocation(
         locationFor(view, view === "projects" ? undefined : itemSlug),
@@ -280,7 +269,7 @@ export default function App() {
     const destination = location.view === "universe" ? "path" : location.view;
     const previousTarget = lastUniverseTarget.current;
     pendingProjectOpen.current = null;
-    setActiveStoryId("intro/name");
+    dispatchPortfolio({ type: "return-to-universe" });
     requestStoryScroll("intro/name", "auto");
     commitLocation(
       { view: "universe" },
@@ -299,6 +288,7 @@ export default function App() {
   }, [commitLocation, location.view, requestStoryScroll]);
 
   const closeProject = useCallback(() => {
+    dispatchPortfolio({ type: "sync-location", location: { view: "projects" } });
     commitLocation(
       { view: "projects" },
       { replace: true, focus: { type: "project" } },
@@ -318,8 +308,7 @@ export default function App() {
   const selectPath = useCallback(
     (slug: string, scroll = true) => {
       aimConstellation("path", slug);
-      setSelectedPathSlug(slug);
-      setActiveStoryId(`path/${slug}`);
+      dispatchPortfolio({ type: "select-item", view: "path", itemSlug: slug });
       if (scroll) {
         requestStoryScroll(`path/${slug}`);
       }
@@ -331,8 +320,7 @@ export default function App() {
   const selectQuote = useCallback(
     (slug: string, scroll = true) => {
       aimConstellation("quotes", slug);
-      setSelectedQuoteSlug(slug);
-      setActiveStoryId(`quotes/${slug}`);
+      dispatchPortfolio({ type: "select-item", view: "quotes", itemSlug: slug });
       if (scroll) {
         requestStoryScroll(`quotes/${slug}`);
       }
@@ -347,12 +335,12 @@ export default function App() {
         return;
       }
       pendingProjectOpen.current = null;
-      setActiveStoryId(beat.id);
       const focusLeavesConstellation =
         location.view !== (beat.kind === "intro" ? "universe" : beat.view) &&
         document.activeElement?.closest(".constellation-map");
 
       if (beat.kind === "intro") {
+        dispatchPortfolio({ type: "focus-beat", beat });
         if (location.view !== "universe") {
           commitLocation(
             { view: "universe" },
@@ -369,16 +357,14 @@ export default function App() {
 
       if (beat.kind === "path") {
         aimConstellation(beat.view, beat.itemSlug);
-        setSelectedPathSlug(beat.itemSlug);
       } else if (beat.kind === "project") {
         aimConstellation(beat.view, beat.itemSlug);
-        setSelectedProjectSlug(beat.itemSlug);
       } else if (beat.kind === "quote") {
         aimConstellation(beat.view, beat.itemSlug);
-        setSelectedQuoteSlug(beat.itemSlug);
       } else {
         aimConstellation(beat.view);
       }
+      dispatchPortfolio({ type: "focus-beat", beat });
       commitLocation(
         locationFor(
           beat.view,
@@ -505,17 +491,9 @@ export default function App() {
       }
       pendingFocus.current = null;
       pendingProjectOpen.current = null;
-      if (nextLocation.view === "path" && nextLocation.pathSlug) {
-        setSelectedPathSlug(nextLocation.pathSlug);
-      } else if (nextLocation.view === "projects" && nextLocation.projectSlug) {
-        setSelectedProjectSlug(nextLocation.projectSlug);
-      } else if (nextLocation.view === "quotes" && nextLocation.quoteSlug) {
-        setSelectedQuoteSlug(nextLocation.quoteSlug);
-      }
       const nextStoryId = storyBeatForLocation(nextLocation);
-      setActiveStoryId(nextStoryId);
+      dispatchPortfolio({ type: "sync-location", location: nextLocation });
       requestStoryScroll(nextStoryId, "auto");
-      setLocation(nextLocation);
     };
 
     syncFromUrl();
