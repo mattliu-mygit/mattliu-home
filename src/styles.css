@@ -26,6 +26,7 @@ html {
   min-height: 100%;
   overflow: hidden;
   background: var(--night);
+  view-transition-name: none;
 }
 
 body {
@@ -151,7 +152,7 @@ a:focus-visible {
 .universe[data-view="path"] .celestial-field,
 .universe[data-view="projects"] .celestial-field,
 .universe[data-view="quotes"] .celestial-field {
-  animation: sky-camera-arrive 760ms linear both;
+  animation: sky-camera-arrive 700ms cubic-bezier(0.22, 0.7, 0.18, 1) both;
 }
 
 .universe[data-view="universe"] .celestial-field {
@@ -741,7 +742,7 @@ a:focus-visible {
   z-index: 4;
   inset: 4.6rem 0 0;
   transform-origin: var(--camera-origin-x) var(--camera-origin-y);
-  animation: camera-arrive 760ms linear both;
+  animation: camera-arrive 620ms cubic-bezier(0.22, 0.7, 0.18, 1) both;
 }
 
 .constellation-view__title {
@@ -765,6 +766,39 @@ a:focus-visible {
 .constellation-map {
   z-index: 3;
   transform-origin: 50% 50%;
+}
+
+.constellation-map--path {
+  view-transition-name: path-constellation;
+}
+
+.constellation-map--projects {
+  view-transition-name: projects-constellation;
+}
+
+.constellation-map--quotes {
+  view-transition-name: quotes-constellation;
+}
+
+html:active-view-transition .constellation-view,
+html:active-view-transition .universe-overview {
+  animation: none;
+}
+
+::view-transition-group(path-constellation),
+::view-transition-group(projects-constellation),
+::view-transition-group(quotes-constellation) {
+  animation-duration: 700ms;
+  animation-timing-function: cubic-bezier(0.22, 0.7, 0.18, 1);
+}
+
+::view-transition-old(path-constellation),
+::view-transition-new(path-constellation),
+::view-transition-old(projects-constellation),
+::view-transition-new(projects-constellation),
+::view-transition-old(quotes-constellation),
+::view-transition-new(quotes-constellation) {
+  mix-blend-mode: normal;
 }
 
 .constellation-map--detail {
@@ -1405,33 +1439,13 @@ a:focus-visible {
 }
 
 @keyframes camera-arrive {
-  0% {
+  from {
     opacity: 0;
-    filter: blur(5px);
-    transform: scale(0.16);
+    transform: scale(0.88);
   }
 
-  45% {
-    opacity: 0.42;
-    filter: blur(3px);
-    transform: scale(0.22);
-  }
-
-  72% {
-    opacity: 0.78;
-    filter: blur(1.5px);
-    transform: scale(0.48);
-  }
-
-  90% {
-    opacity: 0.96;
-    filter: blur(0.4px);
-    transform: scale(0.82);
-  }
-
-  100% {
+  to {
     opacity: 1;
-    filter: blur(0);
     transform: scale(1);
   }
 }
@@ -1458,8 +1472,7 @@ a:focus-visible {
 @keyframes universe-arrive {
   from {
     opacity: 0;
-    filter: blur(5px);
-    transform: scale(2.1);
+    transform: scale(1.1);
   }
 }
 
@@ -1468,18 +1481,14 @@ a:focus-visible {
     transform: scale(1);
   }
 
-  72% {
-    transform: scale(1.012);
-  }
-
   100% {
-    transform: scale(1.045);
+    transform: scale(1.06);
   }
 }
 
 @keyframes sky-camera-return {
   from {
-    transform: scale(1.045);
+    transform: scale(1.06);
   }
 
   to {

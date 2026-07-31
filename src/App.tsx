@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { CelestialScene } from "./components/CelestialScene";
 import {
@@ -30,6 +31,7 @@ import {
   storyBeatForLocation,
   type StoryBeat,
 } from "./story-navigation";
+import { runViewTransition } from "./view-transition";
 
 const { person, path, projects, quotes, destinations } = siteContent;
 const destinationBySlug = Object.fromEntries(
@@ -137,6 +139,7 @@ export default function App() {
   const lastProjectTrigger = useRef<HTMLElement | null>(null);
   const pendingFocus = useRef<PendingFocus>(null);
   const pendingProjectOpen = useRef<string | null>(null);
+  const spatialTransitionRequest = useRef(0);
   const selectedProject =
     location.view === "projects" && location.projectSlug
       ? projectBySlug(location.projectSlug)
@@ -185,52 +188,6 @@ export default function App() {
     [location.view],
   );
 
-  const enterConstellation = useCallback(
-    (view: DestinationSlug, itemSlug?: string, origin?: Point) => {
-      lastUniverseTarget.current = { slug: view, itemSlug };
-      configureCamera(view, origin);
-      pendingProjectOpen.current = null;
-      if (view === "path" && itemSlug) {
-        setSelectedPathSlug(itemSlug);
-      } else if (view === "projects" && itemSlug) {
-        setSelectedProjectSlug(itemSlug);
-        pendingProjectOpen.current = itemSlug;
-      } else if (view === "quotes" && itemSlug) {
-        setSelectedQuoteSlug(itemSlug);
-      }
-      const storyId = itemSlug ? `${view}/${itemSlug}` : view;
-      setActiveStoryId(storyId);
-      requestStoryScroll(storyId);
-      commitLocation(locationFor(view, view === "projects" ? undefined : itemSlug), {
-        focus: { type: "heading" },
-      });
-    },
-    [commitLocation, configureCamera, requestStoryScroll],
-  );
-
-  const returnToUniverse = useCallback(() => {
-    const destination = location.view === "universe" ? "path" : location.view;
-    const previousTarget = lastUniverseTarget.current;
-    pendingProjectOpen.current = null;
-    setCameraTransition("arrive");
-    setActiveStoryId("intro/name");
-    requestStoryScroll("intro/name");
-    commitLocation(
-      { view: "universe" },
-      {
-        replace: true,
-        focus: {
-          type: "universe",
-          slug: destination,
-          itemSlug:
-            previousTarget?.slug === destination
-              ? previousTarget.itemSlug
-              : undefined,
-        },
-      },
-    );
-  }, [commitLocation, location.view, requestStoryScroll]);
-
   const openProject = useCallback(
     (slug: string) => {
       pendingProjectOpen.current = null;
@@ -242,6 +199,102 @@ export default function App() {
     },
     [commitLocation, requestStoryScroll],
   );
+
+  const runSpatialUpdate = useCallback(
+    (update: () => void, onFinished?: () => void) => {
+      const request = ++spatialTransitionRequest.current;
+      const transition = runViewTransition(
+        document,
+        () => flushSync(update),
+        !prefersReducedMotion(),
+      );
+      if (transition && onFinished) {
+        void transition.finished.then(
+          () => {
+            if (request === spatialTransitionRequest.current) {
+              onFinished();
+            }
+          },
+          () => undefined,
+        );
+      }
+      return transition;
+    },
+    [],
+  );
+
+  const enterConstellation = useCallback(
+    (view: DestinationSlug, itemSlug?: string, origin?: Point) => {
+      const update = () => {
+        lastUniverseTarget.current = { slug: view, itemSlug };
+        configureCamera(view, origin);
+        pendingProjectOpen.current = null;
+        if (view === "path" && itemSlug) {
+          setSelectedPathSlug(itemSlug);
+        } else if (view === "projects" && itemSlug) {
+          setSelectedProjectSlug(itemSlug);
+          pendingProjectOpen.current = itemSlug;
+        } else if (view === "quotes" && itemSlug) {
+          setSelectedQuoteSlug(itemSlug);
+        }
+        const storyId = itemSlug ? `${view}/${itemSlug}` : view;
+        setActiveStoryId(storyId);
+        requestStoryScroll(storyId);
+        commitLocation(
+          locationFor(view, view === "projects" ? undefined : itemSlug),
+          { focus: { type: "heading" } },
+        );
+      };
+      if (location.view !== "universe") {
+        update();
+        return;
+      }
+      runSpatialUpdate(update, () => {
+        const pendingSlug = pendingProjectOpen.current;
+        if (pendingSlug) {
+          openProject(pendingSlug);
+        }
+      });
+    },
+    [
+      commitLocation,
+      configureCamera,
+      location.view,
+      openProject,
+      requestStoryScroll,
+      runSpatialUpdate,
+    ],
+  );
+
+  const returnToUniverse = useCallback(() => {
+    const destination = location.view === "universe" ? "path" : location.view;
+    const previousTarget = lastUniverseTarget.current;
+    const update = () => {
+      pendingProjectOpen.current = null;
+      setCameraTransition("arrive");
+      setActiveStoryId("intro/name");
+      requestStoryScroll("intro/name");
+      commitLocation(
+        { view: "universe" },
+        {
+          replace: true,
+          focus: {
+            type: "universe",
+            slug: destination,
+            itemSlug:
+              previousTarget?.slug === destination
+                ? previousTarget.itemSlug
+                : undefined,
+          },
+        },
+      );
+    };
+    if (location.view === "universe") {
+      update();
+    } else {
+      runSpatialUpdate(update);
+    }
+  }, [commitLocation, location.view, requestStoryScroll, runSpatialUpdate]);
 
   const closeProject = useCallback(() => {
     commitLocation(
@@ -294,31 +347,46 @@ export default function App() {
 
       if (beat.kind === "intro") {
         if (location.view !== "universe") {
-          setCameraTransition("arrive");
-          commitLocation({ view: "universe" }, { replace: true });
+          runSpatialUpdate(() => {
+            setCameraTransition("arrive");
+            commitLocation({ view: "universe" }, { replace: true });
+          });
         }
         return;
       }
 
-      configureCamera(beat.view);
-      if (beat.kind === "path") {
-        setSelectedPathSlug(beat.itemSlug);
-      } else if (beat.kind === "project") {
-        setSelectedProjectSlug(beat.itemSlug);
-      } else if (beat.kind === "quote") {
-        setSelectedQuoteSlug(beat.itemSlug);
+      const update = () => {
+        configureCamera(beat.view);
+        if (beat.kind === "path") {
+          setSelectedPathSlug(beat.itemSlug);
+        } else if (beat.kind === "project") {
+          setSelectedProjectSlug(beat.itemSlug);
+        } else if (beat.kind === "quote") {
+          setSelectedQuoteSlug(beat.itemSlug);
+        }
+        commitLocation(
+          locationFor(
+            beat.view,
+            beat.kind === "project" || beat.kind === "destination"
+              ? undefined
+              : beat.itemSlug,
+          ),
+          { replace: true },
+        );
+      };
+      if (location.view === "universe") {
+        runSpatialUpdate(update);
+      } else {
+        update();
       }
-      commitLocation(
-        locationFor(
-          beat.view,
-          beat.kind === "project" || beat.kind === "destination"
-            ? undefined
-            : beat.itemSlug,
-        ),
-        { replace: true },
-      );
     },
-    [activeStoryId, commitLocation, configureCamera, location.view],
+    [
+      activeStoryId,
+      commitLocation,
+      configureCamera,
+      location.view,
+      runSpatialUpdate,
+    ],
   );
 
   const activateStoryBeat = useCallback(
@@ -396,6 +464,7 @@ export default function App() {
       }
       pendingFocus.current = null;
       pendingProjectOpen.current = null;
+      spatialTransitionRequest.current += 1;
       if (nextLocation.view === "path" && nextLocation.pathSlug) {
         setSelectedPathSlug(nextLocation.pathSlug);
       } else if (nextLocation.view === "projects" && nextLocation.projectSlug) {
@@ -463,9 +532,9 @@ export default function App() {
     <CelestialScene
       cameraOrigin={cameraOrigin}
       interactive={!selectedProject}
-      onOpenSkyWheel={(deltaY) => {
+      onOpenSkyWheel={(input) => {
         if (!wheelCollapsed) {
-          wheelRef.current?.scrollBy(deltaY);
+          wheelRef.current?.scrollBy(input);
         }
       }}
       view={location.view}

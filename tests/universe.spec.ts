@@ -254,8 +254,12 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
       element.dispatchEvent(event);
       return event.defaultPrevented;
     });
-  expect(wheelInputWasPrevented).toBe(false);
+  expect(wheelInputWasPrevented).toBe(true);
   await page.getByRole("button", { name: "Explore Projects" }).click();
+  await expect(
+    page.getByRole("region", { name: "Projects constellation" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Hide story" }).click();
   expect(await dispatchWheel()).toBe(true);
 
   await page.getByRole("button", { name: "Explore Monopole" }).click();
@@ -310,6 +314,47 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
     ),
   );
   expect(stabilized).toBeLessThan(displaced);
+});
+
+test("card and open-sky wheel input advance the story equally", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const movement = await page.evaluate(() => {
+    const scroll = document.querySelector<HTMLElement>(
+      ".narrative-wheel__scroll",
+    );
+    if (!scroll) {
+      throw new Error("Story scroll is missing");
+    }
+    scroll.scrollTop = 500;
+    const start = scroll.scrollTop;
+    scroll.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaY: 48,
+      }),
+    );
+    const cardDelta = scroll.scrollTop - start;
+
+    scroll.scrollTop = start;
+    window.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaY: 48,
+      }),
+    );
+    return {
+      cardDelta,
+      skyDelta: scroll.scrollTop - start,
+    };
+  });
+
+  expect(movement.cardDelta).toBeGreaterThan(0);
+  expect(movement.skyDelta).toBe(movement.cardDelta);
 });
 
 test("camera arrival starts at the activated constellation origin", async ({

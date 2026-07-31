@@ -1,15 +1,21 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
 } from "react";
 
 import { centeredStoryBeat, type StoryBeat } from "../story-navigation";
+import {
+  canScrollNarrative,
+  normalizeNarrativeWheel,
+  type NarrativeWheelInput,
+} from "../wheel-input";
 import { ArtifactPreview } from "./ArtifactPreview";
 
 export type NarrativeWheelHandle = {
-  scrollBy: (deltaY: number) => void;
+  scrollBy: (input: NarrativeWheelInput) => boolean;
   scrollToBeat: (id: string, behavior?: ScrollBehavior) => void;
 };
 
@@ -41,28 +47,39 @@ export const NarrativeWheel = forwardRef<
   const requestedIdRef = useRef<string | null>(null);
   activeIdRef.current = activeId;
 
-  const scrollToBeat = (id: string, behavior: ScrollBehavior = "smooth") => {
-    requestedIdRef.current = id;
-    const target = Array.from(
-      scrollRef.current?.querySelectorAll<HTMLElement>("[data-story-beat]") ??
-        [],
-    ).find((element) => element.dataset.storyBeat === id);
-    target?.scrollIntoView?.({ block: "center", behavior });
-  };
+  const scrollToBeat = useCallback(
+    (id: string, behavior: ScrollBehavior = "smooth") => {
+      requestedIdRef.current = id;
+      const target = Array.from(
+        scrollRef.current?.querySelectorAll<HTMLElement>("[data-story-beat]") ??
+          [],
+      ).find((element) => element.dataset.storyBeat === id);
+      target?.scrollIntoView?.({ block: "center", behavior });
+    },
+    [],
+  );
+
+  const applyWheelInput = useCallback((input: NarrativeWheelInput) => {
+    requestedIdRef.current = null;
+    const scroll = scrollRef.current;
+    if (!scroll) {
+      return false;
+    }
+    const deltaY = normalizeNarrativeWheel(input, scroll.clientHeight);
+    if (!canScrollNarrative(scroll, deltaY)) {
+      return false;
+    }
+    scroll.scrollBy({ top: deltaY, behavior: "auto" });
+    return true;
+  }, []);
 
   useImperativeHandle(
     forwardedRef,
     () => ({
-      scrollBy: (deltaY) => {
-        if (requestedIdRef.current) {
-          scrollToBeat(requestedIdRef.current, "auto");
-        }
-        requestedIdRef.current = null;
-        scrollRef.current?.scrollBy({ top: deltaY, behavior: "auto" });
-      },
+      scrollBy: applyWheelInput,
       scrollToBeat,
     }),
-    [],
+    [applyWheelInput, scrollToBeat],
   );
 
   useEffect(() => {
@@ -70,6 +87,25 @@ export const NarrativeWheel = forwardRef<
       scrollToBeat(activeId, "auto");
     }
   }, [collapsed]);
+
+  useEffect(() => {
+    const scroll = scrollRef.current;
+    if (!scroll) {
+      return;
+    }
+    const handleWheel = (event: WheelEvent) => {
+      if (event.ctrlKey) {
+        return;
+      }
+      event.preventDefault();
+      applyWheelInput({
+        deltaY: event.deltaY,
+        deltaMode: event.deltaMode,
+      });
+    };
+    scroll.addEventListener("wheel", handleWheel, { passive: false });
+    return () => scroll.removeEventListener("wheel", handleWheel);
+  }, [applyWheelInput]);
 
   const handleScroll = () => {
     const scroll = scrollRef.current;
@@ -132,9 +168,6 @@ export const NarrativeWheel = forwardRef<
           requestedIdRef.current = null;
         }}
         onScroll={handleScroll}
-        onWheel={() => {
-          requestedIdRef.current = null;
-        }}
         ref={scrollRef}
         tabIndex={collapsed ? -1 : 0}
       >

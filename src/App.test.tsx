@@ -14,6 +14,7 @@ import App from "./App";
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  Reflect.deleteProperty(document, "startViewTransition");
   window.sessionStorage.clear();
   window.history.replaceState(null, "", "/");
 });
@@ -117,6 +118,44 @@ describe("personal universe", () => {
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
   });
 
+  it("opens a selected universe project only after its shared transition", async () => {
+    const user = userEvent.setup();
+    let finishTransition: () => void = () => undefined;
+    const finished = new Promise<void>((resolve) => {
+      finishTransition = resolve;
+    });
+    const startViewTransition = vi.fn((update: () => void) => {
+      update();
+      return { finished };
+    });
+    Object.defineProperty(document, "startViewTransition", {
+      configurable: true,
+      value: startViewTransition,
+    });
+    render(<App />);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Projects with Monopole selected",
+      }),
+    );
+
+    expect(startViewTransition).toHaveBeenCalledTimes(1);
+    expect(window.location.hash).toBe("#projects");
+    expect(
+      screen.getByRole("region", { name: "Projects constellation" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await act(async () => {
+      finishTransition();
+      await finished;
+    });
+
+    expect(window.location.hash).toBe("#projects/monopole");
+    expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
+  });
+
   it("uses a Path star to zoom to the matching professional card", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -175,6 +214,11 @@ describe("personal universe", () => {
   it("opens a universe project star without waiting for animation in reduced motion", async () => {
     const user = userEvent.setup();
     vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    const startViewTransition = vi.fn();
+    Object.defineProperty(document, "startViewTransition", {
+      configurable: true,
+      value: startViewTransition,
+    });
     render(<App />);
 
     await user.click(
@@ -184,6 +228,7 @@ describe("personal universe", () => {
     );
 
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
+    expect(startViewTransition).not.toHaveBeenCalled();
   });
 
   it("returns focus to the universe star that opened a constellation", async () => {

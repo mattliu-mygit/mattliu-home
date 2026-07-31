@@ -19,12 +19,13 @@ import {
 } from "../celestial-motion";
 import type { Point } from "../content/site-content";
 import type { UniverseView } from "../navigation";
+import type { NarrativeWheelInput } from "../wheel-input";
 
 type CelestialSceneProps = PropsWithChildren<{
   cameraOrigin: Point;
   interactive: boolean;
   view: UniverseView;
-  onOpenSkyWheel?: (deltaY: number) => void;
+  onOpenSkyWheel?: (input: NarrativeWheelInput) => void;
 }>;
 
 const wrap = (value: number, extent: number) =>
@@ -61,7 +62,10 @@ export function CelestialScene({
       if (target instanceof Element && target.closest("[data-story-scroll]")) {
         return;
       }
-      openSkyWheelRef.current?.(event.deltaY);
+      openSkyWheelRef.current?.({
+        deltaY: event.deltaY,
+        deltaMode: event.deltaMode,
+      });
       event.preventDefault();
     };
 
