@@ -30,8 +30,8 @@ type ConstellationMapProps = {
   label?: string;
   position?: Point;
   getAccessibleName: (item: ConstellationItem) => string;
-  onOpen?: (origin: Point) => void;
-  onSelect: (slug: string, origin?: Point) => void;
+  onOpen?: () => void;
+  onSelect: (slug: string) => void;
 };
 
 export function ConstellationMap({
@@ -104,30 +104,6 @@ export function ConstellationMap({
       unsubscribe();
     };
   }, [connections, items, mode, motionChannel]);
-  const getOrigin = (): Point => {
-    const fallback = position ?? [50, 50];
-    const root = rootRef.current;
-    const overview = root?.closest<HTMLElement>(".universe-overview");
-    if (!root || !overview) {
-      return fallback;
-    }
-
-    const rootBox = root.getBoundingClientRect();
-    const overviewBox = overview.getBoundingClientRect();
-    if (overviewBox.width <= 0 || overviewBox.height <= 0) {
-      return fallback;
-    }
-
-    return [
-      ((rootBox.left + rootBox.width / 2 - overviewBox.left) /
-        overviewBox.width) *
-        100,
-      ((rootBox.top + rootBox.height / 2 - overviewBox.top) /
-        overviewBox.height) *
-        100,
-    ];
-  };
-
   return (
     <div
       className={[
@@ -135,11 +111,11 @@ export function ConstellationMap({
         `constellation-map--${kind}`,
         `constellation-map--${variant}`,
         `constellation-map--${mode}`,
-        variant === "overview" ? "universe-constellation" : "",
+        mode === "overview" ? "universe-constellation" : "",
       ]
         .filter(Boolean)
         .join(" ")}
-      data-testid={`${kind}-constellation-${variant}`}
+      data-testid={`${kind}-constellation`}
       data-mode={mode}
       aria-hidden={mode === "inactive" ? "true" : undefined}
       ref={rootRef}
@@ -218,12 +194,7 @@ export function ConstellationMap({
                   ? activeSlug === item.slug
                   : undefined
               }
-              onClick={() =>
-                onSelect(
-                  item.slug,
-                  mode === "overview" ? getOrigin() : undefined,
-                )
-              }
+              onClick={() => onSelect(item.slug)}
             >
               <span
                 className="constellation-star__point"
@@ -246,7 +217,7 @@ export function ConstellationMap({
           id={`universe-destination-${kind}`}
           type="button"
           aria-label={`Explore ${label}`}
-          onClick={() => onOpen(getOrigin())}
+          onClick={onOpen}
         >
           {label}
         </button>

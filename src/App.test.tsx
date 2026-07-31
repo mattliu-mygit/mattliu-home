@@ -111,10 +111,9 @@ describe("personal universe", () => {
     expect(selected).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    fireEvent.animationEnd(
-      screen.getByRole("region", { name: "Projects constellation" }),
-      { animationName: "camera-arrive" },
-    );
+    fireEvent.transitionEnd(screen.getByTestId("constellation-world"), {
+      propertyName: "transform",
+    });
     expect(window.location.hash).toBe("#projects/monopole");
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
   });
@@ -188,15 +187,11 @@ describe("personal universe", () => {
     expect(window.location.hash).toBe("#path/aws-sagemaker");
   });
 
-  it("opens a selected universe project only after its shared transition", async () => {
+  it("opens a selected universe project after the persistent camera settles", async () => {
     const user = userEvent.setup();
-    let finishTransition: () => void = () => undefined;
-    const finished = new Promise<void>((resolve) => {
-      finishTransition = resolve;
-    });
     const startViewTransition = vi.fn((update: () => void) => {
       update();
-      return { finished };
+      return { finished: Promise.resolve() };
     });
     Object.defineProperty(document, "startViewTransition", {
       configurable: true,
@@ -210,20 +205,38 @@ describe("personal universe", () => {
       }),
     );
 
-    expect(startViewTransition).toHaveBeenCalledTimes(1);
+    expect(startViewTransition).not.toHaveBeenCalled();
     expect(window.location.hash).toBe("#projects");
     expect(
       screen.getByRole("region", { name: "Projects constellation" }),
     ).toBeVisible();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    await act(async () => {
-      finishTransition();
-      await finished;
+    fireEvent.transitionEnd(screen.getByTestId("constellation-world"), {
+      propertyName: "transform",
     });
 
     expect(window.location.hash).toBe("#projects/monopole");
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
+  });
+
+  it("never snapshots constellation travel in either direction", async () => {
+    const user = userEvent.setup();
+    const startViewTransition = vi.fn((update: () => void) => {
+      update();
+      return { finished: Promise.resolve() };
+    });
+    Object.defineProperty(document, "startViewTransition", {
+      configurable: true,
+      value: startViewTransition,
+    });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Explore Path" }));
+    await user.click(screen.getByRole("button", { name: "Go to Projects" }));
+    await user.click(screen.getByRole("button", { name: "Go to Universe" }));
+
+    expect(startViewTransition).not.toHaveBeenCalled();
   });
 
   it("uses a Path star to zoom to the matching professional card", async () => {
@@ -278,10 +291,10 @@ describe("personal universe", () => {
 
     expect(projectRegion).toBe(pathRegion);
     expect(quoteRegion).toBe(projectRegion);
-    expect(quoteRegion).toHaveAttribute("data-camera-transition", "pan");
-    expect(quoteRegion).toHaveStyle({
-      "--camera-pan-x": "-7.7vw",
-      "--camera-pan-y": "13.2vh",
+    expect(screen.getByRole("main")).toHaveStyle({
+      "--camera-origin-x": "63%",
+      "--camera-origin-y": "72%",
+      "--camera-scale": "3.4",
     });
 
     await user.click(
@@ -289,7 +302,7 @@ describe("personal universe", () => {
         name: /go to quote by paul saffo/i,
       }),
     );
-    expect(quoteRegion).toHaveAttribute("data-camera-transition", "settled");
+    expect(screen.getByTestId("constellation-world")).toBeInTheDocument();
   });
 
   it("opens a universe project star without waiting for animation in reduced motion", async () => {

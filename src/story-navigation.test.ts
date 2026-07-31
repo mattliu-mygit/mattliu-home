@@ -124,7 +124,18 @@ describe("story navigation", () => {
     });
     expect(after?.progress).toBeCloseTo(0.001);
     expect(constellationTravelAtProgress(beats, 2.5 / denominator)).toBeNull();
-    expect(constellationTravelAtProgress(beats, 6.5 / denominator)).toBeNull();
+    expect(constellationTravelAtProgress(beats, 3.5 / denominator)).toEqual({
+      view: "path",
+      fromSlug: undefined,
+      toSlug: "johns-hopkins",
+      progress: 0.5,
+    });
+    expect(constellationTravelAtProgress(beats, 6.25 / denominator)).toEqual({
+      view: "path",
+      fromSlug: "wandb-weave",
+      toSlug: undefined,
+      progress: 0.5,
+    });
   });
 
   it("chooses the beat nearest the viewport center", () => {

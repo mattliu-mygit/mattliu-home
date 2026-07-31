@@ -45,8 +45,8 @@ export type StoryBeat =
 
 export type ConstellationTravel = {
   view: DestinationSlug;
-  fromSlug: string;
-  toSlug: string;
+  fromSlug?: string;
+  toSlug?: string;
   progress: number;
 };
 
@@ -220,20 +220,40 @@ export const constellationTravelAtProgress = (
   const toIndex = Math.min(beats.length - 1, fromIndex + 1);
   const from = beats[fromIndex];
   const to = beats[toIndex];
-  if (
-    fromIndex === toIndex ||
-    !itemBeat(from) ||
-    !itemBeat(to) ||
-    from.view !== to.view
-  ) {
-    return null;
+  const segmentProgress = position - fromIndex;
+  if (fromIndex === toIndex) {
+    return itemBeat(from)
+      ? {
+          view: from.view,
+          fromSlug: from.itemSlug,
+          toSlug: from.itemSlug,
+          progress: 0,
+        }
+      : null;
   }
-  return {
-    view: from.view,
-    fromSlug: from.itemSlug,
-    toSlug: to.itemSlug,
-    progress: position - fromIndex,
-  };
+  if (itemBeat(from) && itemBeat(to) && from.view === to.view) {
+    return {
+      view: from.view,
+      fromSlug: from.itemSlug,
+      toSlug: to.itemSlug,
+      progress: segmentProgress,
+    };
+  }
+  if (from.kind === "destination" && itemBeat(to) && from.view === to.view) {
+    return {
+      view: from.view,
+      toSlug: to.itemSlug,
+      progress: segmentProgress,
+    };
+  }
+  if (itemBeat(from) && to.kind === "destination") {
+    return {
+      view: from.view,
+      fromSlug: from.itemSlug,
+      progress: Math.min(1, segmentProgress * 2),
+    };
+  }
+  return null;
 };
 
 export const routeMarkerPosition = (progress: number, count: number) => {

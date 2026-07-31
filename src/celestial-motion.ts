@@ -1,3 +1,5 @@
+import type { UniverseView } from "./navigation";
+
 export type CelestialMotion = {
   travel: number;
   travelVelocity: number;
@@ -6,6 +8,12 @@ export type CelestialMotion = {
 export type Point2d = {
   x: number;
   y: number;
+};
+
+export type WorldCamera = {
+  origin: Point2d;
+  scale: number;
+  focused: boolean;
 };
 
 export type ViewportSize = {
@@ -45,6 +53,15 @@ const frameDuration = 1000 / 60;
 const clamp = (value: number, minimum: number, maximum: number) =>
   Math.min(maximum, Math.max(minimum, value));
 
+export function worldCameraFor(
+  view: UniverseView,
+  destination: Point2d,
+): WorldCamera {
+  return view === "universe"
+    ? { origin: { x: 50, y: 50 }, scale: 1, focused: false }
+    : { origin: destination, scale: 3.4, focused: true };
+}
+
 export function applyWheelImpulse(
   motion: CelestialMotion,
   deltaY: number,
@@ -74,14 +91,6 @@ export function constellationDrift(travelVelocity: number): Point2d {
   return {
     x: signedVelocity * 10,
     y: signedVelocity * 4.2,
-  };
-}
-
-export function cameraTravelVector(from: Point2d, to: Point2d): Point2d {
-  const rounded = (value: number) => Math.round(value * 100) / 100;
-  return {
-    x: rounded(clamp((to.x - from.x) * 0.55, -12, 12)),
-    y: rounded(clamp((to.y - from.y) * 0.55, -14, 14)),
   };
 }
 

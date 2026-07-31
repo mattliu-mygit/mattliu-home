@@ -1,8 +1,12 @@
-import type {
-  DestinationSlug,
-  Point,
-  SiteContent,
-} from "../content/site-content";
+import {
+  forwardRef,
+  type CSSProperties,
+  useImperativeHandle,
+  useRef,
+} from "react";
+
+import type { Point2d } from "../celestial-motion";
+import type { DestinationSlug, SiteContent } from "../content/site-content";
 import type { UniverseView } from "../navigation";
 import {
   ConstellationMap,
@@ -15,25 +19,63 @@ type ConstellationWorldProps = {
   activeSlugs: Partial<Record<DestinationSlug, string>>;
   destinations: readonly Destination[];
   items: Record<DestinationSlug, readonly ConstellationItem[]>;
-  onEnter: (
-    destination: DestinationSlug,
-    itemSlug?: string,
-    origin?: Point,
-  ) => void;
+  onEnter: (destination: DestinationSlug, itemSlug?: string) => void;
   onSelect: (destination: DestinationSlug, itemSlug: string) => void;
+  onCameraSettled: () => void;
   view: UniverseView;
 };
 
-export function ConstellationWorld({
-  activeSlugs,
-  destinations,
-  items,
-  onEnter,
-  onSelect,
-  view,
-}: ConstellationWorldProps) {
+export type ConstellationWorldHandle = {
+  setFocusOffset: (offset: Point2d) => void;
+};
+
+export const ConstellationWorld = forwardRef<
+  ConstellationWorldHandle,
+  ConstellationWorldProps
+>(function ConstellationWorld(
+  {
+    activeSlugs,
+    destinations,
+    items,
+    onCameraSettled,
+    onEnter,
+    onSelect,
+    view,
+  },
+  forwardedRef,
+) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useImperativeHandle(
+    forwardedRef,
+    () => ({
+      setFocusOffset: (offset) => {
+        rootRef.current?.style.setProperty("--focus-offset-x", `${offset.x}%`);
+        rootRef.current?.style.setProperty("--focus-offset-y", `${offset.y}%`);
+      },
+    }),
+    [],
+  );
+
   return (
-    <div className="constellation-world" data-testid="constellation-world">
+    <div
+      className="constellation-world"
+      data-testid="constellation-world"
+      onTransitionEnd={(event) => {
+        if (
+          event.target === event.currentTarget &&
+          (!event.propertyName || event.propertyName === "transform")
+        ) {
+          onCameraSettled();
+        }
+      }}
+      ref={rootRef}
+      style={
+        {
+          "--focus-offset-x": "0%",
+          "--focus-offset-y": "0%",
+        } as CSSProperties
+      }
+    >
       {destinations.map((destination) => {
         const mode =
           view === "universe"
@@ -59,10 +101,10 @@ export function ConstellationWorld({
             kind={destination.slug}
             label={destination.label}
             mode={mode}
-            onOpen={(origin) => onEnter(destination.slug, undefined, origin)}
-            onSelect={(itemSlug, origin) => {
+            onOpen={() => onEnter(destination.slug)}
+            onSelect={(itemSlug) => {
               if (mode === "overview") {
-                onEnter(destination.slug, itemSlug, origin);
+                onEnter(destination.slug, itemSlug);
               } else if (mode === "detail") {
                 onSelect(destination.slug, itemSlug);
               }
@@ -73,4 +115,4 @@ export function ConstellationWorld({
       })}
     </div>
   );
-}
+});

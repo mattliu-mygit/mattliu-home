@@ -170,6 +170,10 @@ test("scrolling the narrative wheel pans directly between constellations", async
   page,
 }) => {
   await page.goto("/#projects");
+  const world = page.locator(".constellation-world");
+  await world.evaluate((element) => {
+    element.dataset.identityProbe = "persistent";
+  });
   await page.locator('[data-story-beat="quotes"]').evaluate((element) => {
     element
       .closest(".narrative-wheel__scroll")
@@ -181,10 +185,64 @@ test("scrolling the narrative wheel pans directly between constellations", async
   });
 
   await expect(page).toHaveURL(/#quotes$/);
-  await expect(page.locator(".constellation-view")).toHaveAttribute(
-    "data-camera-transition",
-    "pan",
+  await expect(world).toHaveAttribute("data-identity-probe", "persistent");
+  await expect(page.locator(".universe")).toHaveCSS(
+    "--camera-origin-x",
+    "63%",
   );
+});
+
+test("constellations keep one visible identity through camera travel", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const pathStar = page.locator("#constellation-star-path-johns-hopkins");
+  await pathStar.evaluate((element) => {
+    element.dataset.identityProbe = "persistent";
+  });
+
+  await pathStar.click();
+  await expect(page).toHaveURL(/#path\/johns-hopkins$/);
+  await expect(pathStar).toHaveAttribute("data-identity-probe", "persistent");
+  await expect(pathStar.locator(".constellation-star__point")).toHaveCSS(
+    "opacity",
+    "1",
+  );
+  await expect(
+    page.locator('[data-testid="path-constellation"] line').first(),
+  ).toHaveCSS("transition-property", "stroke");
+  await expect(
+    page.locator('[data-testid="projects-constellation"]'),
+  ).not.toHaveCSS("display", "none");
+
+  await page.getByRole("button", { name: "Go to Universe" }).click();
+  await expect(pathStar).toHaveAttribute("data-identity-probe", "persistent");
+});
+
+test("story travel moves focus out of an inactive constellation", async ({
+  page,
+}) => {
+  await page.goto("/#path/aws-sagemaker");
+  const star = page
+    .locator('[data-testid="path-constellation"]')
+    .getByRole("button", { name: "Focus AWS SageMaker" });
+  await star.click();
+  await expect(star).toBeFocused();
+
+  await page.locator('[data-story-beat="projects"]').evaluate((element) => {
+    element
+      .closest(".narrative-wheel__scroll")
+      ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    element.scrollIntoView({ block: "center" });
+    element.closest(".narrative-wheel__scroll")?.dispatchEvent(
+      new Event("scroll", { bubbles: true }),
+    );
+  });
+
+  await expect(page).toHaveURL(/#projects$/);
+  await expect(
+    page.getByRole("heading", { name: "Projects constellation" }),
+  ).toBeFocused();
 });
 
 test("Quotes is a constellation with selectable stars", async ({ page }) => {
@@ -358,7 +416,13 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
     projection.second[0],
     projection.second[1],
   ]);
-  expect(projection.planeTransform).toBe("none");
+  const translation = projection.planeTransform
+    .slice(projection.planeTransform.indexOf("(") + 1, -1)
+    .split(",")
+    .slice(-2)
+    .map(Number);
+  expect(translation[0]).toBeCloseTo(0, 3);
+  expect(translation[1]).toBeCloseTo(0, 3);
 
   await page.waitForTimeout(1800);
   const stabilized = await page.locator(".universe").evaluate((element) => {
@@ -411,7 +475,7 @@ test("card and open-sky wheel input advance the story equally", async ({
   expect(movement).toEqual({ cardDelta: 48, skyDelta: 48 });
 });
 
-test("camera arrival starts at the activated constellation origin", async ({
+test("camera travel keeps the configured constellation origin", async ({
   page,
 }) => {
   await page.goto("/");
@@ -420,7 +484,7 @@ test("camera arrival starts at the activated constellation origin", async ({
     Promise.all(element.getAnimations().map((animation) => animation.finished)),
   );
   const projects = page.locator(
-    '[data-testid="projects-constellation-overview"]',
+    '[data-testid="projects-constellation"]',
   );
   const overviewBox = await overview.boundingBox();
   const projectsBox = await projects.boundingBox();
@@ -449,13 +513,19 @@ test("camera arrival starts at the activated constellation origin", async ({
   expect(rootOrigin.x).toBeCloseTo(expected.x, 0);
   expect(rootOrigin.y).toBeCloseTo(expected.y, 0);
 
-  const detail = page.locator(".constellation-view");
-  const { size, transformOrigin } = await detail.evaluate((element) => ({
-    size: { width: element.clientWidth, height: element.clientHeight },
-    transformOrigin: getComputedStyle(element)
-      .transformOrigin.split(" ")
-      .map((value) => Number.parseFloat(value)),
-  }));
+  const world = page.locator(".constellation-world");
+  await world.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
+  const { size, transformOrigin, transitionProperty } = await world.evaluate(
+    (element) => ({
+      size: { width: element.clientWidth, height: element.clientHeight },
+      transformOrigin: getComputedStyle(element)
+        .transformOrigin.split(" ")
+        .map((value) => Number.parseFloat(value)),
+      transitionProperty: getComputedStyle(element).transitionProperty,
+    }),
+  );
   expect(transformOrigin[0]).toBeCloseTo(
     (expected.x / 100) * size.width,
     0,
@@ -463,6 +533,54 @@ test("camera arrival starts at the activated constellation origin", async ({
   expect(transformOrigin[1]).toBeCloseTo(
     (expected.y / 100) * size.height,
     0,
+  );
+  expect(transitionProperty).toContain("transform");
+});
+
+test("within-constellation scroll guides the same plane continuously", async ({
+  page,
+}) => {
+  await page.goto("/#path/johns-hopkins");
+  const samples = await page.locator(".narrative-wheel__scroll").evaluate(
+    async (scroll) => {
+      const from = scroll.querySelector<HTMLElement>(
+        '[data-story-beat="path/johns-hopkins"]',
+      );
+      const to = scroll.querySelector<HTMLElement>(
+        '[data-story-beat="path/aws-sagemaker"]',
+      );
+      const world = document.querySelector<HTMLElement>(".constellation-world");
+      if (!from || !to || !world) {
+        throw new Error("Path travel controls are missing");
+      }
+      const center = (element: HTMLElement) =>
+        element.offsetTop + element.offsetHeight / 2;
+      const fromCenter = center(from);
+      const toCenter = center(to);
+      const values: { x: number; y: number }[] = [];
+      for (const progress of [0.15, 0.5, 0.85]) {
+        scroll.scrollTop =
+          fromCenter + (toCenter - fromCenter) * progress -
+          scroll.clientHeight / 2;
+        scroll.dispatchEvent(new Event("scroll", { bubbles: true }));
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        });
+        values.push({
+          x: Number.parseFloat(world.style.getPropertyValue("--focus-offset-x")),
+          y: Number.parseFloat(world.style.getPropertyValue("--focus-offset-y")),
+        });
+      }
+      return values;
+    },
+  );
+
+  expect(samples[0].x).toBeGreaterThan(samples[1].x);
+  expect(samples[1].x).toBeGreaterThan(samples[2].x);
+  expect(samples[0].y).toBeLessThan(samples[1].y);
+  expect(samples[1].y).toBeLessThan(samples[2].y);
+  expect(samples.every(({ x, y }) => Math.abs(x) <= 4 && Math.abs(y) <= 3)).toBe(
+    true,
   );
 });
 
@@ -509,9 +627,10 @@ test("mobile overview and project labels remain inside the viewport", async ({
   }
 
   await page.getByRole("button", { name: "Explore Projects" }).click();
-  const labels = page.locator(
-    ".constellation-view--projects .constellation-star__copy",
-  );
+  const labels = page
+    .locator('[data-testid="projects-constellation"]')
+    .locator(".constellation-star__copy");
+  await expect(labels).toHaveCount(5);
   const escaped: number[] = [];
   for (let index = 0; index < (await labels.count()); index += 1) {
     const box = await labels.nth(index).boundingBox();
@@ -522,21 +641,37 @@ test("mobile overview and project labels remain inside the viewport", async ({
   expect(escaped).toEqual([]);
 });
 
-test("reduced motion removes camera transforms and shooting stars", async ({
+test("reduced motion keeps a static sky and applies camera state immediately", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
 
-  await expect(page.locator(".celestial-field")).toHaveCSS("display", "none");
+  await expect(page.locator(".celestial-field")).toHaveCSS("display", "block");
   await page.getByRole("button", { name: "Explore Projects" }).click();
-  await expect(page.locator(".constellation-view")).toHaveCSS(
-    "transform",
-    "none",
+  await expect(page.locator(".constellation-world")).toHaveCSS(
+    "transition-duration",
+    "0s",
   );
-  await expect(page.locator(".constellation-map__plane")).toHaveCSS(
-    "transform",
-    "none",
+  await expect(page.locator(".constellation-map__plane").first()).toHaveCSS(
+    "transition-duration",
+    "0s",
+  );
+  await page
+    .locator('[data-story-beat="projects/model-customization-assistant"]')
+    .evaluate((element) => {
+      element.scrollIntoView({ block: "center" });
+      element.closest(".narrative-wheel__scroll")?.dispatchEvent(
+        new Event("scroll", { bubbles: true }),
+      );
+    });
+  await expect(page.locator(".constellation-world")).toHaveCSS(
+    "--focus-offset-x",
+    "0%",
+  );
+  await expect(page.locator(".constellation-world")).toHaveCSS(
+    "--focus-offset-y",
+    "0%",
   );
 });
 

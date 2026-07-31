@@ -19,18 +19,18 @@ import {
   type CelestialMotion,
   type Meteor,
   type Point2d,
+  type WorldCamera,
 } from "../celestial-motion";
 import {
   CelestialMotionProvider,
   createCelestialMotionChannel,
   type CelestialMotionChannel,
 } from "../celestial-motion-channel";
-import type { Point } from "../content/site-content";
 import type { UniverseView } from "../navigation";
 import type { NarrativeWheelInput } from "../wheel-input";
 
 type CelestialSceneProps = PropsWithChildren<{
-  cameraOrigin: Point;
+  camera: WorldCamera;
   constellationDirection: Point2d;
   interactive: boolean;
   view: UniverseView;
@@ -47,7 +47,7 @@ const starTemperature = {
 } as const;
 
 export function CelestialScene({
-  cameraOrigin,
+  camera,
   children,
   constellationDirection,
   interactive,
@@ -139,9 +139,6 @@ export function CelestialScene({
     const reducedMotion =
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
       false;
-    if (reducedMotion) {
-      return;
-    }
 
     const context = canvas.getContext("2d");
     if (!context) {
@@ -225,6 +222,17 @@ export function CelestialScene({
         context.restore();
       }
     };
+
+    if (reducedMotion) {
+      const drawStaticField = () => {
+        resize();
+        context.clearRect(0, 0, width, height);
+        drawStars(0);
+      };
+      drawStaticField();
+      window.addEventListener("resize", drawStaticField);
+      return () => window.removeEventListener("resize", drawStaticField);
+    }
 
     const drawMeteor = (now: number) => {
       if (!meteor && now >= nextMeteorAt) {
@@ -321,12 +329,15 @@ export function CelestialScene({
         ref={rootRef}
         style={
           {
-            "--camera-origin-x": `${cameraOrigin[0]}%`,
-            "--camera-origin-y": `${cameraOrigin[1]}%`,
+            "--camera-origin-x": `${camera.origin.x}%`,
+            "--camera-origin-y": `${camera.origin.y}%`,
+            "--camera-scale": camera.scale,
+            "--camera-inverse-scale": 1 / camera.scale,
             "--constellation-pull-x": "0px",
             "--constellation-pull-y": "0px",
           } as CSSProperties
         }
+        data-camera-focused={camera.focused ? "true" : undefined}
       >
         <canvas
           className="celestial-field"

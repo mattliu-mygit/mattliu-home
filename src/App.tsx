@@ -1,21 +1,17 @@
-import {
-  type CSSProperties,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { flushSync } from "react-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  cameraTravelVector,
+  constellationFocusOffset,
+  constellationFocusPoint,
   type Point2d,
+  worldCameraFor,
 } from "./celestial-motion";
 import { CelestialScene } from "./components/CelestialScene";
+import { type ConstellationItem } from "./components/ConstellationMap";
 import {
-  type ConstellationItem,
-} from "./components/ConstellationMap";
-import { ConstellationWorld } from "./components/ConstellationWorld";
+  ConstellationWorld,
+  type ConstellationWorldHandle,
+} from "./components/ConstellationWorld";
 import {
   NarrativeWheel,
   type NarrativeWheelHandle,
@@ -27,7 +23,6 @@ import {
   projectBySlug,
   siteContent,
   type DestinationSlug,
-  type Point,
 } from "./content/site-content";
 import {
   parseUniverseLocation,
@@ -38,9 +33,9 @@ import {
 import {
   createStoryBeats,
   storyBeatForLocation,
+  type ConstellationTravel,
   type StoryBeat,
 } from "./story-navigation";
-import { runViewTransition } from "./view-transition";
 
 const { person, path, projects, quotes, destinations } = siteContent;
 const destinationBySlug = Object.fromEntries(
@@ -156,11 +151,6 @@ export default function App() {
       ? (initialLocation.current.quoteSlug ?? quotes[0].slug)
       : quotes[0].slug,
   );
-  const [cameraOrigin, setCameraOrigin] = useState<Point>(() =>
-    initialLocation.current.view === "universe"
-      ? [50, 50]
-      : destinationBySlug[initialLocation.current.view].position,
-  );
   const [activeStoryId, setActiveStoryId] = useState(() =>
     storyBeatForLocation(initialLocation.current),
   );
@@ -176,15 +166,12 @@ export default function App() {
   const [wheelCollapsed, setWheelCollapsed] = useState(
     () => window.sessionStorage.getItem("narrative-wheel-collapsed") === "true",
   );
-  const [cameraTransition, setCameraTransition] = useState<
-    "arrive" | "pan" | "settled"
-  >("arrive");
-  const [cameraPan, setCameraPan] = useState<Point2d>({ x: 0, y: 0 });
   const [constellationDirection, setConstellationDirection] =
     useState<Point2d>(() => directionForSelection("path"));
   const viewHeading = useRef<HTMLHeadingElement>(null);
   const wheelRef = useRef<NarrativeWheelHandle>(null);
   const routeRailRef = useRef<RouteRailHandle>(null);
+  const constellationWorldRef = useRef<ConstellationWorldHandle>(null);
   const lastUniverseTarget = useRef<{
     slug: DestinationSlug;
     itemSlug?: string;
@@ -192,13 +179,20 @@ export default function App() {
   const lastProjectTrigger = useRef<HTMLElement | null>(null);
   const pendingFocus = useRef<PendingFocus>(null);
   const pendingProjectOpen = useRef<string | null>(null);
-  const spatialTransitionRequest = useRef(0);
   const selectedProject =
     location.view === "projects" && location.projectSlug
       ? projectBySlug(location.projectSlug)
       : undefined;
   const selectedQuote =
     quotes.find((quote) => quote.slug === selectedQuoteSlug) ?? quotes[0];
+  const cameraDestination =
+    location.view === "universe"
+      ? { x: 50, y: 50 }
+      : {
+          x: destinationBySlug[location.view].position[0],
+          y: destinationBySlug[location.view].position[1],
+        };
+  const camera = worldCameraFor(location.view, cameraDestination);
 
   const aimConstellation = useCallback(
     (view: DestinationSlug, toSlug?: string) => {
@@ -241,32 +235,6 @@ export default function App() {
     [],
   );
 
-  const configureCamera = useCallback(
-    (nextView: DestinationSlug, origin?: Point) => {
-      setCameraOrigin(origin ?? destinationBySlug[nextView].position);
-      const previousView = location.view;
-      const shouldPan = previousView !== "universe" && previousView !== nextView;
-      setCameraTransition(
-        shouldPan
-          ? "pan"
-          : previousView === "universe"
-            ? "arrive"
-            : "settled",
-      );
-      if (shouldPan) {
-        const previous = destinationBySlug[previousView].position;
-        const next = destinationBySlug[nextView].position;
-        setCameraPan(
-          cameraTravelVector(
-            { x: previous[0], y: previous[1] },
-            { x: next[0], y: next[1] },
-          ),
-        );
-      }
-    },
-    [location.view],
-  );
-
   const openProject = useCallback(
     (slug: string) => {
       pendingProjectOpen.current = null;
@@ -280,116 +248,55 @@ export default function App() {
     [aimConstellation, commitLocation, requestStoryScroll],
   );
 
-  const runSpatialUpdate = useCallback(
-    (
-      update: () => void,
-      target: DestinationSlug,
-      onFinished?: () => void,
-    ) => {
-      const request = ++spatialTransitionRequest.current;
-      const transition = runViewTransition(
-        document,
-        () => flushSync(update),
-        !prefersReducedMotion(),
-        target,
-      );
-      if (transition && onFinished) {
-        void transition.finished.then(
-          () => {
-            if (request === spatialTransitionRequest.current) {
-              onFinished();
-            }
-          },
-          () => undefined,
-        );
-      }
-      return transition;
-    },
-    [],
-  );
-
   const enterConstellation = useCallback(
-    (view: DestinationSlug, itemSlug?: string, origin?: Point) => {
-      const update = () => {
-        lastUniverseTarget.current = { slug: view, itemSlug };
-        configureCamera(view, origin);
-        pendingProjectOpen.current = null;
-        if (view === "path" && itemSlug) {
-          aimConstellation(view, itemSlug);
-          setSelectedPathSlug(itemSlug);
-        } else if (view === "projects" && itemSlug) {
-          aimConstellation(view, itemSlug);
-          setSelectedProjectSlug(itemSlug);
-          pendingProjectOpen.current = itemSlug;
-        } else if (view === "quotes" && itemSlug) {
-          aimConstellation(view, itemSlug);
-          setSelectedQuoteSlug(itemSlug);
-        } else {
-          aimConstellation(view);
-        }
-        const storyId = itemSlug ? `${view}/${itemSlug}` : view;
-        setActiveStoryId(storyId);
-        requestStoryScroll(storyId, "auto");
-        commitLocation(
-          locationFor(view, view === "projects" ? undefined : itemSlug),
-          { focus: { type: "heading" } },
-        );
-      };
-      if (location.view !== "universe") {
-        update();
-        return;
+    (view: DestinationSlug, itemSlug?: string) => {
+      lastUniverseTarget.current = { slug: view, itemSlug };
+      pendingProjectOpen.current = null;
+      if (view === "path" && itemSlug) {
+        aimConstellation(view, itemSlug);
+        setSelectedPathSlug(itemSlug);
+      } else if (view === "projects" && itemSlug) {
+        aimConstellation(view, itemSlug);
+        setSelectedProjectSlug(itemSlug);
+        pendingProjectOpen.current = itemSlug;
+      } else if (view === "quotes" && itemSlug) {
+        aimConstellation(view, itemSlug);
+        setSelectedQuoteSlug(itemSlug);
+      } else {
+        aimConstellation(view);
       }
-      runSpatialUpdate(
-        update,
-        view,
-        () => {
-          const pendingSlug = pendingProjectOpen.current;
-          if (pendingSlug) {
-            openProject(pendingSlug);
-          }
-        },
+      const storyId = itemSlug ? `${view}/${itemSlug}` : view;
+      setActiveStoryId(storyId);
+      requestStoryScroll(storyId, "auto");
+      commitLocation(
+        locationFor(view, view === "projects" ? undefined : itemSlug),
+        { focus: { type: "heading" } },
       );
     },
-    [
-      commitLocation,
-      configureCamera,
-      location.view,
-      aimConstellation,
-      openProject,
-      requestStoryScroll,
-      runSpatialUpdate,
-    ],
+    [aimConstellation, commitLocation, requestStoryScroll],
   );
 
   const returnToUniverse = useCallback(() => {
     const destination = location.view === "universe" ? "path" : location.view;
     const previousTarget = lastUniverseTarget.current;
-    const update = () => {
-      pendingProjectOpen.current = null;
-      setCameraTransition("arrive");
-      setActiveStoryId("intro/name");
-      requestStoryScroll("intro/name", "auto");
-      commitLocation(
-        { view: "universe" },
-        {
-          replace: true,
-          focus: {
-            type: "universe",
-            slug: destination,
-            itemSlug:
-              previousTarget?.slug === destination
-                ? previousTarget.itemSlug
-                : undefined,
-          },
+    pendingProjectOpen.current = null;
+    setActiveStoryId("intro/name");
+    requestStoryScroll("intro/name", "auto");
+    commitLocation(
+      { view: "universe" },
+      {
+        replace: true,
+        focus: {
+          type: "universe",
+          slug: destination,
+          itemSlug:
+            previousTarget?.slug === destination
+              ? previousTarget.itemSlug
+              : undefined,
         },
-      );
-    };
-    if (location.view === "universe") {
-      update();
-    } else {
-      runSpatialUpdate(update, destination);
-    }
-  }, [commitLocation, location.view, requestStoryScroll, runSpatialUpdate]);
+      },
+    );
+  }, [commitLocation, location.view, requestStoryScroll]);
 
   const closeProject = useCallback(() => {
     commitLocation(
@@ -441,58 +348,51 @@ export default function App() {
       }
       pendingProjectOpen.current = null;
       setActiveStoryId(beat.id);
+      const focusLeavesConstellation =
+        location.view !== (beat.kind === "intro" ? "universe" : beat.view) &&
+        document.activeElement?.closest(".constellation-map");
 
       if (beat.kind === "intro") {
         if (location.view !== "universe") {
-          runSpatialUpdate(
-            () => {
-              setCameraTransition("arrive");
-              commitLocation({ view: "universe" }, { replace: true });
+          commitLocation(
+            { view: "universe" },
+            {
+              replace: true,
+              focus: focusLeavesConstellation
+                ? { type: "universe", slug: location.view }
+                : undefined,
             },
-            location.view,
           );
         }
         return;
       }
 
-      const update = () => {
-        configureCamera(beat.view);
-        if (beat.kind === "path") {
-          aimConstellation(beat.view, beat.itemSlug);
-          setSelectedPathSlug(beat.itemSlug);
-        } else if (beat.kind === "project") {
-          aimConstellation(beat.view, beat.itemSlug);
-          setSelectedProjectSlug(beat.itemSlug);
-        } else if (beat.kind === "quote") {
-          aimConstellation(beat.view, beat.itemSlug);
-          setSelectedQuoteSlug(beat.itemSlug);
-        } else {
-          aimConstellation(beat.view);
-        }
-        commitLocation(
-          locationFor(
-            beat.view,
-            beat.kind === "project" || beat.kind === "destination"
-              ? undefined
-              : beat.itemSlug,
-          ),
-          { replace: true },
-        );
-      };
-      if (location.view === "universe") {
-        runSpatialUpdate(update, beat.view);
+      if (beat.kind === "path") {
+        aimConstellation(beat.view, beat.itemSlug);
+        setSelectedPathSlug(beat.itemSlug);
+      } else if (beat.kind === "project") {
+        aimConstellation(beat.view, beat.itemSlug);
+        setSelectedProjectSlug(beat.itemSlug);
+      } else if (beat.kind === "quote") {
+        aimConstellation(beat.view, beat.itemSlug);
+        setSelectedQuoteSlug(beat.itemSlug);
       } else {
-        update();
+        aimConstellation(beat.view);
       }
+      commitLocation(
+        locationFor(
+          beat.view,
+          beat.kind === "project" || beat.kind === "destination"
+            ? undefined
+            : beat.itemSlug,
+        ),
+        {
+          replace: true,
+          focus: focusLeavesConstellation ? { type: "heading" } : undefined,
+        },
+      );
     },
-    [
-      activeStoryId,
-      aimConstellation,
-      commitLocation,
-      configureCamera,
-      location.view,
-      runSpatialUpdate,
-    ],
+    [activeStoryId, aimConstellation, commitLocation, location.view],
   );
 
   const activateStoryBeat = useCallback(
@@ -545,24 +445,53 @@ export default function App() {
     [handleStoryBeat, location.view, requestStoryScroll, returnToUniverse],
   );
 
-  const finishCameraArrival = useCallback(
-    (event: React.AnimationEvent<HTMLElement>) => {
-      if (event.target !== event.currentTarget || !pendingProjectOpen.current) {
-        return;
-      }
+  const finishCameraArrival = useCallback(() => {
+    if (pendingProjectOpen.current) {
       openProject(pendingProjectOpen.current);
-    },
-    [openProject],
-  );
+    }
+  }, [openProject]);
 
   const changeWheelVisibility = useCallback((collapsed: boolean) => {
     setWheelCollapsed(collapsed);
     window.sessionStorage.setItem("narrative-wheel-collapsed", String(collapsed));
   }, []);
 
-  const updateRouteProgress = useCallback((progress: number) => {
-    routeRailRef.current?.setProgress(progress);
-  }, []);
+  const updateRouteProgress = useCallback(
+    (progress: number, travel: ConstellationTravel | null) => {
+      routeRailRef.current?.setProgress(progress);
+      if (
+        prefersReducedMotion() ||
+        !travel ||
+        travel.view !== location.view
+      ) {
+        constellationWorldRef.current?.setFocusOffset({ x: 0, y: 0 });
+        return;
+      }
+      const items = constellationItems[travel.view];
+      const from = travel.fromSlug
+        ? items.find(({ slug }) => slug === travel.fromSlug)
+        : undefined;
+      const to = travel.toSlug
+        ? items.find(({ slug }) => slug === travel.toSlug)
+        : undefined;
+      if ((travel.fromSlug && !from) || (travel.toSlug && !to)) {
+        return;
+      }
+      const focus = constellationFocusPoint(
+        from ? { x: from.position[0], y: from.position[1] } : { x: 50, y: 50 },
+        to ? { x: to.position[0], y: to.position[1] } : { x: 50, y: 50 },
+        travel.progress,
+      );
+      constellationWorldRef.current?.setFocusOffset(
+        constellationFocusOffset(focus),
+      );
+    },
+    [location.view],
+  );
+
+  useEffect(() => {
+    constellationWorldRef.current?.setFocusOffset({ x: 0, y: 0 });
+  }, [location.view]);
 
   useEffect(() => {
     const syncFromUrl = () => {
@@ -576,17 +505,12 @@ export default function App() {
       }
       pendingFocus.current = null;
       pendingProjectOpen.current = null;
-      spatialTransitionRequest.current += 1;
       if (nextLocation.view === "path" && nextLocation.pathSlug) {
         setSelectedPathSlug(nextLocation.pathSlug);
       } else if (nextLocation.view === "projects" && nextLocation.projectSlug) {
         setSelectedProjectSlug(nextLocation.projectSlug);
       } else if (nextLocation.view === "quotes" && nextLocation.quoteSlug) {
         setSelectedQuoteSlug(nextLocation.quoteSlug);
-      }
-      if (nextLocation.view !== "universe") {
-        setCameraOrigin(destinationBySlug[nextLocation.view].position);
-        setCameraTransition("arrive");
       }
       const nextStoryId = storyBeatForLocation(nextLocation);
       setActiveStoryId(nextStoryId);
@@ -642,7 +566,7 @@ export default function App() {
 
   return (
     <CelestialScene
-      cameraOrigin={cameraOrigin}
+      camera={camera}
       constellationDirection={constellationDirection}
       interactive={!selectedProject}
       onOpenSkyWheel={(input) => {
@@ -688,32 +612,22 @@ export default function App() {
               ? "universe-overview"
               : `constellation-view constellation-view--${constellationView}`
           }
-          data-camera-transition={
-            location.view === "universe" ? undefined : cameraTransition
-          }
-          onAnimationEnd={finishCameraArrival}
           role="region"
-          style={
-            {
-              "--camera-pan-x": `${cameraPan.x}vw`,
-              "--camera-pan-y": `${cameraPan.y}vh`,
-            } as CSSProperties
-          }
         >
           {location.view !== "universe" ? (
             <>
-            <h2
-              className="constellation-view__title"
-              id="constellation-view-title"
-              ref={viewHeading}
-              tabIndex={-1}
-            >
-              {destinationBySlug[constellationView].label} constellation
-            </h2>
+              <h2
+                className="constellation-view__title"
+                id="constellation-view-title"
+                ref={viewHeading}
+                tabIndex={-1}
+              >
+                {destinationBySlug[constellationView].label} constellation
+              </h2>
 
-            {constellationView === "quotes" ? (
-              <QuoteReadout hidden={!wheelCollapsed} quote={selectedQuote} />
-            ) : null}
+              {constellationView === "quotes" ? (
+                <QuoteReadout hidden={!wheelCollapsed} quote={selectedQuote} />
+              ) : null}
             </>
           ) : null}
           <ConstellationWorld
@@ -725,6 +639,7 @@ export default function App() {
             destinations={destinations}
             items={constellationItems}
             onEnter={enterConstellation}
+            onCameraSettled={finishCameraArrival}
             onSelect={(view, slug) => {
               if (view === "path") {
                 selectPath(slug);
@@ -735,6 +650,7 @@ export default function App() {
               }
             }}
             view={location.view}
+            ref={constellationWorldRef}
           />
         </section>
       </div>

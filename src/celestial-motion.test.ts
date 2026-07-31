@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   advanceCelestialMotion,
   applyWheelImpulse,
-  cameraTravelVector,
   constellationFocusOffset,
   constellationFocusPoint,
   constellationDrift,
@@ -14,6 +13,7 @@ import {
   meteorSegment,
   parallaxDisplacement,
   projectConstellationPoint,
+  worldCameraFor,
   type CelestialMotion,
 } from "./celestial-motion";
 
@@ -50,13 +50,16 @@ describe("celestial motion", () => {
     expect(drift.y).toBeCloseTo(7.56);
   });
 
-  it("derives camera travel from the actual constellation coordinates", () => {
-    expect(
-      cameraTravelVector({ x: 77, y: 48 }, { x: 63, y: 72 }),
-    ).toEqual({ x: -7.7, y: 13.2 });
-    expect(cameraTravelVector({ x: 63, y: 72 }, { x: 77, y: 48 })).toEqual({
-      x: 7.7,
-      y: -13.2,
+  it("derives stable universe and focused world-camera targets", () => {
+    expect(worldCameraFor("universe", { x: 61, y: 25 })).toEqual({
+      origin: { x: 50, y: 50 },
+      scale: 1,
+      focused: false,
+    });
+    expect(worldCameraFor("path", { x: 61, y: 25 })).toEqual({
+      origin: { x: 61, y: 25 },
+      scale: 3.4,
+      focused: true,
     });
   });
 
