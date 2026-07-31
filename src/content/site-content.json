@@ -71,7 +71,9 @@
       "area": "Foundation",
       "summary": "Learning across systems thinking, research, and building.",
       "position": [12, 72],
-      "depth": 1.04
+      "depth": 1.04,
+      "tone": "warm",
+      "prominence": 2
     },
     {
       "slug": "aws-sagemaker",
@@ -80,7 +82,9 @@
       "area": "AI Platforms",
       "summary": "Production model-customization workflows spanning preparation, training, evaluation, and deployment.",
       "position": [48, 28],
-      "depth": 0.94
+      "depth": 0.94,
+      "tone": "cool",
+      "prominence": 2
     },
     {
       "slug": "wandb-weave",
@@ -89,7 +93,9 @@
       "area": "Evaluation and observability",
       "summary": "Systems that make agent behavior inspectable and easier to improve.",
       "position": [88, 58],
-      "depth": 1.08
+      "depth": 1.08,
+      "tone": "violet",
+      "prominence": 3
     }
   ],
   "projects": [
@@ -106,7 +112,9 @@
       "linkLabel": "View project",
       "artifact": "ucredit",
       "position": [13, 72],
-      "depth": 1.06
+      "depth": 1.06,
+      "tone": "warm",
+      "prominence": 1
     },
     {
       "slug": "model-customization-assistant",
@@ -121,7 +129,9 @@
       "linkLabel": "Read the launch",
       "artifact": "customization",
       "position": [31, 43],
-      "depth": 0.97
+      "depth": 0.97,
+      "tone": "cool",
+      "prominence": 2
     },
     {
       "slug": "llm-as-a-judge",
@@ -134,7 +144,9 @@
       "technologies": ["LLM evaluation", "Weave", "Evidence design"],
       "artifact": "judge",
       "position": [51, 64],
-      "depth": 1.03
+      "depth": 1.03,
+      "tone": "violet",
+      "prominence": 2
     },
     {
       "slug": "weave-agent-adapter",
@@ -149,7 +161,9 @@
       "linkLabel": "View source",
       "artifact": "trace",
       "position": [71, 34],
-      "depth": 0.92
+      "depth": 0.92,
+      "tone": "cool",
+      "prominence": 3
     },
     {
       "slug": "monopole",
@@ -164,7 +178,9 @@
       "linkLabel": "View source",
       "artifact": "interface",
       "position": [89, 16],
-      "depth": 1.08
+      "depth": 1.08,
+      "tone": "violet",
+      "prominence": 3
     }
   ],
   "quotes": [
@@ -174,7 +190,9 @@
       "author": "Ludwig Mies van der Rohe",
       "sourceUrl": "https://www.moma.org/collection/artists/7166",
       "position": [14, 58],
-      "depth": 1.04
+      "depth": 1.04,
+      "tone": "warm",
+      "prominence": 3
     },
     {
       "slug": "failure-to-failure",
@@ -183,7 +201,9 @@
       "sourceUrl": "https://quoteinvestigator.com/2014/06/28/success/",
       "attributionNote": "Origin unknown; commonly misattributed to Winston Churchill.",
       "position": [29, 29],
-      "depth": 0.94
+      "depth": 0.94,
+      "tone": "warm",
+      "prominence": 2
     },
     {
       "slug": "strong-opinions",
@@ -191,7 +211,9 @@
       "author": "Paul Saffo",
       "sourceUrl": "https://hbr.org/podcast/2007/07/harvard-business-ideacast-51-s",
       "position": [43, 67],
-      "depth": 1.07
+      "depth": 1.07,
+      "tone": "neutral",
+      "prominence": 2
     },
     {
       "slug": "simplicity-follows",
@@ -199,7 +221,9 @@
       "author": "Alan Perlis",
       "sourceUrl": "https://cs.yale.edu/homes/perlis-alan/quotes.html",
       "position": [57, 38],
-      "depth": 0.98
+      "depth": 0.98,
+      "tone": "cool",
+      "prominence": 2
     },
     {
       "slug": "create-understand",
@@ -207,7 +231,9 @@
       "author": "Richard Feynman",
       "sourceUrl": "https://magazine.caltech.edu/post/biology-through-the-eyes-of-a-physicist",
       "position": [69, 73],
-      "depth": 1.02
+      "depth": 1.02,
+      "tone": "warm",
+      "prominence": 2
     },
     {
       "slug": "computing-is-insight",
@@ -215,7 +241,9 @@
       "author": "Richard Hamming",
       "sourceUrl": "https://old.maa.org/node/111904",
       "position": [80, 42],
-      "depth": 0.92
+      "depth": 0.92,
+      "tone": "cool",
+      "prominence": 3
     },
     {
       "slug": "reality-precedes",
@@ -223,7 +251,9 @@
       "author": "Richard Feynman",
       "sourceUrl": "https://shepherd.caltech.edu/html/quotes.html",
       "position": [91, 17],
-      "depth": 1.08
+      "depth": 1.08,
+      "tone": "neutral",
+      "prominence": 3
     }
   ]
 }

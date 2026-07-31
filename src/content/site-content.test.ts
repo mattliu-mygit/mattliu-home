@@ -71,6 +71,43 @@ describe("site content", () => {
     }
   });
 
+  it("gives every constellation star intentional tone and prominence", () => {
+    for (const entries of [
+      siteContent.path,
+      siteContent.projects,
+      siteContent.quotes,
+    ]) {
+      expect(
+        entries.every((entry) =>
+          ["warm", "neutral", "cool", "violet"].includes(entry.tone),
+        ),
+      ).toBe(true);
+      expect(
+        entries.every((entry) => [1, 2, 3].includes(entry.prominence)),
+      ).toBe(true);
+    }
+  });
+
+  it("rejects unsupported constellation star intent", () => {
+    const invalidTone = cloneContent();
+    const toneProjects = invalidTone.projects as Array<Record<string, unknown>>;
+    toneProjects[0].tone = "rainbow";
+
+    expect(() => validateSiteContent(invalidTone)).toThrow(
+      /projects\[0\]\.tone must be warm, neutral, cool, or violet/i,
+    );
+
+    const invalidProminence = cloneContent();
+    const prominentProjects = invalidProminence.projects as Array<
+      Record<string, unknown>
+    >;
+    prominentProjects[0].prominence = 4;
+
+    expect(() => validateSiteContent(invalidProminence)).toThrow(
+      /projects\[0\]\.prominence must be 1, 2, or 3/i,
+    );
+  });
+
   it("rejects constellation depth outside the shallow projection range", () => {
     const invalid = cloneContent();
     const projects = invalid.projects as Array<Record<string, unknown>>;

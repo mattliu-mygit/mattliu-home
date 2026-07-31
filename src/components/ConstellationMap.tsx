@@ -6,6 +6,8 @@ import type {
   Connection,
   DestinationSlug,
   Point,
+  StarProminence,
+  StarTone,
 } from "../content/site-content";
 
 export type ConstellationItem = {
@@ -15,6 +17,8 @@ export type ConstellationItem = {
   meta: string;
   position: Point;
   depth: number;
+  tone: StarTone;
+  prominence: StarProminence;
 };
 
 type ConstellationMapProps = {
@@ -187,6 +191,8 @@ export function ConstellationMap({
               id={`constellation-star-${variant}-${kind}-${item.slug}`}
               key={item.slug}
               data-depth={item.depth}
+              data-tone={item.tone}
+              data-prominence={item.prominence}
               ref={(element) => {
                 if (element) {
                   starRefs.current.set(item.slug, element);

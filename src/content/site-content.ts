@@ -9,6 +9,8 @@ export type ArtifactType =
   | "judge"
   | "trace"
   | "interface";
+export type StarTone = "warm" | "neutral" | "cool" | "violet";
+export type StarProminence = 1 | 2 | 3;
 
 export type PublicLink = {
   label: string;
@@ -29,6 +31,8 @@ export type Project = {
   artifact: ArtifactType;
   position: Point;
   depth: number;
+  tone: StarTone;
+  prominence: StarProminence;
 };
 
 export type Quote = {
@@ -39,6 +43,8 @@ export type Quote = {
   attributionNote?: string;
   position: Point;
   depth: number;
+  tone: StarTone;
+  prominence: StarProminence;
 };
 
 export type PathEntry = {
@@ -49,6 +55,8 @@ export type PathEntry = {
   summary: string;
   position: Point;
   depth: number;
+  tone: StarTone;
+  prominence: StarProminence;
 };
 
 export type SiteContent = {
@@ -152,6 +160,27 @@ const depth = (value: unknown, path: string): number => {
   const parsed = number(value, path);
   if (parsed < 0.9 || parsed > 1.1) {
     throw new Error(`${path} must be between 0.9 and 1.1`);
+  }
+  return parsed;
+};
+
+const starTone = (value: unknown, path: string): StarTone => {
+  const parsed = text(value, path);
+  if (
+    parsed !== "warm" &&
+    parsed !== "neutral" &&
+    parsed !== "cool" &&
+    parsed !== "violet"
+  ) {
+    throw new Error(`${path} must be warm, neutral, cool, or violet`);
+  }
+  return parsed;
+};
+
+const starProminence = (value: unknown, path: string): StarProminence => {
+  const parsed = number(value, path);
+  if (parsed !== 1 && parsed !== 2 && parsed !== 3) {
+    throw new Error(`${path} must be 1, 2, or 3`);
   }
   return parsed;
 };
@@ -260,6 +289,11 @@ export function validateSiteContent(value: unknown): SiteContent {
       summary: text(entry.summary, `path[${index}].summary`),
       position: point(entry.position, `path[${index}].position`),
       depth: depth(entry.depth, `path[${index}].depth`),
+      tone: starTone(entry.tone, `path[${index}].tone`),
+      prominence: starProminence(
+        entry.prominence,
+        `path[${index}].prominence`,
+      ),
     };
   });
   assertUniqueSlugs(path, "path entry");
@@ -310,6 +344,11 @@ export function validateSiteContent(value: unknown): SiteContent {
       artifact,
       position: point(project.position, `projects[${index}].position`),
       depth: depth(project.depth, `projects[${index}].depth`),
+      tone: starTone(project.tone, `projects[${index}].tone`),
+      prominence: starProminence(
+        project.prominence,
+        `projects[${index}].prominence`,
+      ),
     };
   });
   assertUniqueSlugs(projects, "project");
@@ -327,6 +366,11 @@ export function validateSiteContent(value: unknown): SiteContent {
       ),
       position: point(quote.position, `quotes[${index}].position`),
       depth: depth(quote.depth, `quotes[${index}].depth`),
+      tone: starTone(quote.tone, `quotes[${index}].tone`),
+      prominence: starProminence(
+        quote.prominence,
+        `quotes[${index}].prominence`,
+      ),
     };
   });
   assertUniqueSlugs(quotes, "quote");

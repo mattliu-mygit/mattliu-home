@@ -26,6 +26,8 @@ describe("ConstellationMap motion", () => {
         meta: "One",
         position: [14, 58] as const,
         depth: 1.1,
+        tone: "warm" as const,
+        prominence: 3 as const,
       },
       {
         slug: "second",
@@ -33,6 +35,8 @@ describe("ConstellationMap motion", () => {
         meta: "Two",
         position: [29, 29] as const,
         depth: 0.9,
+        tone: "cool" as const,
+        prominence: 1 as const,
       },
     ];
 
@@ -71,6 +75,8 @@ describe("ConstellationMap motion", () => {
 
     expect(firstStar.style.getPropertyValue("--star-x")).toBe(`${first[0]}%`);
     expect(firstStar.style.getPropertyValue("--star-y")).toBe(`${first[1]}%`);
+    expect(firstStar).toHaveAttribute("data-tone", "warm");
+    expect(firstStar).toHaveAttribute("data-prominence", "3");
     expect(secondStar.style.getPropertyValue("--star-x")).toBe(`${second[0]}%`);
     expect(secondStar.style.getPropertyValue("--star-y")).toBe(`${second[1]}%`);
     expect(line).toHaveAttribute("x1", String(first[0]));

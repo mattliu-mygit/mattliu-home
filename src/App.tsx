@@ -59,6 +59,8 @@ const constellationItems: Record<
     meta: entry.area,
     position: entry.position,
     depth: entry.depth,
+    tone: entry.tone,
+    prominence: entry.prominence,
   })),
   projects: projects.map((project) => ({
     slug: project.slug,
@@ -66,6 +68,8 @@ const constellationItems: Record<
     meta: project.displayYear,
     position: project.position,
     depth: project.depth,
+    tone: project.tone,
+    prominence: project.prominence,
   })),
   quotes: quotes.map((quote) => ({
     slug: quote.slug,
@@ -74,6 +78,8 @@ const constellationItems: Record<
     meta: quote.author,
     position: quote.position,
     depth: quote.depth,
+    tone: quote.tone,
+    prominence: quote.prominence,
   })),
 };
 
