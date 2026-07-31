@@ -1,9 +1,61 @@
+import { useEffect, useRef, useState } from "react";
+
 import { AmbientStars } from "./components/AmbientStars";
 import { Constellation } from "./components/Constellation";
-import { projects } from "./projects";
+import { ProjectLens } from "./components/ProjectLens";
+import { projectBySlug, projects } from "./projects";
 
 export default function App() {
-  const openProject = () => undefined;
+  const [selectedSlug, setSelectedSlug] = useState(() => {
+    const slug = window.location.hash.slice(1);
+    return projectBySlug(slug)?.slug ?? null;
+  });
+  const lastTrigger = useRef<HTMLElement | null>(null);
+  const selectedProject = selectedSlug
+    ? projectBySlug(selectedSlug)
+    : undefined;
+
+  useEffect(() => {
+    const syncSelection = () => {
+      const slug = window.location.hash.slice(1);
+      setSelectedSlug(projectBySlug(slug)?.slug ?? null);
+    };
+    window.addEventListener("hashchange", syncSelection);
+    window.addEventListener("popstate", syncSelection);
+    return () => {
+      window.removeEventListener("hashchange", syncSelection);
+      window.removeEventListener("popstate", syncSelection);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedProject) {
+      return;
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeProject();
+      }
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  });
+
+  const openProject = (slug: string) => {
+    lastTrigger.current = document.activeElement as HTMLElement | null;
+    setSelectedSlug(slug);
+    window.history.pushState(null, "", `#${slug}`);
+  };
+
+  const closeProject = () => {
+    setSelectedSlug(null);
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+    queueMicrotask(() => lastTrigger.current?.focus());
+  };
 
   return (
     <main className="universe">
@@ -43,6 +95,10 @@ export default function App() {
           />
         ))}
       </section>
+
+      {selectedProject ? (
+        <ProjectLens project={selectedProject} onClose={closeProject} />
+      ) : null}
     </main>
   );
 }
