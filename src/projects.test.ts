@@ -16,4 +16,11 @@ describe("project catalog", () => {
     expect(projectBySlug("monopole")?.title).toBe("Monopole");
     expect(projectBySlug("missing")).toBeUndefined();
   });
+
+  it("describes Otter as the OCaml linter in its repository", () => {
+    const otter = projectBySlug("otter");
+
+    expect(otter?.description).toContain("OCaml linter");
+    expect(otter?.technologies).toContain("OCaml");
+  });
 });

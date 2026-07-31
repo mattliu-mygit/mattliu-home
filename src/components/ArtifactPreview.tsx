@@ -54,13 +54,13 @@ export function ArtifactPreview({ project }: ArtifactPreviewProps) {
         <div className="diff">
           <div>
             <small>before</small>
-            <code>- outcome = run(task)</code>
-            <code>- save(outcome)</code>
+            <code>- let add x y= x+y</code>
+            <code>- let result=add 2 3</code>
           </div>
           <div>
             <small>after</small>
-            <code>+ outcome = inspect(run(task))</code>
-            <code>+ save(outcome, evidence)</code>
+            <code>+ let add x y = x + y</code>
+            <code>+ let result = add 2 3</code>
           </div>
         </div>
       </div>
