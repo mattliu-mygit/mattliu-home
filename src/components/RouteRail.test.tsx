@@ -1,10 +1,11 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { siteContent } from "../content/site-content";
 import { createStoryBeats } from "../story-navigation";
-import { RouteRail } from "./RouteRail";
+import { RouteRail, type RouteRailHandle } from "./RouteRail";
 
 const beats = createStoryBeats(siteContent);
 
@@ -17,7 +18,7 @@ describe("RouteRail", () => {
         activeId="path"
         beats={beats}
         onSelect={() => undefined}
-        progress={3 / (beats.length - 1)}
+        initialProgress={3 / (beats.length - 1)}
       />,
     );
 
@@ -39,7 +40,7 @@ describe("RouteRail", () => {
         activeId="intro/name"
         beats={beats}
         onSelect={onSelect}
-        progress={0}
+        initialProgress={0}
       />,
     );
 
@@ -55,12 +56,35 @@ describe("RouteRail", () => {
         activeId="path/aws-sagemaker"
         beats={beats}
         onSelect={() => undefined}
-        progress={0.25}
+        initialProgress={0.25}
       />,
     );
 
-    expect(screen.getByRole("navigation", { name: "Story scrollbar" })).toHaveStyle({
+    expect(
+      screen.getByRole("navigation", { name: "Story scrollbar" }),
+    ).toHaveStyle({
       "--route-progress": "26.190476190476193%",
+    });
+  });
+
+  it("updates continuous progress without a React render", () => {
+    const ref = createRef<RouteRailHandle>();
+    render(
+      <RouteRail
+        activeId="intro/name"
+        beats={beats}
+        onSelect={() => undefined}
+        initialProgress={0}
+        ref={ref}
+      />,
+    );
+
+    act(() => ref.current?.setProgress(0.75));
+
+    expect(
+      screen.getByRole("navigation", { name: "Story scrollbar" }),
+    ).toHaveStyle({
+      "--route-progress": "73.80952380952381%",
     });
   });
 });

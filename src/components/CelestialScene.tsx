@@ -20,6 +20,11 @@ import {
   type Meteor,
   type Point2d,
 } from "../celestial-motion";
+import {
+  CelestialMotionProvider,
+  createCelestialMotionChannel,
+  type CelestialMotionChannel,
+} from "../celestial-motion-channel";
 import type { Point } from "../content/site-content";
 import type { UniverseView } from "../navigation";
 import type { NarrativeWheelInput } from "../wheel-input";
@@ -49,6 +54,11 @@ export function CelestialScene({
   const openSkyWheelRef = useRef(onOpenSkyWheel);
   const viewRef = useRef(view);
   const directionRef = useRef(constellationDirection);
+  const motionChannelRef = useRef<CelestialMotionChannel | null>(null);
+  if (!motionChannelRef.current) {
+    motionChannelRef.current = createCelestialMotionChannel();
+  }
+  const motionChannel = motionChannelRef.current;
   const backgroundMotionRef = useRef<CelestialMotion>({
     travel: 0,
     travelVelocity: 0,
@@ -64,6 +74,9 @@ export function CelestialScene({
     directionRef.current = constellationDirection;
     if (viewRef.current !== view) {
       localMotionRef.current = { travel: 0, travelVelocity: 0 };
+      motionChannel.publish({ x: 0, y: 0 });
+      rootRef.current?.style.setProperty("--constellation-pull-x", "0px");
+      rootRef.current?.style.setProperty("--constellation-pull-y", "0px");
       if (view !== "universe") {
         backgroundMotionRef.current = {
           ...backgroundMotionRef.current,
@@ -73,7 +86,13 @@ export function CelestialScene({
       }
     }
     viewRef.current = view;
-  }, [constellationDirection, interactive, onOpenSkyWheel, view]);
+  }, [
+    constellationDirection,
+    interactive,
+    motionChannel,
+    onOpenSkyWheel,
+    view,
+  ]);
 
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
@@ -240,6 +259,7 @@ export function CelestialScene({
         "--constellation-pull-y",
         `${drift.y}px`,
       );
+      motionChannel.publish(drift);
       frameId = window.requestAnimationFrame(drawFrame);
     };
 
@@ -251,29 +271,31 @@ export function CelestialScene({
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [motionChannel]);
 
   return (
-    <main
-      className="universe"
-      data-view={view}
-      ref={rootRef}
-      style={
-        {
-          "--camera-origin-x": `${cameraOrigin[0]}%`,
-          "--camera-origin-y": `${cameraOrigin[1]}%`,
-          "--constellation-pull-x": "0px",
-          "--constellation-pull-y": "0px",
-        } as CSSProperties
-      }
-    >
-      <canvas
-        className="celestial-field"
-        data-testid="celestial-field"
-        ref={canvasRef}
-        aria-hidden="true"
-      />
-      {children}
-    </main>
+    <CelestialMotionProvider value={motionChannel}>
+      <main
+        className="universe"
+        data-view={view}
+        ref={rootRef}
+        style={
+          {
+            "--camera-origin-x": `${cameraOrigin[0]}%`,
+            "--camera-origin-y": `${cameraOrigin[1]}%`,
+            "--constellation-pull-x": "0px",
+            "--constellation-pull-y": "0px",
+          } as CSSProperties
+        }
+      >
+        <canvas
+          className="celestial-field"
+          data-testid="celestial-field"
+          ref={canvasRef}
+          aria-hidden="true"
+        />
+        {children}
+      </main>
+    </CelestialMotionProvider>
   );
 }

@@ -771,6 +771,15 @@ a:focus-visible {
   view-transition-name: quotes-constellation;
 }
 
+html[data-view-transition-target="path"]
+  :is(.constellation-map--projects, .constellation-map--quotes),
+html[data-view-transition-target="projects"]
+  :is(.constellation-map--path, .constellation-map--quotes),
+html[data-view-transition-target="quotes"]
+  :is(.constellation-map--path, .constellation-map--projects) {
+  view-transition-name: none;
+}
+
 html:active-view-transition .constellation-view,
 html:active-view-transition .universe-overview {
   animation: none;

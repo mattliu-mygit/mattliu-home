@@ -1,5 +1,6 @@
-import { type CSSProperties, useEffect, useRef } from "react";
+import { type CSSProperties, useLayoutEffect, useRef } from "react";
 
+import { useCelestialMotionChannel } from "../celestial-motion-channel";
 import { projectConstellationPoint } from "../celestial-motion";
 import type {
   Connection,
@@ -44,34 +45,18 @@ export function ConstellationMap({
   const rootRef = useRef<HTMLDivElement>(null);
   const starRefs = useRef(new Map<string, HTMLButtonElement>());
   const lineRefs = useRef(new Map<string, SVGLineElement>());
+  const motionChannel = useCelestialMotionChannel();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = rootRef.current;
-    if (variant !== "detail" || !root || !window.requestAnimationFrame) {
-      return;
-    }
-    const universe = root.closest<HTMLElement>(".universe");
-    const reducedMotion =
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
-      false;
-    if (!universe || reducedMotion) {
+    if (variant !== "detail" || !root || !motionChannel) {
       return;
     }
 
-    let frameId = 0;
-    const draw = () => {
-      const pull = {
-        x:
-          Number.parseFloat(
-            universe.style.getPropertyValue("--constellation-pull-x"),
-          ) || 0,
-        y:
-          Number.parseFloat(
-            universe.style.getPropertyValue("--constellation-pull-y"),
-          ) || 0,
-      };
-      const viewport = { width: root.clientWidth, height: root.clientHeight };
-      const projected = new Map<string, Point>();
+    const viewport = { width: root.clientWidth, height: root.clientHeight };
+    const projected = new Map<string, Point>();
+    const draw = (pull: { x: number; y: number }) => {
+      projected.clear();
 
       for (const item of items) {
         const position = projectConstellationPoint(
@@ -97,12 +82,23 @@ export function ConstellationMap({
           line.setAttribute("y2", String(toPosition[1]));
         }
       }
-      frameId = window.requestAnimationFrame(draw);
     };
 
-    frameId = window.requestAnimationFrame(draw);
-    return () => window.cancelAnimationFrame(frameId);
-  }, [connections, items, variant]);
+    const unsubscribe = motionChannel.subscribe(draw);
+    const resizeObserver = window.ResizeObserver
+      ? new ResizeObserver(() => {
+          viewport.width = root.clientWidth;
+          viewport.height = root.clientHeight;
+          draw(motionChannel.current());
+        })
+      : null;
+    resizeObserver?.observe(root);
+
+    return () => {
+      resizeObserver?.disconnect();
+      unsubscribe();
+    };
+  }, [connections, items, motionChannel, variant]);
   const getOrigin = (): Point => {
     const fallback = position ?? [50, 50];
     const root = rootRef.current;

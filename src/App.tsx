@@ -22,7 +22,7 @@ import {
 } from "./components/NarrativeWheel";
 import { ProjectLens } from "./components/ProjectLens";
 import { QuoteReadout } from "./components/QuoteReadout";
-import { RouteRail } from "./components/RouteRail";
+import { RouteRail, type RouteRailHandle } from "./components/RouteRail";
 import { UniverseOverview } from "./components/UniverseOverview";
 import {
   projectBySlug,
@@ -159,13 +159,15 @@ export default function App() {
   const [activeStoryId, setActiveStoryId] = useState(() =>
     storyBeatForLocation(initialLocation.current),
   );
-  const [storyProgress, setStoryProgress] = useState(() => {
-    const initialId = storyBeatForLocation(initialLocation.current);
-    const index = storyBeats.findIndex((beat) => beat.id === initialId);
-    return index < 0 || storyBeats.length <= 1
-      ? 0
-      : index / (storyBeats.length - 1);
-  });
+  const initialStoryProgress = useRef(
+    (() => {
+      const initialId = storyBeatForLocation(initialLocation.current);
+      const index = storyBeats.findIndex((beat) => beat.id === initialId);
+      return index < 0 || storyBeats.length <= 1
+        ? 0
+        : index / (storyBeats.length - 1);
+    })(),
+  );
   const [wheelCollapsed, setWheelCollapsed] = useState(
     () => window.sessionStorage.getItem("narrative-wheel-collapsed") === "true",
   );
@@ -177,6 +179,7 @@ export default function App() {
     useState<Point2d>(() => directionForSelection("path"));
   const viewHeading = useRef<HTMLHeadingElement>(null);
   const wheelRef = useRef<NarrativeWheelHandle>(null);
+  const routeRailRef = useRef<RouteRailHandle>(null);
   const lastUniverseTarget = useRef<{
     slug: DestinationSlug;
     itemSlug?: string;
@@ -273,12 +276,17 @@ export default function App() {
   );
 
   const runSpatialUpdate = useCallback(
-    (update: () => void, onFinished?: () => void) => {
+    (
+      update: () => void,
+      target: DestinationSlug,
+      onFinished?: () => void,
+    ) => {
       const request = ++spatialTransitionRequest.current;
       const transition = runViewTransition(
         document,
         () => flushSync(update),
         !prefersReducedMotion(),
+        target,
       );
       if (transition && onFinished) {
         void transition.finished.then(
@@ -316,7 +324,7 @@ export default function App() {
         }
         const storyId = itemSlug ? `${view}/${itemSlug}` : view;
         setActiveStoryId(storyId);
-        requestStoryScroll(storyId);
+        requestStoryScroll(storyId, "auto");
         commitLocation(
           locationFor(view, view === "projects" ? undefined : itemSlug),
           { focus: { type: "heading" } },
@@ -326,12 +334,16 @@ export default function App() {
         update();
         return;
       }
-      runSpatialUpdate(update, () => {
-        const pendingSlug = pendingProjectOpen.current;
-        if (pendingSlug) {
-          openProject(pendingSlug);
-        }
-      });
+      runSpatialUpdate(
+        update,
+        view,
+        () => {
+          const pendingSlug = pendingProjectOpen.current;
+          if (pendingSlug) {
+            openProject(pendingSlug);
+          }
+        },
+      );
     },
     [
       commitLocation,
@@ -351,7 +363,7 @@ export default function App() {
       pendingProjectOpen.current = null;
       setCameraTransition("arrive");
       setActiveStoryId("intro/name");
-      requestStoryScroll("intro/name");
+      requestStoryScroll("intro/name", "auto");
       commitLocation(
         { view: "universe" },
         {
@@ -370,7 +382,7 @@ export default function App() {
     if (location.view === "universe") {
       update();
     } else {
-      runSpatialUpdate(update);
+      runSpatialUpdate(update, destination);
     }
   }, [commitLocation, location.view, requestStoryScroll, runSpatialUpdate]);
 
@@ -427,10 +439,13 @@ export default function App() {
 
       if (beat.kind === "intro") {
         if (location.view !== "universe") {
-          runSpatialUpdate(() => {
-            setCameraTransition("arrive");
-            commitLocation({ view: "universe" }, { replace: true });
-          });
+          runSpatialUpdate(
+            () => {
+              setCameraTransition("arrive");
+              commitLocation({ view: "universe" }, { replace: true });
+            },
+            location.view,
+          );
         }
         return;
       }
@@ -460,7 +475,7 @@ export default function App() {
         );
       };
       if (location.view === "universe") {
-        runSpatialUpdate(update);
+        runSpatialUpdate(update, beat.view);
       } else {
         update();
       }
@@ -477,14 +492,13 @@ export default function App() {
 
   const activateStoryBeat = useCallback(
     (beat: StoryBeat) => {
-      requestStoryScroll(beat.id);
       if (beat.kind === "intro") {
         returnToUniverse();
       } else if (beat.kind === "destination") {
         enterConstellation(beat.view);
       } else if (beat.kind === "path") {
         if (location.view === "path") {
-          selectPath(beat.itemSlug, false);
+          selectPath(beat.itemSlug);
         } else {
           enterConstellation("path", beat.itemSlug);
         }
@@ -495,7 +509,7 @@ export default function App() {
           enterConstellation("projects", beat.itemSlug);
         }
       } else if (location.view === "quotes") {
-        selectQuote(beat.itemSlug, false);
+        selectQuote(beat.itemSlug);
       } else {
         enterConstellation("quotes", beat.itemSlug);
       }
@@ -504,7 +518,6 @@ export default function App() {
       enterConstellation,
       location.view,
       openProject,
-      requestStoryScroll,
       returnToUniverse,
       selectPath,
       selectQuote,
@@ -513,14 +526,18 @@ export default function App() {
 
   const selectRouteBeat = useCallback(
     (beat: StoryBeat) => {
-      requestStoryScroll(beat.id);
+      const targetView = beat.kind === "intro" ? "universe" : beat.view;
+      requestStoryScroll(
+        beat.id,
+        targetView === location.view ? undefined : "auto",
+      );
       if (beat.kind === "intro" && beat.line === "name") {
         returnToUniverse();
       } else {
         handleStoryBeat(beat);
       }
     },
-    [handleStoryBeat, requestStoryScroll, returnToUniverse],
+    [handleStoryBeat, location.view, requestStoryScroll, returnToUniverse],
   );
 
   const finishCameraArrival = useCallback(
@@ -536,6 +553,10 @@ export default function App() {
   const changeWheelVisibility = useCallback((collapsed: boolean) => {
     setWheelCollapsed(collapsed);
     window.sessionStorage.setItem("narrative-wheel-collapsed", String(collapsed));
+  }, []);
+
+  const updateRouteProgress = useCallback((progress: number) => {
+    routeRailRef.current?.setProgress(progress);
   }, []);
 
   useEffect(() => {
@@ -648,7 +669,7 @@ export default function App() {
           onActivate={activateStoryBeat}
           onActiveBeat={handleStoryBeat}
           onCollapsedChange={changeWheelVisibility}
-          onProgressChange={setStoryProgress}
+          onProgressChange={updateRouteProgress}
           ref={wheelRef}
         />
 
@@ -720,8 +741,9 @@ export default function App() {
       <RouteRail
         activeId={activeStoryId}
         beats={storyBeats}
+        initialProgress={initialStoryProgress.current}
         onSelect={selectRouteBeat}
-        progress={storyProgress}
+        ref={routeRailRef}
       />
 
       {selectedProject ? (

@@ -17,6 +17,7 @@ afterEach(() => {
   Reflect.deleteProperty(document, "startViewTransition");
   window.sessionStorage.clear();
   window.history.replaceState(null, "", "/");
+  Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
 });
 
 describe("personal universe", () => {
@@ -116,6 +117,49 @@ describe("personal universe", () => {
     );
     expect(window.location.hash).toBe("#projects/monopole");
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
+  });
+
+  it("lets the camera own constellation entry motion", async () => {
+    const user = userEvent.setup();
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Explore Projects" }));
+
+    expect(scrollIntoView).toHaveBeenLastCalledWith({
+      behavior: "auto",
+      block: "center",
+    });
+  });
+
+  it("centers a same-constellation card without adding camera motion", async () => {
+    const user = userEvent.setup();
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Explore Path" }));
+    const callsBeforeCardClick = scrollIntoView.mock.calls.length;
+    await user.click(
+      within(screen.getByRole("region", { name: "Portfolio story" })).getByRole(
+        "button",
+        { name: "Focus AWS SageMaker" },
+      ),
+    );
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(callsBeforeCardClick + 1);
+    expect(scrollIntoView).toHaveBeenLastCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
+    expect(window.location.hash).toBe("#path/aws-sagemaker");
   });
 
   it("opens a selected universe project only after its shared transition", async () => {
