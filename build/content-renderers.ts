@@ -200,7 +200,9 @@ export function renderPortfolioJson(content: SiteContent): string {
         introduction: content.person.introduction,
         profiles: content.person.links,
       },
-      path: content.path.map(({ position: _position, ...entry }) => entry),
+      path: content.path.map(
+        ({ position: _position, depth: _depth, ...entry }) => entry,
+      ),
       projects: content.projects.map((project) => ({
         slug: project.slug,
         title: project.title,

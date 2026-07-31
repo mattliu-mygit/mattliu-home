@@ -283,36 +283,76 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
   });
   expect(browserZoomWasPrevented).toBe(false);
 
-  await page.waitForFunction(() => {
-    const value = getComputedStyle(
-      document.querySelector(".universe")!,
-    ).getPropertyValue("--constellation-pull-x");
-    return Math.abs(Number.parseFloat(value)) > 0.25;
-  });
-  const displaced = await page.locator(".universe").evaluate((element) =>
-    Math.abs(
-      Number.parseFloat(
-        getComputedStyle(element).getPropertyValue("--constellation-pull-x"),
-      ),
-    ),
-  );
-  const detailDrift = await page
-    .locator(".constellation-map--detail .constellation-map__plane")
-    .evaluate((element) => {
-      const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
-      return { x: Math.abs(matrix.e), y: Math.abs(matrix.f) };
+  const displaced = await page.locator(".universe").evaluate(async (element) => {
+    window.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaY: 120,
+      }),
+    );
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
     });
-  expect(detailDrift.x).toBeCloseTo(displaced, 1);
-  expect(detailDrift.y).toBeGreaterThan(0);
+    const styles = getComputedStyle(element);
+    return Math.hypot(
+      Number.parseFloat(styles.getPropertyValue("--constellation-pull-x")),
+      Number.parseFloat(styles.getPropertyValue("--constellation-pull-y")),
+    );
+  });
+  expect(displaced).toBeGreaterThan(0.25);
+  const projection = await page
+    .locator(".constellation-map--detail")
+    .evaluate((element) => {
+      const stars = Array.from(
+        element.querySelectorAll<HTMLElement>(".constellation-star"),
+      );
+      const point = (star: HTMLElement) => [
+        Number.parseFloat(star.style.getPropertyValue("--star-x")),
+        Number.parseFloat(star.style.getPropertyValue("--star-y")),
+      ];
+      const first = point(stars[0]);
+      const second = point(stars[1]);
+      const line = element.querySelector("line")!;
+      return {
+        first,
+        second,
+        line: [
+          Number(line.getAttribute("x1")),
+          Number(line.getAttribute("y1")),
+          Number(line.getAttribute("x2")),
+          Number(line.getAttribute("y2")),
+        ],
+        planeTransform: getComputedStyle(
+          element.querySelector(".constellation-map__plane")!,
+        ).transform,
+      };
+    });
+  const firstTravel = Math.hypot(
+    projection.first[0] - 14,
+    projection.first[1] - 58,
+  );
+  const secondTravel = Math.hypot(
+    projection.second[0] - 29,
+    projection.second[1] - 29,
+  );
+  expect(secondTravel).toBeGreaterThan(firstTravel);
+  expect(projection.line).toEqual([
+    projection.first[0],
+    projection.first[1],
+    projection.second[0],
+    projection.second[1],
+  ]);
+  expect(projection.planeTransform).toBe("none");
 
   await page.waitForTimeout(1800);
-  const stabilized = await page.locator(".universe").evaluate((element) =>
-    Math.abs(
-      Number.parseFloat(
-        getComputedStyle(element).getPropertyValue("--constellation-pull-x"),
-      ),
-    ),
-  );
+  const stabilized = await page.locator(".universe").evaluate((element) => {
+    const styles = getComputedStyle(element);
+    return Math.hypot(
+      Number.parseFloat(styles.getPropertyValue("--constellation-pull-x")),
+      Number.parseFloat(styles.getPropertyValue("--constellation-pull-y")),
+    );
+  });
   expect(stabilized).toBeLessThan(displaced);
 });
 

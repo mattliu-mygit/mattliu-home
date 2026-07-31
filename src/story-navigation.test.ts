@@ -5,6 +5,8 @@ import {
   centeredStoryBeat,
   createRouteMarks,
   createStoryBeats,
+  interpolatedStoryProgress,
+  routeMarkerPosition,
   storyBeatForLocation,
 } from "./story-navigation";
 
@@ -87,5 +89,23 @@ describe("story navigation", () => {
 
   it("returns no centered beat for an empty sequence", () => {
     expect(centeredStoryBeat([], 180)).toBeUndefined();
+  });
+
+  it("interpolates continuously between surrounding card centers", () => {
+    const entries = [
+      { id: "first", center: 100 },
+      { id: "second", center: 300 },
+      { id: "third", center: 500 },
+    ];
+
+    expect(interpolatedStoryProgress(entries, 100)).toBe(0);
+    expect(interpolatedStoryProgress(entries, 200)).toBe(0.25);
+    expect(interpolatedStoryProgress(entries, 500)).toBe(1);
+  });
+
+  it("maps exact story positions to the centers of route cells", () => {
+    expect(routeMarkerPosition(0, 4)).toBe(12.5);
+    expect(routeMarkerPosition(1 / 3, 4)).toBe(37.5);
+    expect(routeMarkerPosition(1, 4)).toBe(87.5);
   });
 });

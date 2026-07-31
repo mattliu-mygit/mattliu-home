@@ -28,6 +28,7 @@ export type Project = {
   linkLabel?: string;
   artifact: ArtifactType;
   position: Point;
+  depth: number;
 };
 
 export type Quote = {
@@ -37,6 +38,7 @@ export type Quote = {
   sourceUrl: string;
   attributionNote?: string;
   position: Point;
+  depth: number;
 };
 
 export type PathEntry = {
@@ -46,6 +48,7 @@ export type PathEntry = {
   area: string;
   summary: string;
   position: Point;
+  depth: number;
 };
 
 export type SiteContent = {
@@ -143,6 +146,14 @@ const point = (value: unknown, path: string): Point => {
     throw new Error(`${path} must contain coordinates from 0 to 100`);
   }
   return coordinates as [number, number];
+};
+
+const depth = (value: unknown, path: string): number => {
+  const parsed = number(value, path);
+  if (parsed < 0.9 || parsed > 1.1) {
+    throw new Error(`${path} must be between 0.9 and 1.1`);
+  }
+  return parsed;
 };
 
 const connection = (value: unknown, path: string): Connection => {
@@ -248,6 +259,7 @@ export function validateSiteContent(value: unknown): SiteContent {
       area: text(entry.area, `path[${index}].area`),
       summary: text(entry.summary, `path[${index}].summary`),
       position: point(entry.position, `path[${index}].position`),
+      depth: depth(entry.depth, `path[${index}].depth`),
     };
   });
   assertUniqueSlugs(path, "path entry");
@@ -297,6 +309,7 @@ export function validateSiteContent(value: unknown): SiteContent {
       ),
       artifact,
       position: point(project.position, `projects[${index}].position`),
+      depth: depth(project.depth, `projects[${index}].depth`),
     };
   });
   assertUniqueSlugs(projects, "project");
@@ -313,6 +326,7 @@ export function validateSiteContent(value: unknown): SiteContent {
         `quotes[${index}].attributionNote`,
       ),
       position: point(quote.position, `quotes[${index}].position`),
+      depth: depth(quote.depth, `quotes[${index}].depth`),
     };
   });
   assertUniqueSlugs(quotes, "quote");

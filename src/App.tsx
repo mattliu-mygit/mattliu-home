@@ -1,6 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { flushSync } from "react-dom";
 
+import {
+  cameraTravelVector,
+  type Point2d,
+} from "./celestial-motion";
 import { CelestialScene } from "./components/CelestialScene";
 import {
   ConstellationMap,
@@ -48,12 +58,14 @@ const constellationItems: Record<
     overviewLabel: entry.shortLabel,
     meta: entry.area,
     position: entry.position,
+    depth: entry.depth,
   })),
   projects: projects.map((project) => ({
     slug: project.slug,
     label: project.title,
     meta: project.displayYear,
     position: project.position,
+    depth: project.depth,
   })),
   quotes: quotes.map((quote) => ({
     slug: quote.slug,
@@ -61,6 +73,7 @@ const constellationItems: Record<
     overviewLabel: quote.author,
     meta: quote.author,
     position: quote.position,
+    depth: quote.depth,
   })),
 };
 
@@ -89,10 +102,33 @@ const locationFor = (
   return { view, quoteSlug: itemSlug };
 };
 
-const viewOrder: Record<DestinationSlug, number> = {
-  path: 0,
-  projects: 1,
-  quotes: 2,
+const directionForSelection = (
+  view: DestinationSlug,
+  fromSlug?: string,
+  toSlug?: string,
+): Point2d => {
+  const items = constellationItems[view];
+  const targetIndex = Math.max(
+    0,
+    toSlug ? items.findIndex(({ slug }) => slug === toSlug) : 0,
+  );
+  const fromIndex = fromSlug
+    ? items.findIndex(({ slug }) => slug === fromSlug)
+    : -1;
+  const start = fromIndex >= 0 ? items[fromIndex] : items[targetIndex];
+  const target =
+    fromIndex >= 0 && fromIndex !== targetIndex
+      ? items[targetIndex]
+      : items[
+          targetIndex < items.length - 1
+            ? targetIndex + 1
+            : Math.max(0, targetIndex - 1)
+        ] ?? start;
+
+  return {
+    x: target.position[0] - start.position[0],
+    y: target.position[1] - start.position[1],
+  };
 };
 
 export default function App() {
@@ -123,13 +159,22 @@ export default function App() {
   const [activeStoryId, setActiveStoryId] = useState(() =>
     storyBeatForLocation(initialLocation.current),
   );
+  const [storyProgress, setStoryProgress] = useState(() => {
+    const initialId = storyBeatForLocation(initialLocation.current);
+    const index = storyBeats.findIndex((beat) => beat.id === initialId);
+    return index < 0 || storyBeats.length <= 1
+      ? 0
+      : index / (storyBeats.length - 1);
+  });
   const [wheelCollapsed, setWheelCollapsed] = useState(
     () => window.sessionStorage.getItem("narrative-wheel-collapsed") === "true",
   );
-  const [cameraTransition, setCameraTransition] = useState<"arrive" | "pan">(
-    "arrive",
-  );
-  const [cameraPan, setCameraPan] = useState<"forward" | "back">("forward");
+  const [cameraTransition, setCameraTransition] = useState<
+    "arrive" | "pan" | "settled"
+  >("arrive");
+  const [cameraPan, setCameraPan] = useState<Point2d>({ x: 0, y: 0 });
+  const [constellationDirection, setConstellationDirection] =
+    useState<Point2d>(() => directionForSelection("path"));
   const viewHeading = useRef<HTMLHeadingElement>(null);
   const wheelRef = useRef<NarrativeWheelHandle>(null);
   const lastUniverseTarget = useRef<{
@@ -146,6 +191,21 @@ export default function App() {
       : undefined;
   const selectedQuote =
     quotes.find((quote) => quote.slug === selectedQuoteSlug) ?? quotes[0];
+
+  const aimConstellation = useCallback(
+    (view: DestinationSlug, toSlug?: string) => {
+      const fromSlug =
+        view === "path"
+          ? selectedPathSlug
+          : view === "projects"
+            ? selectedProjectSlug
+            : selectedQuoteSlug;
+      setConstellationDirection(
+        directionForSelection(view, fromSlug, toSlug),
+      );
+    },
+    [selectedPathSlug, selectedProjectSlug, selectedQuoteSlug],
+  );
 
   const requestStoryScroll = useCallback(
     (id: string, behavior?: ScrollBehavior) => {
@@ -178,10 +238,21 @@ export default function App() {
       setCameraOrigin(origin ?? destinationBySlug[nextView].position);
       const previousView = location.view;
       const shouldPan = previousView !== "universe" && previousView !== nextView;
-      setCameraTransition(shouldPan ? "pan" : "arrive");
+      setCameraTransition(
+        shouldPan
+          ? "pan"
+          : previousView === "universe"
+            ? "arrive"
+            : "settled",
+      );
       if (shouldPan) {
+        const previous = destinationBySlug[previousView].position;
+        const next = destinationBySlug[nextView].position;
         setCameraPan(
-          viewOrder[nextView] > viewOrder[previousView] ? "forward" : "back",
+          cameraTravelVector(
+            { x: previous[0], y: previous[1] },
+            { x: next[0], y: next[1] },
+          ),
         );
       }
     },
@@ -192,12 +263,13 @@ export default function App() {
     (slug: string) => {
       pendingProjectOpen.current = null;
       lastProjectTrigger.current = document.activeElement as HTMLElement | null;
+      aimConstellation("projects", slug);
       setSelectedProjectSlug(slug);
       setActiveStoryId(`projects/${slug}`);
       requestStoryScroll(`projects/${slug}`);
       commitLocation({ view: "projects", projectSlug: slug });
     },
-    [commitLocation, requestStoryScroll],
+    [aimConstellation, commitLocation, requestStoryScroll],
   );
 
   const runSpatialUpdate = useCallback(
@@ -230,12 +302,17 @@ export default function App() {
         configureCamera(view, origin);
         pendingProjectOpen.current = null;
         if (view === "path" && itemSlug) {
+          aimConstellation(view, itemSlug);
           setSelectedPathSlug(itemSlug);
         } else if (view === "projects" && itemSlug) {
+          aimConstellation(view, itemSlug);
           setSelectedProjectSlug(itemSlug);
           pendingProjectOpen.current = itemSlug;
         } else if (view === "quotes" && itemSlug) {
+          aimConstellation(view, itemSlug);
           setSelectedQuoteSlug(itemSlug);
+        } else {
+          aimConstellation(view);
         }
         const storyId = itemSlug ? `${view}/${itemSlug}` : view;
         setActiveStoryId(storyId);
@@ -260,6 +337,7 @@ export default function App() {
       commitLocation,
       configureCamera,
       location.view,
+      aimConstellation,
       openProject,
       requestStoryScroll,
       runSpatialUpdate,
@@ -315,6 +393,7 @@ export default function App() {
 
   const selectPath = useCallback(
     (slug: string, scroll = true) => {
+      aimConstellation("path", slug);
       setSelectedPathSlug(slug);
       setActiveStoryId(`path/${slug}`);
       if (scroll) {
@@ -322,11 +401,12 @@ export default function App() {
       }
       commitLocation({ view: "path", pathSlug: slug }, { replace: true });
     },
-    [commitLocation, requestStoryScroll],
+    [aimConstellation, commitLocation, requestStoryScroll],
   );
 
   const selectQuote = useCallback(
     (slug: string, scroll = true) => {
+      aimConstellation("quotes", slug);
       setSelectedQuoteSlug(slug);
       setActiveStoryId(`quotes/${slug}`);
       if (scroll) {
@@ -334,7 +414,7 @@ export default function App() {
       }
       commitLocation({ view: "quotes", quoteSlug: slug }, { replace: true });
     },
-    [commitLocation, requestStoryScroll],
+    [aimConstellation, commitLocation, requestStoryScroll],
   );
 
   const handleStoryBeat = useCallback(
@@ -358,11 +438,16 @@ export default function App() {
       const update = () => {
         configureCamera(beat.view);
         if (beat.kind === "path") {
+          aimConstellation(beat.view, beat.itemSlug);
           setSelectedPathSlug(beat.itemSlug);
         } else if (beat.kind === "project") {
+          aimConstellation(beat.view, beat.itemSlug);
           setSelectedProjectSlug(beat.itemSlug);
         } else if (beat.kind === "quote") {
+          aimConstellation(beat.view, beat.itemSlug);
           setSelectedQuoteSlug(beat.itemSlug);
+        } else {
+          aimConstellation(beat.view);
         }
         commitLocation(
           locationFor(
@@ -382,6 +467,7 @@ export default function App() {
     },
     [
       activeStoryId,
+      aimConstellation,
       commitLocation,
       configureCamera,
       location.view,
@@ -531,6 +617,7 @@ export default function App() {
   return (
     <CelestialScene
       cameraOrigin={cameraOrigin}
+      constellationDirection={constellationDirection}
       interactive={!selectedProject}
       onOpenSkyWheel={(input) => {
         if (!wheelCollapsed) {
@@ -561,6 +648,7 @@ export default function App() {
           onActivate={activateStoryBeat}
           onActiveBeat={handleStoryBeat}
           onCollapsedChange={changeWheelVisibility}
+          onProgressChange={setStoryProgress}
           ref={wheelRef}
         />
 
@@ -573,12 +661,17 @@ export default function App() {
         ) : (
           <section
             className={`constellation-view constellation-view--${constellationView}`}
-            data-camera-pan={cameraPan}
             data-camera-transition={cameraTransition}
             onAnimationEnd={finishCameraArrival}
             role="region"
             aria-labelledby="constellation-view-title"
             key={constellationView}
+            style={
+              {
+                "--camera-pan-x": `${cameraPan.x}vw`,
+                "--camera-pan-y": `${cameraPan.y}vh`,
+              } as CSSProperties
+            }
           >
             <h2
               className="constellation-view__title"
@@ -628,6 +721,7 @@ export default function App() {
         activeId={activeStoryId}
         beats={storyBeats}
         onSelect={selectRouteBeat}
+        progress={storyProgress}
       />
 
       {selectedProject ? (

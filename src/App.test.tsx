@@ -209,6 +209,17 @@ describe("personal universe", () => {
     expect(projectRegion).not.toBe(pathRegion);
     expect(quoteRegion).not.toBe(projectRegion);
     expect(quoteRegion).toHaveAttribute("data-camera-transition", "pan");
+    expect(quoteRegion).toHaveStyle({
+      "--camera-pan-x": "-7.7vw",
+      "--camera-pan-y": "13.2vh",
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /go to quote by paul saffo/i,
+      }),
+    );
+    expect(quoteRegion).toHaveAttribute("data-camera-transition", "settled");
   });
 
   it("opens a universe project star without waiting for animation in reduced motion", async () => {

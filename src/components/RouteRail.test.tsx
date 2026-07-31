@@ -12,7 +12,14 @@ afterEach(cleanup);
 
 describe("RouteRail", () => {
   it("renders one instrument tick per beat with major route labels", () => {
-    render(<RouteRail activeId="path" beats={beats} onSelect={() => undefined} />);
+    render(
+      <RouteRail
+        activeId="path"
+        beats={beats}
+        onSelect={() => undefined}
+        progress={3 / (beats.length - 1)}
+      />,
+    );
 
     expect(screen.getAllByRole("button")).toHaveLength(beats.length);
     expect(screen.getByRole("button", { name: "Go to Universe" })).toBeVisible();
@@ -27,7 +34,14 @@ describe("RouteRail", () => {
   it("requests navigation without activating project content", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    render(<RouteRail activeId="intro/name" beats={beats} onSelect={onSelect} />);
+    render(
+      <RouteRail
+        activeId="intro/name"
+        beats={beats}
+        onSelect={onSelect}
+        progress={0}
+      />,
+    );
 
     await user.click(screen.getByRole("button", { name: "Go to Monopole" }));
     expect(onSelect).toHaveBeenCalledWith(
@@ -41,11 +55,12 @@ describe("RouteRail", () => {
         activeId="path/aws-sagemaker"
         beats={beats}
         onSelect={() => undefined}
+        progress={0.25}
       />,
     );
 
     expect(screen.getByRole("navigation", { name: "Story scrollbar" })).toHaveStyle({
-      "--route-progress": "25%",
+      "--route-progress": "26.190476190476193%",
     });
   });
 });

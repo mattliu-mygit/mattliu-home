@@ -1,5 +1,8 @@
+import type { CSSProperties } from "react";
+
 import {
   createRouteMarks,
+  routeMarkerPosition,
   type StoryBeat,
 } from "../story-navigation";
 
@@ -7,20 +10,22 @@ type RouteRailProps = {
   beats: readonly StoryBeat[];
   activeId: string;
   onSelect: (beat: StoryBeat) => void;
+  progress: number;
 };
 
-export function RouteRail({ beats, activeId, onSelect }: RouteRailProps) {
+export function RouteRail({
+  beats,
+  activeId,
+  onSelect,
+  progress,
+}: RouteRailProps) {
   const marks = createRouteMarks(beats);
-  const activeIndex = Math.max(
-    0,
-    marks.findIndex((mark) => mark.id === activeId),
-  );
-  const progress = marks.length > 1 ? (activeIndex / (marks.length - 1)) * 100 : 0;
+  const markerPosition = routeMarkerPosition(progress, marks.length);
   return (
     <nav
       aria-label="Story scrollbar"
       className="route-rail"
-      style={{ "--route-progress": `${progress}%` } as CSSProperties}
+      style={{ "--route-progress": `${markerPosition}%` } as CSSProperties}
     >
       <span aria-hidden="true" className="route-rail__position" />
       <ol>
@@ -46,4 +51,3 @@ export function RouteRail({ beats, activeId, onSelect }: RouteRailProps) {
     </nav>
   );
 }
-import type { CSSProperties } from "react";

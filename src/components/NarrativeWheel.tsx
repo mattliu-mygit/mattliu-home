@@ -6,7 +6,11 @@ import {
   useRef,
 } from "react";
 
-import { centeredStoryBeat, type StoryBeat } from "../story-navigation";
+import {
+  centeredStoryBeat,
+  interpolatedStoryProgress,
+  type StoryBeat,
+} from "../story-navigation";
 import {
   canScrollNarrative,
   normalizeNarrativeWheel,
@@ -26,6 +30,7 @@ type NarrativeWheelProps = {
   onActiveBeat: (beat: StoryBeat) => void;
   onActivate: (beat: StoryBeat) => void;
   onCollapsedChange: (collapsed: boolean) => void;
+  onProgressChange: (progress: number) => void;
 };
 
 export const NarrativeWheel = forwardRef<
@@ -39,6 +44,7 @@ export const NarrativeWheel = forwardRef<
     onActiveBeat,
     onActivate,
     onCollapsedChange,
+    onProgressChange,
   },
   forwardedRef,
 ) {
@@ -113,8 +119,9 @@ export const NarrativeWheel = forwardRef<
       return;
     }
     const scrollBox = scroll.getBoundingClientRect();
-    const id = centeredStoryBeat(
-      Array.from(scroll.querySelectorAll<HTMLElement>("[data-story-beat]")).map(
+    const entries = Array.from(
+      scroll.querySelectorAll<HTMLElement>("[data-story-beat]"),
+    ).map(
         (element) => {
           const box = element.getBoundingClientRect();
           return {
@@ -122,9 +129,10 @@ export const NarrativeWheel = forwardRef<
             center: box.top + box.height / 2,
           };
         },
-      ),
-      scrollBox.top + scrollBox.height / 2,
-    );
+      );
+    const viewportCenter = scrollBox.top + scrollBox.height / 2;
+    onProgressChange(interpolatedStoryProgress(entries, viewportCenter));
+    const id = centeredStoryBeat(entries, viewportCenter);
     if (!id || id === activeIdRef.current) {
       if (id === requestedIdRef.current) {
         requestedIdRef.current = null;

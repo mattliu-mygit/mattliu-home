@@ -204,6 +204,7 @@ a:focus-visible {
 }
 
 .universe-stage {
+  --story-panel-width: min(36vw, 34rem);
   position: relative;
   z-index: 3;
   min-height: 100svh;
@@ -216,7 +217,7 @@ a:focus-visible {
   top: 4.6rem;
   bottom: 4.9rem;
   left: clamp(2.5rem, 5.5vw, 6.5rem);
-  width: min(32vw, 29rem);
+  width: var(--story-panel-width);
   transition: transform 520ms cubic-bezier(0.22, 0.7, 0.18, 1);
 }
 
@@ -567,7 +568,7 @@ a:focus-visible {
   box-shadow: 0 0 0.85rem rgba(240, 213, 138, 0.5);
   pointer-events: none;
   transform: translate(-50%, -50%);
-  transition: left 320ms cubic-bezier(0.22, 0.7, 0.18, 1);
+  transition: left 80ms linear;
 }
 
 .route-rail::before {
@@ -666,14 +667,8 @@ a:focus-visible {
     both;
 }
 
-.constellation-view[data-camera-transition="pan"][data-camera-pan="forward"] {
-  --camera-pan-x: 10vw;
-  --camera-pan-y: 14vh;
-}
-
-.constellation-view[data-camera-transition="pan"][data-camera-pan="back"] {
-  --camera-pan-x: -10vw;
-  --camera-pan-y: -14vh;
+.constellation-view[data-camera-transition="arrive"] {
+  animation: camera-arrive 620ms cubic-bezier(0.22, 0.7, 0.18, 1) both;
 }
 
 .universe-overview {
@@ -739,7 +734,6 @@ a:focus-visible {
   z-index: 4;
   inset: 4.6rem 0 0;
   transform-origin: var(--camera-origin-x) var(--camera-origin-y);
-  animation: camera-arrive 620ms cubic-bezier(0.22, 0.7, 0.18, 1) both;
 }
 
 .constellation-view__title {
@@ -811,7 +805,7 @@ html:active-view-transition .universe-overview {
     .constellation-map--detail {
     right: clamp(2.5rem, 5vw, 5rem);
     left: calc(
-      clamp(2.5rem, 5.5vw, 6.5rem) + min(32vw, 29rem) + 2.5rem
+      clamp(2.5rem, 5.5vw, 6.5rem) + var(--story-panel-width) + 2.5rem
     );
   }
 }
@@ -820,15 +814,6 @@ html:active-view-transition .universe-overview {
   position: absolute;
   inset: 0;
   transform-origin: 50% 50%;
-}
-
-.constellation-map--detail .constellation-map__plane {
-  transform: translate3d(
-    var(--constellation-pull-x),
-    var(--constellation-pull-y),
-    0
-  );
-  will-change: transform;
 }
 
 .constellation-map__connections {
@@ -1494,9 +1479,12 @@ html:active-view-transition .universe-overview {
 }
 
 @media (max-width: 900px) and (min-width: 761px) {
+  .universe-stage {
+    --story-panel-width: 36vw;
+  }
+
   .narrative-wheel {
     left: 2rem;
-    width: 36vw;
   }
 
   .constellation-map--detail {

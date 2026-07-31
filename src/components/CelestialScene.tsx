@@ -2,6 +2,7 @@ import {
   type CSSProperties,
   type PropsWithChildren,
   useEffect,
+  useLayoutEffect,
   useRef,
 } from "react";
 
@@ -12,10 +13,12 @@ import {
   createMeteor,
   createSeededRandom,
   createStarField,
+  directionalConstellationDrift,
   meteorSegment,
   parallaxDisplacement,
   type CelestialMotion,
   type Meteor,
+  type Point2d,
 } from "../celestial-motion";
 import type { Point } from "../content/site-content";
 import type { UniverseView } from "../navigation";
@@ -23,6 +26,7 @@ import type { NarrativeWheelInput } from "../wheel-input";
 
 type CelestialSceneProps = PropsWithChildren<{
   cameraOrigin: Point;
+  constellationDirection: Point2d;
   interactive: boolean;
   view: UniverseView;
   onOpenSkyWheel?: (input: NarrativeWheelInput) => void;
@@ -34,6 +38,7 @@ const wrap = (value: number, extent: number) =>
 export function CelestialScene({
   cameraOrigin,
   children,
+  constellationDirection,
   interactive,
   onOpenSkyWheel,
   view,
@@ -42,22 +47,48 @@ export function CelestialScene({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const interactiveRef = useRef(interactive);
   const openSkyWheelRef = useRef(onOpenSkyWheel);
-  const motionRef = useRef<CelestialMotion>({
+  const viewRef = useRef(view);
+  const directionRef = useRef(constellationDirection);
+  const backgroundMotionRef = useRef<CelestialMotion>({
+    travel: 0,
+    travelVelocity: 0,
+  });
+  const localMotionRef = useRef<CelestialMotion>({
     travel: 0,
     travelVelocity: 0,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     interactiveRef.current = interactive;
     openSkyWheelRef.current = onOpenSkyWheel;
-  }, [interactive, onOpenSkyWheel]);
+    directionRef.current = constellationDirection;
+    if (viewRef.current !== view) {
+      localMotionRef.current = { travel: 0, travelVelocity: 0 };
+      if (view !== "universe") {
+        backgroundMotionRef.current = {
+          ...backgroundMotionRef.current,
+          travelVelocity:
+            backgroundMotionRef.current.travelVelocity * 0.12,
+        };
+      }
+    }
+    viewRef.current = view;
+  }, [constellationDirection, interactive, onOpenSkyWheel, view]);
 
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
       if (!interactiveRef.current || event.ctrlKey) {
         return;
       }
-      motionRef.current = applyWheelImpulse(motionRef.current, event.deltaY);
+      const inUniverse = viewRef.current === "universe";
+      backgroundMotionRef.current = applyWheelImpulse(
+        backgroundMotionRef.current,
+        inUniverse ? event.deltaY : event.deltaY * 0.12,
+      );
+      localMotionRef.current = applyWheelImpulse(
+        localMotionRef.current,
+        event.deltaY,
+      );
       const target = event.target;
       if (target instanceof Element && target.closest("[data-story-scroll]")) {
         return;
@@ -114,7 +145,7 @@ export function CelestialScene({
     const drawStars = (now: number) => {
       for (const star of stars) {
         const displacement = parallaxDisplacement(
-          motionRef.current.travel,
+          backgroundMotionRef.current.travel,
           star.depth,
           star.phase,
         );
@@ -183,8 +214,21 @@ export function CelestialScene({
     const drawFrame = (now: number) => {
       const elapsed = now - lastTime;
       lastTime = now;
-      motionRef.current = advanceCelestialMotion(motionRef.current, elapsed);
-      const drift = constellationDrift(motionRef.current.travelVelocity);
+      backgroundMotionRef.current = advanceCelestialMotion(
+        backgroundMotionRef.current,
+        elapsed,
+      );
+      localMotionRef.current = advanceCelestialMotion(
+        localMotionRef.current,
+        elapsed,
+      );
+      const drift =
+        viewRef.current === "universe"
+          ? constellationDrift(backgroundMotionRef.current.travelVelocity)
+          : directionalConstellationDrift(
+              localMotionRef.current.travelVelocity,
+              directionRef.current,
+            );
       context.clearRect(0, 0, width, height);
       drawStars(now);
       drawMeteor(now);

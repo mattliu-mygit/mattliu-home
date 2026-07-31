@@ -1,5 +1,6 @@
-import { type CSSProperties, useRef } from "react";
+import { type CSSProperties, useEffect, useRef } from "react";
 
+import { projectConstellationPoint } from "../celestial-motion";
 import type {
   Connection,
   DestinationSlug,
@@ -12,6 +13,7 @@ export type ConstellationItem = {
   overviewLabel?: string;
   meta: string;
   position: Point;
+  depth: number;
 };
 
 type ConstellationMapProps = {
@@ -40,6 +42,67 @@ export function ConstellationMap({
   onSelect,
 }: ConstellationMapProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const starRefs = useRef(new Map<string, HTMLButtonElement>());
+  const lineRefs = useRef(new Map<string, SVGLineElement>());
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (variant !== "detail" || !root || !window.requestAnimationFrame) {
+      return;
+    }
+    const universe = root.closest<HTMLElement>(".universe");
+    const reducedMotion =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
+      false;
+    if (!universe || reducedMotion) {
+      return;
+    }
+
+    let frameId = 0;
+    const draw = () => {
+      const pull = {
+        x:
+          Number.parseFloat(
+            universe.style.getPropertyValue("--constellation-pull-x"),
+          ) || 0,
+        y:
+          Number.parseFloat(
+            universe.style.getPropertyValue("--constellation-pull-y"),
+          ) || 0,
+      };
+      const viewport = { width: root.clientWidth, height: root.clientHeight };
+      const projected = new Map<string, Point>();
+
+      for (const item of items) {
+        const position = projectConstellationPoint(
+          item.position,
+          item.depth,
+          pull,
+          viewport,
+        );
+        projected.set(item.slug, position);
+        const star = starRefs.current.get(item.slug);
+        star?.style.setProperty("--star-x", `${position[0]}%`);
+        star?.style.setProperty("--star-y", `${position[1]}%`);
+      }
+
+      for (const [from, to] of connections) {
+        const line = lineRefs.current.get(`${from}-${to}`);
+        const fromPosition = projected.get(from);
+        const toPosition = projected.get(to);
+        if (line && fromPosition && toPosition) {
+          line.setAttribute("x1", String(fromPosition[0]));
+          line.setAttribute("y1", String(fromPosition[1]));
+          line.setAttribute("x2", String(toPosition[0]));
+          line.setAttribute("y2", String(toPosition[1]));
+        }
+      }
+      frameId = window.requestAnimationFrame(draw);
+    };
+
+    frameId = window.requestAnimationFrame(draw);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [connections, items, variant]);
   const getOrigin = (): Point => {
     const fallback = position ?? [50, 50];
     const root = rootRef.current;
@@ -98,6 +161,14 @@ export function ConstellationMap({
             return fromItem && toItem ? (
               <line
                 key={`${from}-${to}`}
+                ref={(element) => {
+                  const key = `${from}-${to}`;
+                  if (element) {
+                    lineRefs.current.set(key, element);
+                  } else {
+                    lineRefs.current.delete(key);
+                  }
+                }}
                 x1={fromItem.position[0]}
                 y1={fromItem.position[1]}
                 x2={toItem.position[0]}
@@ -119,6 +190,14 @@ export function ConstellationMap({
               data-index={index}
               id={`constellation-star-${variant}-${kind}-${item.slug}`}
               key={item.slug}
+              data-depth={item.depth}
+              ref={(element) => {
+                if (element) {
+                  starRefs.current.set(item.slug, element);
+                } else {
+                  starRefs.current.delete(item.slug);
+                }
+              }}
               style={
                 {
                   "--star-x": `${item.position[0]}%`,

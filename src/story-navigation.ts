@@ -174,3 +174,31 @@ export const centeredStoryBeat = (
       : nearest,
   ).id;
 };
+
+export const interpolatedStoryProgress = (
+  entries: readonly { center: number }[],
+  viewportCenter: number,
+) => {
+  if (entries.length <= 1 || viewportCenter <= (entries[0]?.center ?? 0)) {
+    return 0;
+  }
+  const lastIndex = entries.length - 1;
+  if (viewportCenter >= entries[lastIndex].center) {
+    return 1;
+  }
+  const beforeIndex = entries.findIndex(
+    (entry) => entry.center >= viewportCenter,
+  ) - 1;
+  const before = entries[beforeIndex];
+  const after = entries[beforeIndex + 1];
+  const segment = (viewportCenter - before.center) / (after.center - before.center);
+  return (beforeIndex + segment) / lastIndex;
+};
+
+export const routeMarkerPosition = (progress: number, count: number) => {
+  if (count <= 0) {
+    return 50;
+  }
+  const boundedProgress = Math.min(1, Math.max(0, progress));
+  return ((boundedProgress * Math.max(0, count - 1) + 0.5) / count) * 100;
+};

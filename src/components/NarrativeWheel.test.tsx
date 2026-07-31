@@ -32,6 +32,7 @@ describe("NarrativeWheel", () => {
         onActivate={() => undefined}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
+        onProgressChange={() => undefined}
       />,
     );
 
@@ -52,6 +53,7 @@ describe("NarrativeWheel", () => {
         onActivate={onActivate}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
+        onProgressChange={() => undefined}
       />,
     );
 
@@ -76,6 +78,7 @@ describe("NarrativeWheel", () => {
         onActivate={() => undefined}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
+        onProgressChange={() => undefined}
         ref={ref}
       />,
     );
@@ -105,6 +108,7 @@ describe("NarrativeWheel", () => {
         onActivate={() => undefined}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
+        onProgressChange={() => undefined}
         ref={ref}
       />,
     );
@@ -137,6 +141,7 @@ describe("NarrativeWheel", () => {
         onActivate={() => undefined}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
+        onProgressChange={() => undefined}
         ref={ref}
       />,
     );
@@ -148,5 +153,34 @@ describe("NarrativeWheel", () => {
 
     expect(scrollBy).toHaveBeenCalledTimes(1);
     expect(scrollBy).toHaveBeenCalledWith({ behavior: "auto", top: 32 });
+  });
+
+  it("reports continuous progress before the nearest beat changes", () => {
+    const onProgressChange = vi.fn();
+    render(
+      <NarrativeWheel
+        activeId="intro/name"
+        beats={beats}
+        collapsed={false}
+        onActivate={() => undefined}
+        onActiveBeat={() => undefined}
+        onCollapsedChange={() => undefined}
+        onProgressChange={onProgressChange}
+      />,
+    );
+
+    const scroll = screen.getByLabelText("Story sequence");
+    scroll.getBoundingClientRect = () =>
+      ({ top: 0, height: 400 } as DOMRect);
+    Array.from(scroll.querySelectorAll<HTMLElement>("[data-story-beat]")).forEach(
+      (element, index) => {
+        element.getBoundingClientRect = () =>
+          ({ top: index * 200, height: 200 } as DOMRect);
+      },
+    );
+
+    fireEvent.scroll(scroll);
+
+    expect(onProgressChange).toHaveBeenLastCalledWith(0.025);
   });
 });

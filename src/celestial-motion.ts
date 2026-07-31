@@ -8,6 +8,11 @@ export type Point2d = {
   y: number;
 };
 
+export type ViewportSize = {
+  width: number;
+  height: number;
+};
+
 export type BackgroundStar = Point2d & {
   depth: number;
   size: number;
@@ -63,6 +68,47 @@ export function constellationDrift(travelVelocity: number): Point2d {
     x: signedVelocity * 10,
     y: signedVelocity * 4.2,
   };
+}
+
+export function cameraTravelVector(from: Point2d, to: Point2d): Point2d {
+  const rounded = (value: number) => Math.round(value * 100) / 100;
+  return {
+    x: rounded(clamp((to.x - from.x) * 0.55, -12, 12)),
+    y: rounded(clamp((to.y - from.y) * 0.55, -14, 14)),
+  };
+}
+
+export function directionalConstellationDrift(
+  travelVelocity: number,
+  direction: Point2d,
+): Point2d {
+  const length = Math.hypot(direction.x, direction.y);
+  if (length === 0 || travelVelocity === 0) {
+    return { x: 0, y: 0 };
+  }
+
+  const magnitude = clamp(Math.abs(travelVelocity), 0, 1.8) * 10;
+  return {
+    x: (direction.x / length) * magnitude,
+    y: (direction.y / length) * magnitude,
+  };
+}
+
+export function projectConstellationPoint(
+  position: readonly [number, number],
+  depth: number,
+  pull: Point2d,
+  viewport: ViewportSize,
+): readonly [number, number] {
+  if (viewport.width <= 0 || viewport.height <= 0) {
+    return position;
+  }
+
+  const parallax = 1 / depth;
+  return [
+    position[0] + (pull.x / viewport.width) * 100 * parallax,
+    position[1] + (pull.y / viewport.height) * 100 * parallax,
+  ];
 }
 
 export function parallaxDisplacement(

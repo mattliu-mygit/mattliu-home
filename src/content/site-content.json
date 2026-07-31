@@ -70,7 +70,8 @@
       "shortLabel": "Johns Hopkins",
       "area": "Foundation",
       "summary": "Learning across systems thinking, research, and building.",
-      "position": [12, 72]
+      "position": [12, 72],
+      "depth": 1.04
     },
     {
       "slug": "aws-sagemaker",
@@ -78,7 +79,8 @@
       "shortLabel": "AWS SageMaker",
       "area": "AI Platforms",
       "summary": "Production model-customization workflows spanning preparation, training, evaluation, and deployment.",
-      "position": [48, 28]
+      "position": [48, 28],
+      "depth": 0.94
     },
     {
       "slug": "wandb-weave",
@@ -86,7 +88,8 @@
       "shortLabel": "W&B · Weave",
       "area": "Evaluation and observability",
       "summary": "Systems that make agent behavior inspectable and easier to improve.",
-      "position": [88, 58]
+      "position": [88, 58],
+      "depth": 1.08
     }
   ],
   "projects": [
@@ -102,7 +105,8 @@
       "repositoryUrl": "https://github.com/uCredit-Dev/ucredit_frontend_typescript",
       "linkLabel": "View project",
       "artifact": "ucredit",
-      "position": [13, 72]
+      "position": [13, 72],
+      "depth": 1.06
     },
     {
       "slug": "model-customization-assistant",
@@ -116,7 +120,8 @@
       "repositoryUrl": "https://aws.amazon.com/blogs/machine-learning/agent-guided-workflows-to-accelerate-model-customization-in-amazon-sagemaker-ai/",
       "linkLabel": "Read the launch",
       "artifact": "customization",
-      "position": [31, 43]
+      "position": [31, 43],
+      "depth": 0.97
     },
     {
       "slug": "llm-as-a-judge",
@@ -128,7 +133,8 @@
       "contribution": "Evaluation UX, judging architecture, and implementation",
       "technologies": ["LLM evaluation", "Weave", "Evidence design"],
       "artifact": "judge",
-      "position": [51, 64]
+      "position": [51, 64],
+      "depth": 1.03
     },
     {
       "slug": "weave-agent-adapter",
@@ -142,7 +148,8 @@
       "repositoryUrl": "https://github.com/mattliu-mygit/Weave-Agent-Adapter",
       "linkLabel": "View source",
       "artifact": "trace",
-      "position": [71, 34]
+      "position": [71, 34],
+      "depth": 0.92
     },
     {
       "slug": "monopole",
@@ -156,7 +163,8 @@
       "repositoryUrl": "https://github.com/mattliu-mygit/Monopole",
       "linkLabel": "View source",
       "artifact": "interface",
-      "position": [89, 16]
+      "position": [89, 16],
+      "depth": 1.08
     }
   ],
   "quotes": [
@@ -165,7 +173,8 @@
       "text": "Less is more.",
       "author": "Ludwig Mies van der Rohe",
       "sourceUrl": "https://www.moma.org/collection/artists/7166",
-      "position": [14, 58]
+      "position": [14, 58],
+      "depth": 1.04
     },
     {
       "slug": "failure-to-failure",
@@ -173,42 +182,48 @@
       "author": "Maybe Churchill",
       "sourceUrl": "https://quoteinvestigator.com/2014/06/28/success/",
       "attributionNote": "Origin unknown; commonly misattributed to Winston Churchill.",
-      "position": [29, 29]
+      "position": [29, 29],
+      "depth": 0.94
     },
     {
       "slug": "strong-opinions",
       "text": "Strong opinions, weakly held.",
       "author": "Paul Saffo",
       "sourceUrl": "https://hbr.org/podcast/2007/07/harvard-business-ideacast-51-s",
-      "position": [43, 67]
+      "position": [43, 67],
+      "depth": 1.07
     },
     {
       "slug": "simplicity-follows",
       "text": "Simplicity does not precede complexity, but follows it.",
       "author": "Alan Perlis",
       "sourceUrl": "https://cs.yale.edu/homes/perlis-alan/quotes.html",
-      "position": [57, 38]
+      "position": [57, 38],
+      "depth": 0.98
     },
     {
       "slug": "create-understand",
       "text": "What I cannot create, I do not understand.",
       "author": "Richard Feynman",
       "sourceUrl": "https://magazine.caltech.edu/post/biology-through-the-eyes-of-a-physicist",
-      "position": [69, 73]
+      "position": [69, 73],
+      "depth": 1.02
     },
     {
       "slug": "computing-is-insight",
       "text": "The purpose of computing is insight, not numbers.",
       "author": "Richard Hamming",
       "sourceUrl": "https://old.maa.org/node/111904",
-      "position": [80, 42]
+      "position": [80, 42],
+      "depth": 0.92
     },
     {
       "slug": "reality-precedes",
       "text": "Reality must take precedence over public relations, for nature cannot be fooled.",
       "author": "Richard Feynman",
       "sourceUrl": "https://shepherd.caltech.edu/html/quotes.html",
-      "position": [91, 17]
+      "position": [91, 17],
+      "depth": 1.08
     }
   ]
 }

@@ -59,6 +59,28 @@ describe("site content", () => {
     });
   });
 
+  it("gives each constellation a restrained range of individual depth", () => {
+    for (const entries of [
+      siteContent.path,
+      siteContent.projects,
+      siteContent.quotes,
+    ]) {
+      const depths = entries.map((entry) => entry.depth);
+      expect(depths.every((depth) => depth >= 0.9 && depth <= 1.1)).toBe(true);
+      expect(new Set(depths).size).toBeGreaterThan(1);
+    }
+  });
+
+  it("rejects constellation depth outside the shallow projection range", () => {
+    const invalid = cloneContent();
+    const projects = invalid.projects as Array<Record<string, unknown>>;
+    projects[0].depth = 1.2;
+
+    expect(() => validateSiteContent(invalid)).toThrow(
+      /projects\[0\]\.depth must be between 0\.9 and 1\.1/i,
+    );
+  });
+
   it("rejects duplicate project and quote slugs", () => {
     const duplicateProject = cloneContent();
     const projects = duplicateProject.projects as Array<Record<string, unknown>>;

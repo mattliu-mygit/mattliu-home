@@ -3,12 +3,15 @@ import { describe, expect, it } from "vitest";
 import {
   advanceCelestialMotion,
   applyWheelImpulse,
+  cameraTravelVector,
   constellationDrift,
   createMeteor,
   createSeededRandom,
   createStarField,
+  directionalConstellationDrift,
   meteorSegment,
   parallaxDisplacement,
+  projectConstellationPoint,
   type CelestialMotion,
 } from "./celestial-motion";
 
@@ -43,6 +46,55 @@ describe("celestial motion", () => {
 
     expect(drift.x).toBe(18);
     expect(drift.y).toBeCloseTo(7.56);
+  });
+
+  it("derives camera travel from the actual constellation coordinates", () => {
+    expect(
+      cameraTravelVector({ x: 77, y: 48 }, { x: 63, y: 72 }),
+    ).toEqual({ x: -7.7, y: 13.2 });
+    expect(cameraTravelVector({ x: 63, y: 72 }, { x: 77, y: 48 })).toEqual({
+      x: 7.7,
+      y: -13.2,
+    });
+  });
+
+  it("pulls a focused constellation toward the next selected star", () => {
+    const drift = directionalConstellationDrift(1, { x: -14, y: 24 });
+
+    expect(drift.x).toBeLessThan(0);
+    expect(drift.y).toBeGreaterThan(0);
+    expect(Math.hypot(drift.x, drift.y)).toBeCloseTo(10);
+    expect(directionalConstellationDrift(0, { x: -14, y: 24 })).toEqual({
+      x: 0,
+      y: 0,
+    });
+  });
+
+  it("projects shallow star depth without changing the base constellation", () => {
+    const base = [50, 50] as const;
+    const near = projectConstellationPoint(
+      base,
+      0.9,
+      { x: 10, y: 6 },
+      { width: 1000, height: 600 },
+    );
+    const far = projectConstellationPoint(
+      base,
+      1.1,
+      { x: 10, y: 6 },
+      { width: 1000, height: 600 },
+    );
+
+    expect(near[0] - base[0]).toBeGreaterThan(far[0] - base[0]);
+    expect(near[1] - base[1]).toBeGreaterThan(far[1] - base[1]);
+    expect(
+      projectConstellationPoint(
+        base,
+        0.9,
+        { x: 0, y: 0 },
+        { width: 1000, height: 600 },
+      ),
+    ).toEqual(base);
   });
 
   it("moves nearby stars farther than distant stars without a spherical edge", () => {
