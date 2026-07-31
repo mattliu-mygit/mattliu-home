@@ -1,8 +1,6 @@
 export type CelestialMotion = {
   travel: number;
   travelVelocity: number;
-  pull: number;
-  pullVelocity: number;
 };
 
 export type Point2d = {
@@ -43,7 +41,6 @@ export function applyWheelImpulse(
   return {
     ...motion,
     travelVelocity: motion.travelVelocity + impulse * 0.0045,
-    pullVelocity: motion.pullVelocity + impulse * 0.024,
   };
 }
 
@@ -52,16 +49,19 @@ export function advanceCelestialMotion(
   elapsedMs: number,
 ): CelestialMotion {
   const frames = clamp(elapsedMs, 0, 32) / frameDuration;
-  const pullAcceleration = -motion.pull * 0.09 - motion.pullVelocity * 0.24;
-  const pullVelocity =
-    motion.pullVelocity + pullAcceleration * frames;
 
   return {
     travel: motion.travel + motion.travelVelocity * elapsedMs,
     travelVelocity:
       motion.travelVelocity * Math.pow(0.986, frames),
-    pull: motion.pull + pullVelocity * frames,
-    pullVelocity,
+  };
+}
+
+export function constellationDrift(travelVelocity: number): Point2d {
+  const signedVelocity = clamp(travelVelocity, -1.8, 1.8);
+  return {
+    x: signedVelocity * 10,
+    y: signedVelocity * 4.2,
   };
 }
 

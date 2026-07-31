@@ -1,5 +1,6 @@
 import type {
   DestinationSlug,
+  Point,
   SiteContent,
 } from "../content/site-content";
 import {
@@ -12,7 +13,11 @@ type Destination = SiteContent["destinations"][number];
 type UniverseOverviewProps = {
   destinations: readonly Destination[];
   items: Record<DestinationSlug, readonly ConstellationItem[]>;
-  onSelect: (destination: DestinationSlug, itemSlug?: string) => void;
+  onSelect: (
+    destination: DestinationSlug,
+    itemSlug?: string,
+    origin?: Point,
+  ) => void;
 };
 
 export function UniverseOverview({
@@ -34,8 +39,10 @@ export function UniverseOverview({
           getAccessibleName={(item) =>
             `Open ${destination.label} with ${item.label} selected`
           }
-          onOpen={() => onSelect(destination.slug)}
-          onSelect={(itemSlug) => onSelect(destination.slug, itemSlug)}
+          onOpen={(origin) => onSelect(destination.slug, undefined, origin)}
+          onSelect={(itemSlug, origin) =>
+            onSelect(destination.slug, itemSlug, origin)
+          }
         />
       ))}
     </div>

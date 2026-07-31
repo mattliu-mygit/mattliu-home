@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   advanceCelestialMotion,
   applyWheelImpulse,
+  constellationDrift,
   createMeteor,
   createSeededRandom,
   createStarField,
@@ -14,24 +15,34 @@ import {
 const still: CelestialMotion = {
   travel: 0,
   travelVelocity: 0,
-  pull: 0,
-  pullVelocity: 0,
 };
 
 describe("celestial motion", () => {
-  it("pulls with the wheel impulse and stabilizes at the authored position", () => {
+  it("keeps constellation drift aligned with decaying sky velocity", () => {
     let motion = applyWheelImpulse(still, 120);
-    motion = advanceCelestialMotion(motion, 16);
+    const first = constellationDrift(motion.travelVelocity);
 
-    expect(motion.pull).toBeGreaterThan(0);
-    const displaced = motion.pull;
+    expect(first.x).toBeGreaterThan(0);
+    expect(first.y).toBeGreaterThan(0);
 
-    for (let frame = 0; frame < 360; frame += 1) {
+    for (let frame = 0; frame < 180; frame += 1) {
       motion = advanceCelestialMotion(motion, 16);
+      const drift = constellationDrift(motion.travelVelocity);
+      expect(Math.sign(drift.x)).toBe(Math.sign(motion.travelVelocity));
+      expect(Math.sign(drift.y)).toBe(Math.sign(motion.travelVelocity));
     }
 
-    expect(Math.abs(motion.pull)).toBeLessThan(displaced / 20);
-    expect(Math.abs(motion.pullVelocity)).toBeLessThan(0.01);
+    const settled = constellationDrift(motion.travelVelocity);
+    expect(settled.x).toBeGreaterThanOrEqual(0);
+    expect(settled.x).toBeLessThan(first.x / 10);
+    expect(settled.y).toBeLessThan(first.y / 10);
+  });
+
+  it("bounds constellation drift during high-resolution wheel bursts", () => {
+    const drift = constellationDrift(20);
+
+    expect(drift.x).toBe(18);
+    expect(drift.y).toBeCloseTo(7.56);
   });
 
   it("moves nearby stars farther than distant stars without a spherical edge", () => {

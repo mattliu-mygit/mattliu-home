@@ -51,6 +51,10 @@ describe("personal universe", () => {
     );
 
     expect(window.location.hash).toBe("#projects");
+    expect(screen.getByRole("main")).toHaveStyle({
+      "--camera-origin-x": "64%",
+      "--camera-origin-y": "40%",
+    });
     const selected = screen.getByRole("button", {
       name: "Explore Monopole",
     });
@@ -199,8 +203,6 @@ describe("personal universe", () => {
       name: "Explore Monopole",
     });
     await user.click(trigger);
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    await user.click(trigger);
 
     expect(window.location.hash).toBe("#projects/monopole");
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
@@ -217,9 +219,6 @@ describe("personal universe", () => {
 
     await user.click(
       screen.getByRole("button", { name: "Explore Projects" }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: "Explore LLM-as-a-Judge" }),
     );
     await user.click(
       screen.getByRole("button", { name: "Explore LLM-as-a-Judge" }),

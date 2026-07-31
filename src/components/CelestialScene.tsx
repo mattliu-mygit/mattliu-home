@@ -8,6 +8,7 @@ import {
 import {
   advanceCelestialMotion,
   applyWheelImpulse,
+  constellationDrift,
   createMeteor,
   createSeededRandom,
   createStarField,
@@ -16,17 +17,22 @@ import {
   type CelestialMotion,
   type Meteor,
 } from "../celestial-motion";
+import type { Point } from "../content/site-content";
 
 type CelestialSceneProps = PropsWithChildren<{
+  cameraOrigin: Point;
   interactive: boolean;
+  view: "universe" | "projects" | "quotes";
 }>;
 
 const wrap = (value: number, extent: number) =>
   ((value % extent) + extent) % extent;
 
 export function CelestialScene({
+  cameraOrigin,
   children,
   interactive,
+  view,
 }: CelestialSceneProps) {
   const rootRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -65,8 +71,6 @@ export function CelestialScene({
     let motion: CelestialMotion = {
       travel: 0,
       travelVelocity: 0,
-      pull: 0,
-      pullVelocity: 0,
     };
     let meteor: Meteor | null = null;
     let nextMeteorAt = lastTime + 1_000;
@@ -153,16 +157,17 @@ export function CelestialScene({
       const elapsed = now - lastTime;
       lastTime = now;
       motion = advanceCelestialMotion(motion, elapsed);
+      const drift = constellationDrift(motion.travelVelocity);
       context.clearRect(0, 0, width, height);
       drawStars(now);
       drawMeteor(now);
       root.style.setProperty(
         "--constellation-pull-x",
-        `${motion.pull * 0.72}px`,
+        `${drift.x}px`,
       );
       root.style.setProperty(
         "--constellation-pull-y",
-        `${motion.pull * 0.31}px`,
+        `${drift.y}px`,
       );
       frameId = window.requestAnimationFrame(drawFrame);
     };
@@ -190,9 +195,12 @@ export function CelestialScene({
   return (
     <main
       className="universe"
+      data-view={view}
       ref={rootRef}
       style={
         {
+          "--camera-origin-x": `${cameraOrigin[0]}%`,
+          "--camera-origin-y": `${cameraOrigin[1]}%`,
           "--constellation-pull-x": "0px",
           "--constellation-pull-y": "0px",
         } as CSSProperties

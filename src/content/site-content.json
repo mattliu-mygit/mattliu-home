@@ -33,7 +33,7 @@
     {
       "slug": "projects",
       "label": "Projects",
-      "position": [73, 30],
+      "position": [64, 40],
       "connections": [
         ["ucredit", "model-customization-assistant"],
         ["model-customization-assistant", "llm-as-a-judge"],
@@ -44,7 +44,7 @@
     {
       "slug": "quotes",
       "label": "Quotes",
-      "position": [84, 70],
+      "position": [74, 68],
       "connections": [
         ["less-is-more", "failure-to-failure"],
         ["failure-to-failure", "strong-opinions"],

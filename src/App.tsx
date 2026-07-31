@@ -12,6 +12,7 @@ import {
   projectBySlug,
   siteContent,
   type DestinationSlug,
+  type Point,
 } from "./content/site-content";
 import {
   parseUniverseLocation,
@@ -69,6 +70,7 @@ export default function App() {
   const [selectedQuoteSlug, setSelectedQuoteSlug] = useState(
     siteContent.quotes[0].slug,
   );
+  const [cameraOrigin, setCameraOrigin] = useState<Point>([50, 50]);
   const viewHeading = useRef<HTMLHeadingElement>(null);
   const lastUniverseTarget = useRef<{
     slug: DestinationSlug;
@@ -100,8 +102,12 @@ export default function App() {
   );
 
   const enterConstellation = useCallback(
-    (view: DestinationSlug, itemSlug?: string) => {
+    (view: DestinationSlug, itemSlug?: string, origin?: Point) => {
       lastUniverseTarget.current = { slug: view, itemSlug };
+      const destination = destinations.find(
+        (candidate) => candidate.slug === view,
+      );
+      setCameraOrigin(origin ?? destination?.position ?? [50, 50]);
       if (view === "projects" && itemSlug) {
         setSelectedProjectSlug(itemSlug);
       } else if (view === "quotes" && itemSlug) {
@@ -135,20 +141,10 @@ export default function App() {
   const openProject = useCallback(
     (slug: string) => {
       lastProjectTrigger.current = document.activeElement as HTMLElement | null;
+      setSelectedProjectSlug(slug);
       commitLocation({ view: "projects", projectSlug: slug });
     },
     [commitLocation],
-  );
-
-  const selectProject = useCallback(
-    (slug: string) => {
-      if (selectedProjectSlug === slug) {
-        openProject(slug);
-        return;
-      }
-      setSelectedProjectSlug(slug);
-    },
-    [openProject, selectedProjectSlug],
   );
 
   const closeProject = useCallback(() => {
@@ -221,7 +217,11 @@ export default function App() {
   }, [closeProject, location, returnToUniverse]);
 
   return (
-    <CelestialScene interactive={location.view === "universe"}>
+    <CelestialScene
+      cameraOrigin={cameraOrigin}
+      interactive={!selectedProject}
+      view={location.view}
+    >
       <nav className="site-nav" aria-label="Primary navigation">
         <a className="site-nav__name" href="/" aria-label="Matthew Liu home">
           {person.name}
@@ -286,7 +286,7 @@ export default function App() {
                 connections={projectDestination.connections}
                 activeSlug={selectedProjectSlug}
                 getAccessibleName={(project) => `Explore ${project.label}`}
-                onSelect={selectProject}
+                onSelect={openProject}
               />
             ) : (
               <>
