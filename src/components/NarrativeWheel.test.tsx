@@ -181,6 +181,45 @@ describe("NarrativeWheel", () => {
 
     fireEvent.scroll(scroll);
 
-    expect(onProgressChange).toHaveBeenLastCalledWith(0.025);
+    expect(onProgressChange).toHaveBeenLastCalledWith(0.025, null);
+  });
+
+  it("reports star-to-star travel before the active card changes", () => {
+    const onProgressChange = vi.fn();
+    const onActiveBeat = vi.fn();
+    render(
+      <NarrativeWheel
+        activeId="path/johns-hopkins"
+        beats={beats}
+        collapsed={false}
+        onActivate={() => undefined}
+        onActiveBeat={onActiveBeat}
+        onCollapsedChange={() => undefined}
+        onProgressChange={onProgressChange}
+      />,
+    );
+
+    const scroll = screen.getByLabelText("Story sequence");
+    scroll.getBoundingClientRect = () =>
+      ({ top: 800, height: 400 } as DOMRect);
+    Array.from(scroll.querySelectorAll<HTMLElement>("[data-story-beat]")).forEach(
+      (element, index) => {
+        element.getBoundingClientRect = () =>
+          ({ top: index * 200, height: 200 } as DOMRect);
+      },
+    );
+
+    fireEvent.scroll(scroll);
+
+    expect(onProgressChange).toHaveBeenLastCalledWith(
+      0.225,
+      expect.objectContaining({
+        view: "path",
+        fromSlug: "johns-hopkins",
+        toSlug: "aws-sagemaker",
+        progress: 0.5,
+      }),
+    );
+    expect(onActiveBeat).not.toHaveBeenCalled();
   });
 });

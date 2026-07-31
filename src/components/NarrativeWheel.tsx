@@ -8,7 +8,9 @@ import {
 
 import {
   centeredStoryBeat,
+  constellationTravelAtProgress,
   interpolatedStoryProgress,
+  type ConstellationTravel,
   type StoryBeat,
 } from "../story-navigation";
 import {
@@ -30,7 +32,10 @@ type NarrativeWheelProps = {
   onActiveBeat: (beat: StoryBeat) => void;
   onActivate: (beat: StoryBeat) => void;
   onCollapsedChange: (collapsed: boolean) => void;
-  onProgressChange: (progress: number) => void;
+  onProgressChange: (
+    progress: number,
+    travel: ConstellationTravel | null,
+  ) => void;
 };
 
 export const NarrativeWheel = forwardRef<
@@ -131,7 +136,11 @@ export const NarrativeWheel = forwardRef<
         },
       );
     const viewportCenter = scrollBox.top + scrollBox.height / 2;
-    onProgressChange(interpolatedStoryProgress(entries, viewportCenter));
+    const progress = interpolatedStoryProgress(entries, viewportCenter);
+    onProgressChange(
+      progress,
+      constellationTravelAtProgress(beats, progress),
+    );
     const id = centeredStoryBeat(entries, viewportCenter);
     if (!id || id === activeIdRef.current) {
       if (id === requestedIdRef.current) {

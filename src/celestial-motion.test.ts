@@ -4,6 +4,8 @@ import {
   advanceCelestialMotion,
   applyWheelImpulse,
   cameraTravelVector,
+  constellationFocusOffset,
+  constellationFocusPoint,
   constellationDrift,
   createMeteor,
   createSeededRandom,
@@ -104,6 +106,28 @@ describe("celestial motion", () => {
     expect(Math.hypot(near.x, near.y)).toBeGreaterThan(
       Math.hypot(far.x, far.y) * 3,
     );
+  });
+
+  it("interpolates focus continuously and bounds distant star travel", () => {
+    const before = constellationFocusPoint(
+      { x: 12, y: 72 },
+      { x: 48, y: 28 },
+      0.999,
+    );
+    const after = constellationFocusPoint(
+      { x: 48, y: 28 },
+      { x: 88, y: 58 },
+      0.001,
+    );
+
+    expect(Math.hypot(before.x - after.x, before.y - after.y)).toBeLessThan(
+      0.2,
+    );
+    expect(constellationFocusOffset({ x: 100, y: 100 })).toEqual({
+      x: -4,
+      y: -3,
+    });
+    expect(constellationFocusOffset({ x: 50, y: 50 })).toEqual({ x: 0, y: 0 });
   });
 
   it("keeps every meteor trail directly behind its velocity", () => {

@@ -43,6 +43,18 @@ export type StoryBeat =
       quote: Quote;
     };
 
+export type ConstellationTravel = {
+  view: DestinationSlug;
+  fromSlug: string;
+  toSlug: string;
+  progress: number;
+};
+
+const itemBeat = (
+  beat: StoryBeat,
+): beat is Extract<StoryBeat, { kind: "path" | "project" | "quote" }> =>
+  beat.kind === "path" || beat.kind === "project" || beat.kind === "quote";
+
 export const createStoryBeats = (
   content: SiteContent,
 ): readonly StoryBeat[] => [
@@ -193,6 +205,35 @@ export const interpolatedStoryProgress = (
   const after = entries[beforeIndex + 1];
   const segment = (viewportCenter - before.center) / (after.center - before.center);
   return (beforeIndex + segment) / lastIndex;
+};
+
+export const constellationTravelAtProgress = (
+  beats: readonly StoryBeat[],
+  progress: number,
+): ConstellationTravel | null => {
+  if (beats.length < 2) {
+    return null;
+  }
+  const boundedProgress = Math.min(1, Math.max(0, progress));
+  const position = boundedProgress * (beats.length - 1);
+  const fromIndex = Math.floor(position);
+  const toIndex = Math.min(beats.length - 1, fromIndex + 1);
+  const from = beats[fromIndex];
+  const to = beats[toIndex];
+  if (
+    fromIndex === toIndex ||
+    !itemBeat(from) ||
+    !itemBeat(to) ||
+    from.view !== to.view
+  ) {
+    return null;
+  }
+  return {
+    view: from.view,
+    fromSlug: from.itemSlug,
+    toSlug: to.itemSlug,
+    progress: position - fromIndex,
+  };
 };
 
 export const routeMarkerPosition = (progress: number, count: number) => {

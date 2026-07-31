@@ -101,6 +101,26 @@ export function directionalConstellationDrift(
   };
 }
 
+export function constellationFocusPoint(
+  from: Point2d,
+  to: Point2d,
+  progress: number,
+): Point2d {
+  const boundedProgress = clamp(progress, 0, 1);
+  const eased = boundedProgress * boundedProgress * (3 - 2 * boundedProgress);
+  return {
+    x: from.x + (to.x - from.x) * eased,
+    y: from.y + (to.y - from.y) * eased,
+  };
+}
+
+export function constellationFocusOffset(focus: Point2d): Point2d {
+  return {
+    x: clamp((50 - focus.x) * 0.08, -4, 4),
+    y: clamp((50 - focus.y) * 0.06, -3, 3),
+  };
+}
+
 export function projectConstellationPoint(
   position: readonly [number, number],
   depth: number,

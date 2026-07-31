@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { siteContent } from "./content/site-content";
 import {
   centeredStoryBeat,
+  constellationTravelAtProgress,
   createRouteChapters,
   createRouteMarks,
   createStoryBeats,
@@ -102,6 +103,28 @@ describe("story navigation", () => {
       },
       { label: "Fin", position: markPosition(20) },
     ]);
+  });
+
+  it("derives continuous travel between adjacent stars in one constellation", () => {
+    const beats = createStoryBeats(siteContent);
+    const denominator = beats.length - 1;
+    const before = constellationTravelAtProgress(beats, 4.999 / denominator);
+    const after = constellationTravelAtProgress(beats, 5.001 / denominator);
+
+    expect(before).toMatchObject({
+      view: "path",
+      fromSlug: "johns-hopkins",
+      toSlug: "aws-sagemaker",
+    });
+    expect(before?.progress).toBeCloseTo(0.999);
+    expect(after).toMatchObject({
+      view: "path",
+      fromSlug: "aws-sagemaker",
+      toSlug: "wandb-weave",
+    });
+    expect(after?.progress).toBeCloseTo(0.001);
+    expect(constellationTravelAtProgress(beats, 2.5 / denominator)).toBeNull();
+    expect(constellationTravelAtProgress(beats, 6.5 / denominator)).toBeNull();
   });
 
   it("chooses the beat nearest the viewport center", () => {
