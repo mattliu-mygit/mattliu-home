@@ -353,8 +353,7 @@ test("card and open-sky wheel input advance the story equally", async ({
     };
   });
 
-  expect(movement.cardDelta).toBeGreaterThan(0);
-  expect(movement.skyDelta).toBe(movement.cardDelta);
+  expect(movement).toEqual({ cardDelta: 48, skyDelta: 48 });
 });
 
 test("camera arrival starts at the activated constellation origin", async ({
