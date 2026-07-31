@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 import type { Project } from "../content/site-content";
 import { ArtifactPreview } from "./ArtifactPreview";
+import { ExternalLink } from "./ExternalLink";
 
 type ProjectLensProps = {
   project: Project;
@@ -61,10 +62,13 @@ export function ProjectLens({ project, onClose }: ProjectLensProps) {
             ))}
           </ul>
           {project.repositoryUrl ? (
-            <a className="project-lens__link" href={project.repositoryUrl}>
+            <ExternalLink
+              className="project-lens__link"
+              href={project.repositoryUrl}
+            >
               {project.linkLabel ?? "View source"}{" "}
               <span aria-hidden="true">↗</span>
-            </a>
+            </ExternalLink>
           ) : null}
         </div>
 

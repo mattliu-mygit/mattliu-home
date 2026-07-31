@@ -151,13 +151,13 @@ export function renderFallbackHtml(content: SiteContent): string {
   const links = content.person.links
     .map(
       (link) =>
-        `<li><a href="${escapeHtml(link.url)}">${escapeHtml(link.label)}</a></li>`,
+        `<li><a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)}</a></li>`,
     )
     .join("");
   const projects = content.projects
     .map((project) => {
       const title = project.repositoryUrl
-        ? `<a href="${escapeHtml(project.repositoryUrl)}">${escapeHtml(project.title)}</a>`
+        ? `<a href="${escapeHtml(project.repositoryUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(project.title)}</a>`
         : escapeHtml(project.title);
       return [
         "<li>",

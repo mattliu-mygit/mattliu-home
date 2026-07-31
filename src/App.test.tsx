@@ -57,6 +57,22 @@ describe("personal universe", () => {
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
   });
 
+  it("moves Matthew Liu into the header only after the intro", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const identity = document.querySelector(".site-nav__identity");
+
+    expect(identity).toHaveAttribute("aria-hidden", "true");
+    await user.click(screen.getByRole("button", { name: "Go to Principle" }));
+    expect(identity).toHaveAttribute("aria-hidden", "true");
+    await user.click(screen.getByRole("button", { name: "Go to Context" }));
+    expect(identity).toHaveAttribute("aria-hidden", "true");
+    await user.click(screen.getByRole("button", { name: "Go to Path" }));
+    expect(identity).not.toHaveAttribute("aria-hidden");
+    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
+    expect(identity).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("uses a project card to enter its existing constellation selection", async () => {
     const user = userEvent.setup();
     render(<App />);

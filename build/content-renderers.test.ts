@@ -78,6 +78,11 @@ describe("content renderers", () => {
 
     expect(html).toContain("<h1>Matthew Liu");
     expect(html).toContain(siteContent.person.introduction);
+    expect(html.match(/target="_blank"/g)).toHaveLength(
+      siteContent.person.links.length +
+        siteContent.projects.filter(({ repositoryUrl }) => repositoryUrl).length,
+    );
+    expect(html).toContain('rel="noopener noreferrer"');
     for (const project of siteContent.projects) {
       expect(html).toContain(project.title);
       expect(html).toContain(project.description);

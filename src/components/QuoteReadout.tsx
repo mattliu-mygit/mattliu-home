@@ -1,4 +1,5 @@
 import type { Quote } from "../content/site-content";
+import { ExternalLink } from "./ExternalLink";
 
 export function QuoteReadout({
   hidden,
@@ -16,9 +17,9 @@ export function QuoteReadout({
     >
       <blockquote>{quote.text}</blockquote>
       <figcaption>
-        <a href={quote.sourceUrl} tabIndex={hidden ? -1 : 0}>
+        <ExternalLink href={quote.sourceUrl} tabIndex={hidden ? -1 : 0}>
           {quote.author} <span aria-hidden="true">↗</span>
-        </a>
+        </ExternalLink>
       </figcaption>
     </figure>
   );

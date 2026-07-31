@@ -12,6 +12,7 @@ import {
   ConstellationWorld,
   type ConstellationWorldHandle,
 } from "./components/ConstellationWorld";
+import { ExternalLink } from "./components/ExternalLink";
 import {
   NarrativeWheel,
   type NarrativeWheelHandle,
@@ -187,6 +188,8 @@ export default function App() {
           y: destinationBySlug[location.view].position[1],
         };
   const camera = worldCameraFor(location.view, cameraDestination);
+  const showHeaderIdentity =
+    location.view !== "universe" || !activeStoryId.startsWith("intro/");
 
   const aimConstellation = useCallback(
     (view: DestinationSlug, toSlug?: string) => {
@@ -555,11 +558,18 @@ export default function App() {
       view={location.view}
     >
       <nav className="site-nav" aria-label="Profile links">
+        <span
+          aria-hidden={showHeaderIdentity ? undefined : true}
+          className="site-nav__identity"
+          data-visible={showHeaderIdentity ? "true" : undefined}
+        >
+          {person.name}
+        </span>
         <div className="site-nav__links">
           {person.links.map((link) => (
-            <a href={link.url} key={link.label}>
+            <ExternalLink href={link.url} key={link.label}>
               {link.label}
-            </a>
+            </ExternalLink>
           ))}
         </div>
       </nav>

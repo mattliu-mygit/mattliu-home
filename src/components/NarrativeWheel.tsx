@@ -19,6 +19,7 @@ import {
   type NarrativeWheelInput,
 } from "../wheel-input";
 import { ArtifactPreview } from "./ArtifactPreview";
+import { ExternalLink } from "./ExternalLink";
 
 export type NarrativeWheelHandle = {
   scrollBy: (input: NarrativeWheelInput) => boolean;
@@ -307,9 +308,12 @@ function NarrativeCard({
       >
         <blockquote>{beat.quote.text}</blockquote>
       </button>
-      <a href={beat.quote.sourceUrl} tabIndex={disabled ? -1 : 0}>
+      <ExternalLink
+        href={beat.quote.sourceUrl}
+        tabIndex={disabled ? -1 : 0}
+      >
         {beat.quote.author} <span aria-hidden="true">↗</span>
-      </a>
+      </ExternalLink>
     </article>
   );
 }
