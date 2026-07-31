@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { AmbientStars } from "./components/AmbientStars";
-import { ConstellationMap } from "./components/ConstellationMap";
+import { CelestialScene } from "./components/CelestialScene";
+import {
+  ConstellationMap,
+  type ConstellationItem,
+} from "./components/ConstellationMap";
 import { ProjectLens } from "./components/ProjectLens";
 import { QuoteReadout } from "./components/QuoteReadout";
-import { ShootingStars } from "./components/ShootingStars";
 import { UniverseOverview } from "./components/UniverseOverview";
 import {
   projectBySlug,
@@ -17,29 +19,35 @@ import {
   type UniverseLocation,
 } from "./navigation";
 
-const projectConnections = [
-  [0, 1],
-  [1, 2],
-  [2, 3],
-  [3, 4],
-] as const;
-
-const quoteConnections = [
-  [0, 1],
-  [1, 2],
-  [2, 3],
-  [3, 4],
-  [4, 5],
-  [5, 6],
-  [1, 3],
-  [3, 5],
-] as const;
-
 const { person, projects, quotes, destinations } = siteContent;
+const projectDestination = destinations.find(
+  (destination) => destination.slug === "projects",
+)!;
+const quoteDestination = destinations.find(
+  (destination) => destination.slug === "quotes",
+)!;
+const constellationItems: Record<
+  DestinationSlug,
+  readonly ConstellationItem[]
+> = {
+  projects: projects.map((project) => ({
+    slug: project.slug,
+    label: project.title,
+    meta: project.displayYear,
+    position: project.position,
+  })),
+  quotes: quotes.map((quote) => ({
+    slug: quote.slug,
+    label: quote.text,
+    overviewLabel: quote.author,
+    meta: quote.author,
+    position: quote.position,
+  })),
+};
 
 type PendingFocus =
   | { type: "heading" }
-  | { type: "destination"; slug: DestinationSlug }
+  | { type: "universe"; slug: DestinationSlug; itemSlug?: string }
   | { type: "project" }
   | null;
 
@@ -50,10 +58,22 @@ export default function App() {
   const [location, setLocation] = useState(() =>
     parseUniverseLocation(window.location.hash),
   );
+  const [selectedProjectSlug, setSelectedProjectSlug] = useState<
+    string | undefined
+  >(() => {
+    const initialLocation = parseUniverseLocation(window.location.hash);
+    return initialLocation.view === "projects"
+      ? initialLocation.projectSlug
+      : undefined;
+  });
   const [selectedQuoteSlug, setSelectedQuoteSlug] = useState(
     siteContent.quotes[0].slug,
   );
   const viewHeading = useRef<HTMLHeadingElement>(null);
+  const lastUniverseTarget = useRef<{
+    slug: DestinationSlug;
+    itemSlug?: string;
+  } | null>(null);
   const lastProjectTrigger = useRef<HTMLElement | null>(null);
   const pendingFocus = useRef<PendingFocus>(null);
   const selectedProject =
@@ -80,7 +100,13 @@ export default function App() {
   );
 
   const enterConstellation = useCallback(
-    (view: DestinationSlug) => {
+    (view: DestinationSlug, itemSlug?: string) => {
+      lastUniverseTarget.current = { slug: view, itemSlug };
+      if (view === "projects" && itemSlug) {
+        setSelectedProjectSlug(itemSlug);
+      } else if (view === "quotes" && itemSlug) {
+        setSelectedQuoteSlug(itemSlug);
+      }
       commitLocation({ view }, { focus: { type: "heading" } });
     },
     [commitLocation],
@@ -89,11 +115,19 @@ export default function App() {
   const returnToUniverse = useCallback(() => {
     const destination =
       location.view === "universe" ? "projects" : location.view;
+    const previousTarget = lastUniverseTarget.current;
     commitLocation(
       { view: "universe" },
       {
         replace: true,
-        focus: { type: "destination", slug: destination },
+        focus: {
+          type: "universe",
+          slug: destination,
+          itemSlug:
+            previousTarget?.slug === destination
+              ? previousTarget.itemSlug
+              : undefined,
+        },
       },
     );
   }, [commitLocation, location.view]);
@@ -104,6 +138,17 @@ export default function App() {
       commitLocation({ view: "projects", projectSlug: slug });
     },
     [commitLocation],
+  );
+
+  const selectProject = useCallback(
+    (slug: string) => {
+      if (selectedProjectSlug === slug) {
+        openProject(slug);
+        return;
+      }
+      setSelectedProjectSlug(slug);
+    },
+    [openProject, selectedProjectSlug],
   );
 
   const closeProject = useCallback(() => {
@@ -124,6 +169,9 @@ export default function App() {
         );
       }
       pendingFocus.current = null;
+      if (nextLocation.view === "projects" && nextLocation.projectSlug) {
+        setSelectedProjectSlug(nextLocation.projectSlug);
+      }
       setLocation(nextLocation);
     };
 
@@ -145,10 +193,11 @@ export default function App() {
     queueMicrotask(() => {
       if (target.type === "heading") {
         viewHeading.current?.focus();
-      } else if (target.type === "destination") {
-        document
-          .getElementById(`universe-destination-${target.slug}`)
-          ?.focus();
+      } else if (target.type === "universe") {
+        const targetId = target.itemSlug
+          ? `constellation-star-overview-${target.slug}-${target.itemSlug}`
+          : `universe-destination-${target.slug}`;
+        document.getElementById(targetId)?.focus();
       } else {
         lastProjectTrigger.current?.focus();
       }
@@ -172,10 +221,7 @@ export default function App() {
   }, [closeProject, location, returnToUniverse]);
 
   return (
-    <main className="universe">
-      <AmbientStars />
-      <ShootingStars />
-
+    <CelestialScene interactive={location.view === "universe"}>
       <nav className="site-nav" aria-label="Primary navigation">
         <a className="site-nav__name" href="/" aria-label="Matthew Liu home">
           {person.name}
@@ -206,6 +252,7 @@ export default function App() {
         {location.view === "universe" ? (
           <UniverseOverview
             destinations={destinations}
+            items={constellationItems}
             onSelect={enterConstellation}
           />
         ) : (
@@ -235,28 +282,19 @@ export default function App() {
             {location.view === "projects" ? (
               <ConstellationMap
                 kind="projects"
-                items={projects.map((project) => ({
-                  slug: project.slug,
-                  label: project.title,
-                  meta: project.displayYear,
-                  position: project.position,
-                }))}
-                connections={projectConnections}
+                items={constellationItems.projects}
+                connections={projectDestination.connections}
+                activeSlug={selectedProjectSlug}
                 getAccessibleName={(project) => `Explore ${project.label}`}
-                onSelect={openProject}
+                onSelect={selectProject}
               />
             ) : (
               <>
                 <QuoteReadout quote={selectedQuote} />
                 <ConstellationMap
                   kind="quotes"
-                  items={quotes.map((quote) => ({
-                    slug: quote.slug,
-                    label: quote.text,
-                    meta: quote.author,
-                    position: quote.position,
-                  }))}
-                  connections={quoteConnections}
+                  items={constellationItems.quotes}
+                  connections={quoteDestination.connections}
                   activeSlug={selectedQuote.slug}
                   getAccessibleName={(quote) => `Read quote: ${quote.label}`}
                   onSelect={setSelectedQuoteSlug}
@@ -270,6 +308,6 @@ export default function App() {
       {selectedProject ? (
         <ProjectLens project={selectedProject} onClose={closeProject} />
       ) : null}
-    </main>
+    </CelestialScene>
   );
 }

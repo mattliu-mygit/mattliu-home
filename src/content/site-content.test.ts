@@ -116,6 +116,25 @@ describe("site content", () => {
     );
   });
 
+  it("validates shared constellation connection topology", () => {
+    expect(siteContent.destinations[0].connections).toEqual([
+      ["ucredit", "model-customization-assistant"],
+      ["model-customization-assistant", "llm-as-a-judge"],
+      ["llm-as-a-judge", "weave-agent-adapter"],
+      ["weave-agent-adapter", "monopole"],
+    ]);
+
+    const invalid = cloneContent();
+    const destinations = invalid.destinations as Array<
+      Record<string, unknown>
+    >;
+    destinations[0].connections = [["ucredit", "missing-project"]];
+
+    expect(() => validateSiteContent(invalid)).toThrow(
+      /destinations\[0\]\.connections\[0\].*existing projects/i,
+    );
+  });
+
   it("rejects unknown artifact types", () => {
     const invalid = cloneContent();
     const projects = invalid.projects as Array<Record<string, unknown>>;

@@ -33,12 +33,28 @@
     {
       "slug": "projects",
       "label": "Projects",
-      "position": [73, 30]
+      "position": [73, 30],
+      "connections": [
+        ["ucredit", "model-customization-assistant"],
+        ["model-customization-assistant", "llm-as-a-judge"],
+        ["llm-as-a-judge", "weave-agent-adapter"],
+        ["weave-agent-adapter", "monopole"]
+      ]
     },
     {
       "slug": "quotes",
       "label": "Quotes",
-      "position": [84, 70]
+      "position": [84, 70],
+      "connections": [
+        ["less-is-more", "failure-to-failure"],
+        ["failure-to-failure", "strong-opinions"],
+        ["strong-opinions", "simplicity-follows"],
+        ["simplicity-follows", "create-understand"],
+        ["create-understand", "computing-is-insight"],
+        ["computing-is-insight", "reality-precedes"],
+        ["failure-to-failure", "simplicity-follows"],
+        ["simplicity-follows", "computing-is-insight"]
+      ]
     }
   ],
   "projects": [

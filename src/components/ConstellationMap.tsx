@@ -1,35 +1,59 @@
 import type { CSSProperties } from "react";
 
-import type { Point } from "../content/site-content";
+import type { Connection, Point } from "../content/site-content";
 
-type ConstellationItem = {
+export type ConstellationItem = {
   slug: string;
   label: string;
+  overviewLabel?: string;
   meta: string;
   position: Point;
 };
 
 type ConstellationMapProps = {
   kind: "projects" | "quotes";
+  variant?: "detail" | "overview";
   items: readonly ConstellationItem[];
-  connections: readonly (readonly [from: number, to: number])[];
+  connections: readonly Connection[];
   activeSlug?: string;
+  label?: string;
+  position?: Point;
   getAccessibleName: (item: ConstellationItem) => string;
+  onOpen?: () => void;
   onSelect: (slug: string) => void;
 };
 
 export function ConstellationMap({
   kind,
+  variant = "detail",
   items,
   connections,
   activeSlug,
+  label,
+  position,
   getAccessibleName,
+  onOpen,
   onSelect,
 }: ConstellationMapProps) {
   return (
     <div
-      className={`constellation-map constellation-map--${kind}`}
-      data-testid={`${kind}-constellation`}
+      className={[
+        "constellation-map",
+        `constellation-map--${kind}`,
+        `constellation-map--${variant}`,
+        variant === "overview" ? "universe-constellation" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      data-testid={`${kind}-constellation-${variant}`}
+      style={
+        position
+          ? ({
+              "--destination-x": `${position[0]}%`,
+              "--destination-y": `${position[1]}%`,
+            } as CSSProperties)
+          : undefined
+      }
     >
       <div className="constellation-map__plane">
         <svg
@@ -38,41 +62,74 @@ export function ConstellationMap({
           preserveAspectRatio="none"
           aria-hidden="true"
         >
-          {connections.map(([from, to]) => (
-            <line
-              key={`${from}-${to}`}
-              x1={items[from].position[0]}
-              y1={items[from].position[1]}
-              x2={items[to].position[0]}
-              y2={items[to].position[1]}
-            />
-          ))}
+          {connections.map(([from, to]) => {
+            const fromItem = items.find((item) => item.slug === from);
+            const toItem = items.find((item) => item.slug === to);
+            return fromItem && toItem ? (
+              <line
+                key={`${from}-${to}`}
+                x1={fromItem.position[0]}
+                y1={fromItem.position[1]}
+                x2={toItem.position[0]}
+                y2={toItem.position[1]}
+              />
+            ) : null;
+          })}
         </svg>
 
-        {items.map((item, index) => (
-          <button
-            className="constellation-star"
-            data-active={activeSlug === item.slug ? "true" : undefined}
-            data-index={index}
-            key={item.slug}
-            style={
-              {
-                "--star-x": `${item.position[0]}%`,
-                "--star-y": `${item.position[1]}%`,
-              } as CSSProperties
-            }
-            type="button"
-            aria-label={getAccessibleName(item)}
-            onClick={() => onSelect(item.slug)}
-          >
-            <span className="constellation-star__point" aria-hidden="true" />
-            <span className="constellation-star__copy">
-              <span className="constellation-star__label">{item.label}</span>
-              <span className="constellation-star__meta">{item.meta}</span>
-            </span>
-          </button>
-        ))}
+        {items.map((item, index) => {
+          const displayLabel =
+            variant === "overview"
+              ? (item.overviewLabel ?? item.label)
+              : item.label;
+          return (
+            <button
+              className="constellation-star"
+              data-active={activeSlug === item.slug ? "true" : undefined}
+              data-index={index}
+              id={`constellation-star-${variant}-${kind}-${item.slug}`}
+              key={item.slug}
+              style={
+                {
+                  "--star-x": `${item.position[0]}%`,
+                  "--star-y": `${item.position[1]}%`,
+                } as CSSProperties
+              }
+              type="button"
+              aria-label={getAccessibleName(item)}
+              aria-pressed={
+                variant === "detail"
+                  ? activeSlug === item.slug
+                  : undefined
+              }
+              onClick={() => onSelect(item.slug)}
+            >
+              <span
+                className="constellation-star__point"
+                aria-hidden="true"
+              />
+              <span className="constellation-star__copy">
+                <span className="constellation-star__label">
+                  {displayLabel}
+                </span>
+                <span className="constellation-star__meta">{item.meta}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
+
+      {variant === "overview" && label && onOpen ? (
+        <button
+          className="constellation-map__name"
+          id={`universe-destination-${kind}`}
+          type="button"
+          aria-label={`Explore ${label}`}
+          onClick={onOpen}
+        >
+          {label}
+        </button>
+      ) : null}
     </div>
   );
 }

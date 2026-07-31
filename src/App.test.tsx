@@ -25,10 +25,58 @@ describe("personal universe", () => {
       screen.getByRole("button", { name: "Explore Quotes" }),
     ).toBeVisible();
     expect(
-      screen.queryByRole("button", { name: "Explore Monopole" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", {
+        name: "Open Projects with Monopole selected",
+      }),
+    ).toBeVisible();
+    const quoteStar = screen.getByRole("button", {
+      name: "Open Quotes with Less is more. selected",
+    });
+    expect(quoteStar).toBeVisible();
+    expect(
+      quoteStar.querySelector(".constellation-star__label"),
+    ).toHaveTextContent("Ludwig Mies van der Rohe");
     expect(screen.queryByRole("tab")).not.toBeInTheDocument();
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+  });
+
+  it("carries a universe star selection into its constellation", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Projects with Monopole selected",
+      }),
+    );
+
+    expect(window.location.hash).toBe("#projects");
+    const selected = screen.getByRole("button", {
+      name: "Explore Monopole",
+    });
+    expect(selected).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await user.click(selected);
+    expect(window.location.hash).toBe("#projects/monopole");
+    expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
+  });
+
+  it("returns focus to the universe star that opened a constellation", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const origin = screen.getByRole("button", {
+      name: "Open Projects with Monopole selected",
+    });
+    await user.click(origin);
+    await user.click(screen.getByRole("button", { name: "Universe" }));
+
+    expect(
+      screen.getByRole("button", {
+        name: "Open Projects with Monopole selected",
+      }),
+    ).toHaveFocus();
   });
 
   it("enters Projects with a URL and focused constellation heading", async () => {
@@ -151,6 +199,8 @@ describe("personal universe", () => {
       name: "Explore Monopole",
     });
     await user.click(trigger);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await user.click(trigger);
 
     expect(window.location.hash).toBe("#projects/monopole");
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
@@ -167,6 +217,9 @@ describe("personal universe", () => {
 
     await user.click(
       screen.getByRole("button", { name: "Explore Projects" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Explore LLM-as-a-Judge" }),
     );
     await user.click(
       screen.getByRole("button", { name: "Explore LLM-as-a-Judge" }),

@@ -24,6 +24,7 @@
 html {
   min-width: 320px;
   min-height: 100%;
+  overflow: hidden;
   background: var(--night);
 }
 
@@ -31,6 +32,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100%;
+  overflow: hidden;
   background: var(--night);
 }
 
@@ -114,18 +116,28 @@ a:focus-visible {
 
 .universe {
   position: relative;
+  height: 100svh;
   min-height: 100svh;
-  overflow: clip;
+  overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(circle at 69% 44%, rgba(53, 63, 98, 0.18), transparent 31%),
+    radial-gradient(ellipse at 48% 48%, rgba(45, 52, 78, 0.15), transparent 43%),
     radial-gradient(circle at 81% 12%, rgba(81, 74, 44, 0.07), transparent 23%),
     linear-gradient(140deg, #0a0c13 0%, var(--night) 62%, #090a0f 100%);
 }
 
-.universe::after {
+.celestial-field {
   position: fixed;
   z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.universe::after {
+  position: fixed;
+  z-index: 2;
   inset: 0;
   pointer-events: none;
   content: "";
@@ -239,87 +251,53 @@ a:focus-visible {
   animation: universe-arrive 680ms ease-out both;
 }
 
-.universe-destination {
+.constellation-map--overview {
   position: absolute;
   top: var(--destination-y);
   left: var(--destination-x);
-  display: grid;
   width: clamp(8rem, 12vw, 11rem);
   height: clamp(8rem, 12vw, 11rem);
-  place-items: center;
-  padding: 0;
-  border: 0;
   color: var(--blue);
-  background: transparent;
-  cursor: pointer;
-  transform: translate(-50%, -50%);
+  transform:
+    translate(-50%, -50%)
+    translate3d(
+      var(--constellation-pull-x),
+      var(--constellation-pull-y),
+      0
+    );
+  will-change: transform;
 }
 
-.universe-destination::before {
+.constellation-map--overview::before {
   position: absolute;
+  top: 50%;
+  left: 50%;
   width: 1px;
   height: 1px;
   border-radius: 50%;
   content: "";
   box-shadow: 0 0 4rem 1.4rem rgba(165, 179, 255, 0.09);
-  transition: box-shadow 320ms ease;
+  transform: translate(-50%, -50%);
 }
 
-.universe-destination__glyph {
+.constellation-map__name {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.universe-destination__glyph polyline {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 0.65;
-  opacity: 0.28;
-  vector-effect: non-scaling-stroke;
-}
-
-.universe-destination__glyph circle {
-  fill: var(--night);
-  stroke: currentColor;
-  stroke-width: 1.1;
-  transition:
-    fill 220ms ease,
-    filter 220ms ease,
-    r 220ms ease;
-}
-
-.universe-destination > span {
-  position: relative;
-  z-index: 1;
+  top: calc(100% + 0.45rem);
+  left: 50%;
   padding: 0.35rem 0.55rem;
+  border: 0;
   color: #d9dbe3;
   background: rgba(8, 10, 16, 0.72);
+  cursor: pointer;
   font-size: 0.62rem;
   letter-spacing: 0.16em;
+  white-space: nowrap;
   text-transform: uppercase;
-  transition: color 220ms ease;
+  transform: translateX(-50%);
+  transition: color 180ms ease;
 }
 
-.universe-destination:is(:hover, :focus-visible) {
-  color: var(--gold);
-}
-
-.universe-destination:is(:hover, :focus-visible)::before {
-  box-shadow: 0 0 5rem 2rem rgba(240, 213, 138, 0.13);
-}
-
-.universe-destination:is(:hover, :focus-visible)
-  .universe-destination__glyph
-  circle {
-  fill: currentColor;
-  filter: drop-shadow(0 0 0.35rem currentColor);
-  r: 3;
-}
-
-.universe-destination:is(:hover, :focus-visible) > span {
+.constellation-map__name:is(:hover, :focus-visible) {
   color: var(--ink);
 }
 
@@ -369,11 +347,18 @@ a:focus-visible {
   transform: translateX(-50%);
 }
 
+.constellation-view__title:focus {
+  outline: none;
+}
+
 .constellation-map {
-  position: absolute;
   z-index: 3;
-  inset: 3.8rem clamp(2.5rem, 7vw, 7rem) 1.5rem;
   transform-origin: 50% 50%;
+}
+
+.constellation-map--detail {
+  position: absolute;
+  inset: 3.8rem clamp(2.5rem, 7vw, 7rem) 1.5rem;
 }
 
 .constellation-map__plane {
@@ -407,6 +392,12 @@ a:focus-visible {
   opacity: 0.25;
 }
 
+.constellation-map--overview .constellation-map__connections line {
+  stroke-width: 0.65;
+  opacity: 0.32;
+  animation: none;
+}
+
 .constellation-star {
   position: absolute;
   top: var(--star-y);
@@ -421,6 +412,16 @@ a:focus-visible {
   cursor: pointer;
   text-align: left;
   transform: translate(-50%, -50%);
+}
+
+.constellation-map--overview .constellation-star {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.constellation-map--overview .constellation-star__point {
+  width: 0.34rem;
+  height: 0.34rem;
 }
 
 .constellation-star__point {
@@ -454,10 +455,44 @@ a:focus-visible {
   pointer-events: none;
 }
 
-.constellation-map--projects
+.constellation-map--overview .constellation-star__copy {
+  top: calc(50% + 0.55rem);
+  left: 50%;
+  max-width: 9rem;
+  padding: 0.2rem 0.35rem;
+  background: rgba(8, 10, 16, 0.82);
+  opacity: 0;
+  text-align: center;
+  transform: translate(-50%, -0.2rem);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.constellation-map--overview
+  .constellation-star:is(:hover, :focus-visible)
+  .constellation-star__copy {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.constellation-map--overview .constellation-star__label {
+  color: var(--ink);
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 0.52rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.constellation-map--overview .constellation-star__meta {
+  display: none;
+}
+
+.constellation-map--detail.constellation-map--projects
   .constellation-star:is([data-index="3"], [data-index="4"])
   .constellation-star__copy,
-.constellation-map--quotes
+.constellation-map--detail.constellation-map--quotes
   .constellation-star:is([data-index="5"], [data-index="6"])
   .constellation-star__copy {
   right: calc(50% + 0.8rem);
@@ -495,11 +530,11 @@ a:focus-visible {
   color: var(--ink);
 }
 
-.constellation-map--quotes .constellation-star__label {
+.constellation-map--detail.constellation-map--quotes .constellation-star__label {
   display: none;
 }
 
-.constellation-map--quotes .constellation-star__meta {
+.constellation-map--detail.constellation-map--quotes .constellation-star__meta {
   width: 8rem;
   color: #858da0;
   line-height: 1.35;
@@ -541,44 +576,6 @@ a:focus-visible {
   color: var(--gold);
 }
 
-.ambient-stars {
-  position: fixed;
-  z-index: 2;
-  inset: 4.8rem 1.5rem 1.5rem;
-  pointer-events: none;
-}
-
-.ambient-stars span {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: #d9deef;
-  box-shadow: 0 0 4px rgba(217, 222, 239, 0.35);
-  animation: breathe 4.8s ease-in-out infinite alternate;
-}
-
-.shooting-stars {
-  position: fixed;
-  z-index: 2;
-  inset: 4.6rem 0 0;
-  width: 100%;
-  height: calc(100% - 4.6rem);
-  overflow: visible;
-  pointer-events: none;
-}
-
-.shooting-stars line {
-  opacity: 0;
-  stroke: rgba(210, 220, 255, 0.78);
-  stroke-width: 0.12;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 0.22rem rgba(181, 198, 255, 0.7));
-  animation: shooting-star var(--shooting-duration) linear
-    var(--shooting-delay) infinite;
-}
-
 .project-lens {
   width: min(66rem, calc(100vw - 4rem));
   max-width: none;
@@ -605,6 +602,13 @@ a:focus-visible {
   background:
     radial-gradient(circle at 74% 20%, rgba(103, 116, 175, 0.09), transparent 38%),
     #10131b;
+  scrollbar-width: none;
+}
+
+.project-lens__surface::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .project-lens__copy {
@@ -965,36 +969,6 @@ a:focus-visible {
   }
 }
 
-@keyframes breathe {
-  to {
-    opacity: 0.22;
-  }
-}
-
-@keyframes shooting-star {
-  0%,
-  84% {
-    opacity: 0;
-    stroke-dasharray: 0 24;
-    stroke-dashoffset: 16;
-  }
-
-  86% {
-    opacity: 0.82;
-    stroke-dasharray: 7 17;
-  }
-
-  90% {
-    opacity: 0;
-    stroke-dasharray: 0 24;
-    stroke-dashoffset: -12;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
-
 @media (max-width: 900px) and (min-width: 761px) {
   .quiet-zone {
     left: 2rem;
@@ -1009,7 +983,7 @@ a:focus-visible {
     font-size: 0.86rem;
   }
 
-  .constellation-map {
+  .constellation-map--detail {
     right: 2rem;
     left: 2rem;
   }
@@ -1076,17 +1050,17 @@ a:focus-visible {
     inset: 4.2rem 0 0;
   }
 
-  .universe-destination {
+  .constellation-map--overview {
     width: 8.6rem;
     height: 8.6rem;
   }
 
-  .universe-destination:nth-child(1) {
+  .constellation-map--overview:nth-child(1) {
     top: 67%;
     left: 28%;
   }
 
-  .universe-destination:nth-child(2) {
+  .constellation-map--overview:nth-child(2) {
     top: 80%;
     left: 72%;
   }
@@ -1108,7 +1082,7 @@ a:focus-visible {
     transform: none;
   }
 
-  .constellation-map {
+  .constellation-map--detail {
     inset: 4.2rem -1.25rem 0;
     min-height: auto;
   }
@@ -1123,10 +1097,10 @@ a:focus-visible {
     max-width: 8.5rem;
   }
 
-  .constellation-map--projects
+  .constellation-map--detail.constellation-map--projects
     .constellation-star:is([data-index="3"], [data-index="4"])
     .constellation-star__copy,
-  .constellation-map--quotes
+  .constellation-map--detail.constellation-map--quotes
     .constellation-star:is([data-index="5"], [data-index="6"])
     .constellation-star__copy {
     right: calc(50% + 0.6rem);
@@ -1137,7 +1111,8 @@ a:focus-visible {
     font-size: 1.05rem;
   }
 
-  .constellation-map--quotes .constellation-star__meta {
+  .constellation-map--detail.constellation-map--quotes
+    .constellation-star__meta {
     width: 5.5rem;
     font-size: 0.45rem;
   }
@@ -1156,21 +1131,8 @@ a:focus-visible {
     font-size: clamp(1.7rem, 8vw, 2.35rem);
   }
 
-  .constellation-view--quotes .constellation-map {
+  .constellation-view--quotes .constellation-map--detail {
     top: 11rem;
-  }
-
-  .ambient-stars {
-    inset: 4.5rem 1rem 1rem;
-  }
-
-  .ambient-stars span:nth-child(3n) {
-    display: none;
-  }
-
-  .shooting-stars {
-    top: 4.2rem;
-    height: calc(100% - 4.2rem);
   }
 
   .project-lens {
@@ -1226,7 +1188,11 @@ a:focus-visible {
     transform: translate(-50%, -50%);
   }
 
-  .shooting-stars {
+  .constellation-map--overview {
+    transform: translate(-50%, -50%);
+  }
+
+  .celestial-field {
     display: none;
   }
 }

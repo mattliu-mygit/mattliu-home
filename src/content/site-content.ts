@@ -1,6 +1,7 @@
 import rawSiteContent from "./site-content.json";
 
 export type Point = readonly [x: number, y: number];
+export type Connection = readonly [from: string, to: string];
 export type DestinationSlug = "projects" | "quotes";
 export type ArtifactType =
   | "ucredit"
@@ -64,6 +65,7 @@ export type SiteContent = {
     slug: DestinationSlug;
     label: string;
     position: Point;
+    connections: readonly Connection[];
   }[];
   projects: readonly Project[];
   quotes: readonly Quote[];
@@ -136,6 +138,19 @@ const point = (value: unknown, path: string): Point => {
   return coordinates as [number, number];
 };
 
+const connection = (value: unknown, path: string): Connection => {
+  const endpoints = array(value, path);
+  if (endpoints.length !== 2) {
+    throw new Error(`${path} must connect two item slugs`);
+  }
+  const from = text(endpoints[0], `${path}[0]`);
+  const to = text(endpoints[1], `${path}[1]`);
+  if (from === to) {
+    throw new Error(`${path} must connect two distinct item slugs`);
+  }
+  return [from, to];
+};
+
 const optionalText = (value: unknown, path: string) =>
   value === undefined ? undefined : text(value, path);
 
@@ -193,6 +208,15 @@ export function validateSiteContent(value: unknown): SiteContent {
         position: point(
           destination.position,
           `destinations[${index}].position`,
+        ),
+        connections: array(
+          destination.connections,
+          `destinations[${index}].connections`,
+        ).map((value, connectionIndex) =>
+          connection(
+            value,
+            `destinations[${index}].connections[${connectionIndex}]`,
+          ),
         ),
       };
     },
@@ -271,6 +295,21 @@ export function validateSiteContent(value: unknown): SiteContent {
     };
   });
   assertUniqueSlugs(quotes, "quote");
+
+  destinations.forEach((destination, destinationIndex) => {
+    const itemSlugs = new Set(
+      (destination.slug === "projects" ? projects : quotes).map(
+        ({ slug }) => slug,
+      ),
+    );
+    destination.connections.forEach(([from, to], connectionIndex) => {
+      if (!itemSlugs.has(from) || !itemSlugs.has(to)) {
+        throw new Error(
+          `destinations[${destinationIndex}].connections[${connectionIndex}] must reference existing ${destination.slug}`,
+        );
+      }
+    });
+  });
 
   return {
     site: {

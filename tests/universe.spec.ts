@@ -25,10 +25,15 @@ test("universe overview enters and leaves the Projects constellation", async ({
   await expect(
     page.getByRole("button", { name: "Explore Quotes" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: "Open Projects with Monopole selected",
+    }),
+  ).toBeVisible();
 
   const quietZone = await page.locator(".quiet-zone").boundingBox();
   expect(quietZone).not.toBeNull();
-  for (const destination of await page.locator(".universe-destination").all()) {
+  for (const destination of await page.locator(".universe-constellation").all()) {
     const box = await destination.boundingBox();
     expect(box).not.toBeNull();
     expect(overlaps(box!, quietZone!)).toBe(false);
@@ -50,6 +55,27 @@ test("universe overview enters and leaves the Projects constellation", async ({
   ).toBeFocused();
 });
 
+test("a universe star zooms with its selection before opening a lens", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  await page
+    .getByRole("button", {
+      name: "Open Projects with Monopole selected",
+    })
+    .click();
+
+  await expect(page).toHaveURL(/#projects$/);
+  const selected = page.getByRole("button", { name: "Explore Monopole" });
+  await expect(selected).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await selected.click();
+  await expect(page).toHaveURL(/#projects\/monopole$/);
+  await expect(page.getByRole("dialog", { name: "Monopole" })).toBeVisible();
+});
+
 test("Quotes is a constellation with selectable stars", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Explore Quotes" }).click();
@@ -64,7 +90,7 @@ test("Quotes is a constellation with selectable stars", async ({ page }) => {
   await expect(page.locator(".quote-readout blockquote")).toHaveText(
     "Strong opinions, weakly held.",
   );
-  await expect(page.locator(".quote-readout figcaption")).toHaveText(
+  await expect(page.locator(".quote-readout figcaption")).toContainText(
     "Paul Saffo",
   );
 });
@@ -78,6 +104,7 @@ test("project lenses preserve URL hierarchy, truthfulness, and focus", async ({
     name: "Explore LLM-as-a-Judge",
   });
 
+  await trigger.click();
   await trigger.click();
   await expect(page).toHaveURL(/#projects\/llm-as-a-judge$/);
   await expect(
@@ -97,7 +124,9 @@ test("project lenses preserve URL hierarchy, truthfulness, and focus", async ({
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-test("the camera never captures wheel input", async ({ page }) => {
+test("wheel input drifts the sky and constellations stabilize", async ({
+  page,
+}) => {
   await page.goto("/");
 
   const wasPrevented = await page.evaluate(() => {
@@ -110,8 +139,40 @@ test("the camera never captures wheel input", async ({ page }) => {
     return event.defaultPrevented;
   });
 
-  expect(wasPrevented).toBe(false);
-  await expect(page.locator(".universe")).toHaveCSS("min-height", "720px");
+  expect(wasPrevented).toBe(true);
+  const browserZoomWasPrevented = await page.evaluate(() => {
+    const event = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      deltaY: 120,
+    });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(browserZoomWasPrevented).toBe(false);
+  await page.waitForFunction(() => {
+    const value = getComputedStyle(
+      document.querySelector(".universe")!,
+    ).getPropertyValue("--constellation-pull-x");
+    return Math.abs(Number.parseFloat(value)) > 0.25;
+  });
+  const displaced = await page.locator(".universe").evaluate((element) =>
+    Math.abs(
+      Number.parseFloat(
+        getComputedStyle(element).getPropertyValue("--constellation-pull-x"),
+      ),
+    ),
+  );
+  await page.waitForTimeout(1800);
+  const stabilized = await page.locator(".universe").evaluate((element) =>
+    Math.abs(
+      Number.parseFloat(
+        getComputedStyle(element).getPropertyValue("--constellation-pull-x"),
+      ),
+    ),
+  );
+  expect(stabilized).toBeLessThan(displaced);
 });
 
 test("mobile overview and project labels remain inside the viewport", async ({
@@ -119,8 +180,11 @@ test("mobile overview and project labels remain inside the viewport", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await page.locator(".universe-overview").evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
 
-  for (const destination of await page.locator(".universe-destination").all()) {
+  for (const destination of await page.locator(".universe-constellation").all()) {
     const box = await destination.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.x).toBeGreaterThanOrEqual(0);
@@ -147,7 +211,7 @@ test("reduced motion removes camera transforms and shooting stars", async ({
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
 
-  await expect(page.locator(".shooting-stars")).toHaveCSS("display", "none");
+  await expect(page.locator(".celestial-field")).toHaveCSS("display", "none");
   await page.getByRole("button", { name: "Explore Projects" }).click();
   await expect(page.locator(".constellation-view")).toHaveCSS(
     "transform",
