@@ -64,7 +64,7 @@ describe("story navigation", () => {
 
     expect(marks).toHaveLength(beats.length);
     expect(marks.find(({ id }) => id === "intro/name")).toMatchObject({
-      label: "Universe",
+      label: "Origin",
       major: true,
     });
     expect(marks.find(({ id }) => id === "path")).toMatchObject({
@@ -77,7 +77,7 @@ describe("story navigation", () => {
     });
   });
 
-  it("centers permanent labels over each story chapter and ends on Fin", () => {
+  it("positions permanent labels at each story chapter opening and ends on Fin", () => {
     const beats = createStoryBeats(siteContent);
     const chapters = createRouteChapters(beats);
     const markPosition = (index: number) =>
@@ -91,15 +91,15 @@ describe("story navigation", () => {
       "Fin",
     ]);
     expect(chapters).toEqual([
-      { label: "Intro", position: (markPosition(0) + markPosition(2)) / 2 },
-      { label: "Path", position: (markPosition(3) + markPosition(6)) / 2 },
+      { label: "Intro", position: markPosition(0) },
+      { label: "Path", position: markPosition(3) },
       {
         label: "Projects",
-        position: (markPosition(7) + markPosition(12)) / 2,
+        position: markPosition(7),
       },
       {
         label: "Quotes",
-        position: (markPosition(13) + markPosition(20)) / 2,
+        position: markPosition(13),
       },
       { label: "Fin", position: markPosition(20) },
     ]);

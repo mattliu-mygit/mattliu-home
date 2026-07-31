@@ -636,7 +636,7 @@ a:focus-visible {
 
 .route-rail__label {
   position: absolute;
-  bottom: 2rem;
+  bottom: 2.75rem;
   width: max-content;
   max-width: 12rem;
   padding: 0.25rem 0.4rem;
@@ -667,7 +667,7 @@ a:focus-visible {
 
 .route-rail__chapter {
   position: absolute;
-  top: 66%;
+  bottom: 1.85rem;
   left: var(--chapter-position);
   color: rgba(218, 218, 224, 0.72);
   font-family: "Instrument Serif", Georgia, serif;

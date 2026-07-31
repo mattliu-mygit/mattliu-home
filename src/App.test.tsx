@@ -136,7 +136,7 @@ describe("personal universe", () => {
       ),
     ).toBe(star);
 
-    await user.click(screen.getByRole("button", { name: "Go to Universe" }));
+    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
     expect(
       screen.getByRole("button", {
         name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
@@ -234,7 +234,7 @@ describe("personal universe", () => {
 
     await user.click(screen.getByRole("button", { name: "Explore Path" }));
     await user.click(screen.getByRole("button", { name: "Go to Projects" }));
-    await user.click(screen.getByRole("button", { name: "Go to Universe" }));
+    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
 
     expect(startViewTransition).not.toHaveBeenCalled();
   });
@@ -333,7 +333,7 @@ describe("personal universe", () => {
       name: "Open Projects with Monopole selected",
     });
     await user.click(origin);
-    await user.click(screen.getByRole("button", { name: "Go to Universe" }));
+    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
 
     expect(
       screen.getByRole("button", {
@@ -368,7 +368,7 @@ describe("personal universe", () => {
       name: "Explore Projects",
     });
     await user.click(trigger);
-    await user.click(screen.getByRole("button", { name: "Go to Universe" }));
+    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
 
     expect(window.location.hash).toBe("");
     expect(

@@ -64,7 +64,7 @@ test("universe overview enters and leaves the Projects constellation", async ({
     expandedWheel!.x + expandedWheel!.width,
   );
 
-  await page.getByRole("button", { name: "Go to Universe" }).click();
+  await page.getByRole("button", { name: "Go to Origin" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(
     page.getByRole("button", { name: "Explore Projects" }),
@@ -99,6 +99,57 @@ test("overview connections stay continuous at large map sizes", async ({
       )
       .first(),
   ).toHaveCSS("stroke-dasharray", "none");
+});
+
+test("route chapter labels align above their opening ticks at desktop and mobile widths", async ({
+  page,
+}) => {
+  const chapterOpeningIndices = [0, 3, 7, 13, 20];
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+
+    const rail = page.getByRole("navigation", { name: "Story scrollbar" });
+    const chapters = rail.locator(".route-rail__chapter");
+    const originLabel = page
+      .getByRole("button", { name: "Go to Origin" })
+      .locator(".route-rail__label");
+
+    await expect(chapters).toHaveCount(chapterOpeningIndices.length);
+
+    const [chapterBoxes, originBox] = await Promise.all([
+      chapters.evaluateAll((elements) =>
+        elements.map((element) => element.getBoundingClientRect().toJSON()),
+      ),
+      originLabel.boundingBox(),
+    ]);
+
+    expect(originBox).not.toBeNull();
+    for (const [chapterIndex, openingIndex] of chapterOpeningIndices.entries()) {
+      const chapterBox = chapterBoxes[chapterIndex]!;
+      const tickBox = await rail
+        .locator(".route-rail__tick")
+        .nth(openingIndex)
+        .boundingBox();
+
+      expect(tickBox).not.toBeNull();
+      expect(
+        Math.abs(
+          chapterBox.x +
+            chapterBox.width / 2 -
+            (tickBox!.x + tickBox!.width / 2),
+        ),
+      ).toBeLessThanOrEqual(0.5);
+      expect(chapterBox.y + chapterBox.height).toBeLessThanOrEqual(tickBox!.y);
+    }
+
+    const introBox = chapterBoxes[0]!;
+    expect(overlaps(originBox!, introBox)).toBe(false);
+  }
 });
 
 test("a Path star zooms to its matching professional card", async ({ page }) => {
@@ -215,7 +266,7 @@ test("constellations keep one visible identity through camera travel", async ({
     page.locator('[data-testid="projects-constellation"]'),
   ).not.toHaveCSS("display", "none");
 
-  await page.getByRole("button", { name: "Go to Universe" }).click();
+  await page.getByRole("button", { name: "Go to Origin" }).click();
   await expect(pathStar).toHaveAttribute("data-identity-probe", "persistent");
 });
 
@@ -340,7 +391,7 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
   expect(await dispatchWheel()).toBe(false);
 
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Go to Universe" }).click();
+  await page.getByRole("button", { name: "Go to Origin" }).click();
   await page.getByRole("button", { name: "Explore Quotes" }).click();
   expect(await dispatchWheel()).toBe(true);
 

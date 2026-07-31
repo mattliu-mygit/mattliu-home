@@ -135,7 +135,7 @@ export type RouteMark = {
 const routeLabel = (beat: StoryBeat) => {
   if (beat.kind === "intro") {
     return beat.line === "name"
-      ? "Universe"
+      ? "Origin"
       : beat.line === "headline"
         ? "Principle"
         : "Context";
@@ -289,24 +289,13 @@ export const createRouteChapters = (
       beats.length,
   );
   const chapters = chapterDefinitions.flatMap(({ label, view }) => {
-    let firstIndex = -1;
-    let lastIndex = -1;
-    beats.forEach((beat, index) => {
-      if (beat.view !== view) {
-        return;
-      }
-      if (firstIndex < 0) {
-        firstIndex = index;
-      }
-      lastIndex = index;
-    });
+    const firstIndex = beats.findIndex((beat) => beat.view === view);
     return firstIndex < 0
       ? []
       : [
           {
             label,
-            position:
-              (positionForIndex(firstIndex) + positionForIndex(lastIndex)) / 2,
+            position: positionForIndex(firstIndex),
           },
         ];
   });

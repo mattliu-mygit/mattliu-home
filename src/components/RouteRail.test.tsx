@@ -6,7 +6,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { siteContent } from "../content/site-content";
 import {
   createRouteChapters,
+  createRouteMarks,
   createStoryBeats,
+  routeMarkerPosition,
 } from "../story-navigation";
 import { RouteRail, type RouteRailHandle } from "./RouteRail";
 
@@ -26,7 +28,7 @@ describe("RouteRail", () => {
     );
 
     expect(screen.getAllByRole("button")).toHaveLength(beats.length);
-    expect(screen.getByRole("button", { name: "Go to Universe" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Go to Origin" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Go to Path" })).toHaveAttribute(
       "aria-current",
       "step",
@@ -91,7 +93,7 @@ describe("RouteRail", () => {
     });
   });
 
-  it("renders permanent decorative chapter labels along the route", () => {
+  it("renders chapter labels at their opening ticks and Fin at the final tick", () => {
     const { container } = render(
       <RouteRail
         activeId="intro/name"
@@ -106,6 +108,7 @@ describe("RouteRail", () => {
       container.querySelectorAll<HTMLElement>(".route-rail__chapter"),
     );
     const chapters = createRouteChapters(beats);
+    const marks = createRouteMarks(beats);
 
     expect(layer).toHaveAttribute("aria-hidden", "true");
     expect(labels.map((label) => label.textContent)).toEqual(
@@ -114,6 +117,28 @@ describe("RouteRail", () => {
     labels.forEach((label, index) => {
       expect(label.style.getPropertyValue("--chapter-position")).toBe(
         `${chapters[index].position}%`,
+      );
+    });
+    expect(chapters).toEqual([
+      { label: "Intro", position: routeMarkerPosition(0, beats.length) },
+      { label: "Path", position: routeMarkerPosition(3 / 20, beats.length) },
+      {
+        label: "Projects",
+        position: routeMarkerPosition(7 / 20, beats.length),
+      },
+      {
+        label: "Quotes",
+        position: routeMarkerPosition(13 / 20, beats.length),
+      },
+      { label: "Fin", position: routeMarkerPosition(1, beats.length) },
+    ]);
+    chapters.forEach((chapter, index) => {
+      const openingIndex = [0, 3, 7, 13, 20][index];
+      if (chapter.label !== "Fin") {
+        expect(marks[openingIndex]?.major).toBe(true);
+      }
+      expect(chapter.position).toBe(
+        routeMarkerPosition(openingIndex / (beats.length - 1), beats.length),
       );
     });
   });
