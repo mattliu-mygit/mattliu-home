@@ -1,6 +1,7 @@
 import type { UniverseView } from "./navigation";
 
 export const BACKGROUND_STAR_COUNT = 330;
+export const GALACTIC_BAND_STAR_COUNT = 620;
 
 export type CelestialMotion = {
   travel: number;
@@ -35,6 +36,12 @@ export type BackgroundStar = Point2d & {
   temperature: BackgroundStarTemperature;
   twinkle: number;
   double: boolean;
+};
+
+export type GalacticBandStar = Point2d & {
+  alpha: number;
+  size: number;
+  temperature: BackgroundStarTemperature;
 };
 
 export type MeteorEdge = "top" | "left" | "right";
@@ -204,6 +211,14 @@ export function parallaxDisplacement(
   };
 }
 
+export function galacticBandDisplacement(travelVelocity: number): Point2d {
+  const signedVelocity = clamp(travelVelocity, -1.8, 1.8);
+  return {
+    x: signedVelocity * 0.42,
+    y: signedVelocity * 0.16,
+  };
+}
+
 export function createSeededRandom(seed: number) {
   let state = seed >>> 0;
   return () => {
@@ -254,6 +269,45 @@ export function createStarField(
       double:
         (tier === "anchor" && index % 2 === 0) ||
         (tier === "medium" && nextRandom() < 0.05),
+    };
+  });
+}
+
+export function createGalacticBand(
+  count: number,
+  nextRandom: () => number,
+): GalacticBandStar[] {
+  return Array.from({ length: count }, (_, index) => {
+    const x = nextRandom();
+    const centerY = 0.73 - x * 0.42;
+    const planeOffset =
+      ((nextRandom() + nextRandom() + nextRandom()) / 3 - 0.5) * 0.24;
+    const y = clamp(centerY + planeOffset, 0, 1);
+    const distanceFromPlane = Math.abs(planeOffset);
+    const inDustLane =
+      ((x >= 0.34 && x <= 0.47) || (x >= 0.69 && x <= 0.77)) &&
+      distanceFromPlane < 0.045;
+    const clusterLift =
+      0.82 +
+      Math.max(0, Math.sin(x * Math.PI * 7.2 + 0.8)) * 0.28;
+    const planeLift = 1 - Math.min(0.58, distanceFromPlane * 2.6);
+    const dustAttenuation = inDustLane ? 0.24 : 1;
+    const temperature: BackgroundStarTemperature =
+      index % 11 === 0 ? "warm" : index % 5 === 0 ? "cool" : "neutral";
+
+    return {
+      x,
+      y,
+      alpha: clamp(
+        (0.08 + nextRandom() * 0.21) *
+          clusterLift *
+          planeLift *
+          dustAttenuation,
+        0.018,
+        0.3,
+      ),
+      size: 0.32 + nextRandom() * 0.64,
+      temperature,
     };
   });
 }

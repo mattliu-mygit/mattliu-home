@@ -220,9 +220,9 @@ test("selected star aura is stronger than its peers", async ({ page }) => {
     ),
   ]);
 
-  expect(maxBlurRadius(inactiveAura)).toBeGreaterThanOrEqual(18);
-  expect(maxBlurRadius(hoveredAura)).toBeGreaterThanOrEqual(26);
-  expect(maxBlurRadius(selectedAura)).toBeGreaterThanOrEqual(34);
+  expect(maxBlurRadius(inactiveAura)).toBeGreaterThanOrEqual(28);
+  expect(maxBlurRadius(hoveredAura)).toBeGreaterThanOrEqual(36);
+  expect(maxBlurRadius(selectedAura)).toBeGreaterThanOrEqual(44);
   expect(maxBlurRadius(hoveredAura)).toBeGreaterThan(
     maxBlurRadius(inactiveAura),
   );
@@ -311,7 +311,7 @@ test("universe navigation labels remain legible at overview scale", async ({
 
   await star.hover();
 
-  const [destinationSize, labelSize, ambientField, destinationStyle] =
+  const [destinationSize, labelSize, mapWidth, ambientField, destinationStyle] =
     await Promise.all([
       destination.evaluate((element) =>
         Number.parseFloat(getComputedStyle(element).fontSize),
@@ -319,6 +319,7 @@ test("universe navigation labels remain legible at overview scale", async ({
       label.evaluate((element) =>
         Number.parseFloat(getComputedStyle(element).fontSize),
       ),
+      map.evaluate((element) => element.getBoundingClientRect().width),
       map.evaluate((element) => {
         const styles = getComputedStyle(element, "::before");
         return {
@@ -341,7 +342,7 @@ test("universe navigation labels remain legible at overview scale", async ({
   expect(labelSize).toBeGreaterThanOrEqual(11.5);
   expect(ambientField.backgroundImage).toContain("radial-gradient");
   expect(ambientField.boxShadow).toBe("none");
-  expect(ambientField.width).toBeGreaterThan(200);
+  expect(ambientField.width).toBeLessThan(mapWidth);
   expect(destinationStyle).toEqual({
     backgroundColor: "rgba(0, 0, 0, 0)",
     borderWidth: "0px",
@@ -456,10 +457,6 @@ test("immersive view becomes a centered observational sky and restores context",
   await expect(story).toHaveCSS("opacity", "0");
   await expect(rail).toHaveCSS("opacity", "0");
   await expect(github).toHaveCSS("opacity", "0");
-  await expect(page.locator(".immersive-milky-way")).toHaveCSS(
-    "opacity",
-    "1",
-  );
   await expect(universe).toHaveCSS("--camera-target-x", "50%");
   await expect(world).toHaveAttribute("inert", "");
   await expect(world).toHaveAttribute("aria-hidden", "true");

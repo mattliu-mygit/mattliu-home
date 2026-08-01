@@ -128,41 +128,8 @@ a:focus-visible {
     linear-gradient(140deg, #0a0c13 0%, var(--night) 62%, #090a0f 100%);
 }
 
-.immersive-milky-way {
-  position: fixed;
-  z-index: 0;
-  inset: -35% -24%;
-  opacity: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse at 52% 50%,
-      rgb(190 202 240 / 0.13) 0%,
-      rgb(146 163 220 / 0.07) 22%,
-      transparent 62%
-    ),
-    linear-gradient(
-      153deg,
-      transparent 34%,
-      rgb(114 132 196 / 0.02) 40%,
-      rgb(178 191 230 / 0.11) 48%,
-      rgb(126 144 205 / 0.04) 57%,
-      transparent 65%
-    );
-  filter: blur(18px);
-  transform: scale(0.96) rotate(-1.5deg);
-  transition:
-    opacity 900ms ease,
-    transform 1100ms cubic-bezier(0.22, 0.7, 0.18, 1);
-}
-
 .universe[data-immersive="true"] {
   --camera-target-x: 50%;
-}
-
-.universe[data-immersive="true"] .immersive-milky-way {
-  opacity: 1;
-  transform: scale(1) rotate(-1.5deg);
 }
 
 .celestial-field {
@@ -884,16 +851,16 @@ a:focus-visible {
 
 .constellation-map--overview::before {
   position: absolute;
-  inset: -20% -28%;
+  inset: 20% 12%;
   border-radius: 50%;
   background: radial-gradient(
     ellipse,
-    rgb(143 157 211 / 0.055) 0%,
-    rgb(112 127 181 / 0.025) 38%,
-    transparent 72%
+    rgb(143 157 211 / 0.024) 0%,
+    rgb(112 127 181 / 0.01) 42%,
+    transparent 76%
   );
   content: "";
-  filter: blur(12px);
+  filter: blur(18px);
   pointer-events: none;
 }
 
@@ -1077,8 +1044,8 @@ a:focus-visible {
   border-radius: 50%;
   content: "";
   box-shadow:
-    0 0 0.82rem 0.08rem rgb(var(--star-color) / 0.46),
-    0 0 1.55rem 0.24rem rgb(var(--star-color) / 0.24);
+    0 0 1rem 0.06rem rgb(var(--star-color) / 0.4),
+    0 0 1.85rem 0.22rem rgb(var(--star-color) / 0.16);
   pointer-events: none;
   transform: translate(-50%, -50%);
   transition:
@@ -1101,8 +1068,8 @@ a:focus-visible {
       rgb(var(--star-color) / 0.95),
     0 0 calc(0.62rem * var(--star-prominence))
       rgb(var(--star-color) / 0.64),
-    0 0 calc(1.02rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.32);
+    0 0 calc(1.2rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.27);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
   transition:
     filter 220ms ease,
@@ -1189,8 +1156,8 @@ a:focus-visible {
       rgb(var(--star-color) / 1),
     0 0 calc(0.68rem * var(--star-prominence))
       rgb(var(--star-color) / 0.72),
-    0 0 calc(1.1rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.36);
+    0 0 calc(1.35rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.32);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
 }
 
@@ -1201,22 +1168,22 @@ a:focus-visible {
       rgb(var(--star-color) / 1),
     0 0 calc(0.82rem * var(--star-prominence))
       rgb(var(--star-color) / 0.84),
-    0 0 calc(1.3rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.5);
+    0 0 calc(1.55rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.44);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
 }
 
 .constellation-star:is(:hover, :focus-visible)::before {
   box-shadow:
-    0 0 0.9rem 0.1rem rgb(var(--star-color) / 0.58),
-    0 0 1.8rem 0.32rem rgb(var(--star-color) / 0.3);
+    0 0 1.2rem 0.08rem rgb(var(--star-color) / 0.52),
+    0 0 2.35rem 0.3rem rgb(var(--star-color) / 0.24);
   filter: brightness(1.12);
 }
 
 .constellation-star[data-active="true"]::before {
   box-shadow:
-    0 0 1.1rem 0.18rem rgb(var(--star-color) / 0.7),
-    0 0 2.3rem 0.45rem rgb(var(--star-color) / 0.38);
+    0 0 1.35rem 0.14rem rgb(var(--star-color) / 0.64),
+    0 0 2.85rem 0.4rem rgb(var(--star-color) / 0.31);
   filter: brightness(1.18);
 }
 

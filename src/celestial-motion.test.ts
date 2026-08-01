@@ -2,16 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import {
   BACKGROUND_STAR_COUNT,
+  GALACTIC_BAND_STAR_COUNT,
   advanceCelestialMotion,
   applyWheelImpulse,
   constellationFocusOffset,
   constellationFocusPoint,
   constellationDrift,
   createMeteor,
+  createGalacticBand,
   createSeededRandom,
   createStarField,
   dampPoint,
   directionalConstellationDrift,
+  galacticBandDisplacement,
   meteorSegment,
   parallaxDisplacement,
   projectConstellationPoint,
@@ -266,5 +269,59 @@ describe("celestial motion", () => {
 
     expect(second).toEqual(first);
     expect(first.some(({ double }) => double)).toBe(true);
+  });
+
+  it("builds a deterministic diagonal galactic band with dark interruptions", () => {
+    const first = createGalacticBand(
+      GALACTIC_BAND_STAR_COUNT,
+      createSeededRandom(80317),
+    );
+    const second = createGalacticBand(
+      GALACTIC_BAND_STAR_COUNT,
+      createSeededRandom(80317),
+    );
+
+    expect(second).toEqual(first);
+    expect(first).toHaveLength(GALACTIC_BAND_STAR_COUNT);
+    expect(GALACTIC_BAND_STAR_COUNT).toBeGreaterThan(BACKGROUND_STAR_COUNT);
+    expect(first.every(({ x, y }) => x >= 0 && x <= 1 && y >= 0 && y <= 1)).toBe(
+      true,
+    );
+    expect(new Set(first.map(({ temperature }) => temperature)).size).toBe(3);
+    expect(Math.max(...first.map(({ alpha }) => alpha))).toBeLessThanOrEqual(
+      0.3,
+    );
+    expect(Math.max(...first.map(({ size }) => size))).toBeGreaterThan(
+      Math.min(...first.map(({ size }) => size)) * 2,
+    );
+
+    const meanDistanceFromPlane =
+      first.reduce(
+        (sum, star) => sum + Math.abs(star.y - (0.73 - star.x * 0.42)),
+        0,
+      ) / first.length;
+    expect(meanDistanceFromPlane).toBeLessThan(0.12);
+
+    const dustLane = first.filter(
+      ({ x, y }) =>
+        x >= 0.34 &&
+        x <= 0.47 &&
+        Math.abs(y - (0.73 - x * 0.42)) < 0.045,
+    );
+    expect(dustLane.length).toBeGreaterThan(0);
+    expect(
+      dustLane.reduce((sum, star) => sum + star.alpha, 0) / dustLane.length,
+    ).toBeLessThan(
+      first.reduce((sum, star) => sum + star.alpha, 0) / first.length,
+    );
+  });
+
+  it("keeps galactic drift sub-pixel and tied to scroll acceleration", () => {
+    const forward = galacticBandDisplacement(20);
+    const reverse = galacticBandDisplacement(-20);
+
+    expect(Math.hypot(forward.x, forward.y)).toBeLessThan(1);
+    expect(reverse).toEqual({ x: -forward.x, y: -forward.y });
+    expect(galacticBandDisplacement(0)).toEqual({ x: 0, y: 0 });
   });
 });

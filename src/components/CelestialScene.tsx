@@ -8,14 +8,17 @@ import {
 
 import {
   BACKGROUND_STAR_COUNT,
+  GALACTIC_BAND_STAR_COUNT,
   advanceCelestialMotion,
   applyWheelImpulse,
   constellationDrift,
+  createGalacticBand,
   createMeteor,
   createSeededRandom,
   createStarField,
   dampPoint,
   directionalConstellationDrift,
+  galacticBandDisplacement,
   meteorSegment,
   parallaxDisplacement,
   type CelestialMotion,
@@ -61,9 +64,11 @@ export function CelestialScene({
   const rootRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const interactiveRef = useRef(interactive);
+  const immersiveRef = useRef(immersive);
   const openSkyWheelRef = useRef(onOpenSkyWheel);
   const viewRef = useRef(view);
   const directionRef = useRef(constellationDirection);
+  const staticDrawRef = useRef<(() => void) | null>(null);
   const motionChannelRef = useRef<CelestialMotionChannel | null>(null);
   if (!motionChannelRef.current) {
     motionChannelRef.current = createCelestialMotionChannel();
@@ -80,6 +85,7 @@ export function CelestialScene({
 
   useLayoutEffect(() => {
     interactiveRef.current = interactive;
+    immersiveRef.current = immersive;
     openSkyWheelRef.current = onOpenSkyWheel;
     directionRef.current = constellationDirection;
     if (viewRef.current !== view) {
@@ -93,8 +99,10 @@ export function CelestialScene({
       }
     }
     viewRef.current = view;
+    staticDrawRef.current?.();
   }, [
     constellationDirection,
+    immersive,
     interactive,
     motionChannel,
     onOpenSkyWheel,
@@ -103,7 +111,18 @@ export function CelestialScene({
 
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
-      if (!interactiveRef.current || event.ctrlKey) {
+      if (event.ctrlKey) {
+        return;
+      }
+      if (!interactiveRef.current) {
+        if (!immersiveRef.current) {
+          return;
+        }
+        backgroundMotionRef.current = applyWheelImpulse(
+          backgroundMotionRef.current,
+          event.deltaY,
+        );
+        event.preventDefault();
         return;
       }
       const inUniverse = viewRef.current === "universe";
@@ -148,6 +167,10 @@ export function CelestialScene({
 
     const nextRandom = createSeededRandom(270731);
     const stars = createStarField(BACKGROUND_STAR_COUNT, nextRandom);
+    const galacticBand = createGalacticBand(
+      GALACTIC_BAND_STAR_COUNT,
+      createSeededRandom(80317),
+    );
     let width = 0;
     let height = 0;
     let pixelRatio = 1;
@@ -156,6 +179,7 @@ export function CelestialScene({
     let meteor: Meteor | null = null;
     let nextMeteorAt = lastTime + 1_000;
     let renderedPull = { x: 0, y: 0 };
+    let renderedBandPull = { x: 0, y: 0 };
 
     const resize = () => {
       pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
@@ -248,15 +272,43 @@ export function CelestialScene({
       }
     };
 
+    const drawGalacticBand = () => {
+      if (!immersiveRef.current) {
+        return;
+      }
+
+      for (const star of galacticBand) {
+        const x = star.x * width + renderedBandPull.x;
+        const y = star.y * height + renderedBandPull.y;
+        const temperature = starTemperature[star.temperature];
+
+        context.save();
+        if (star.alpha > 0.18) {
+          context.shadowColor = `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${star.alpha * 0.45})`;
+          context.shadowBlur = 2.4;
+        }
+        context.beginPath();
+        context.fillStyle = `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${star.alpha})`;
+        context.arc(x, y, star.size, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+      }
+    };
+
     if (reducedMotion) {
       const drawStaticField = () => {
         resize();
         context.clearRect(0, 0, width, height);
+        drawGalacticBand();
         drawStars(0);
       };
+      staticDrawRef.current = drawStaticField;
       drawStaticField();
       window.addEventListener("resize", drawStaticField);
-      return () => window.removeEventListener("resize", drawStaticField);
+      return () => {
+        staticDrawRef.current = null;
+        window.removeEventListener("resize", drawStaticField);
+      };
     }
 
     const drawMeteor = (now: number) => {
@@ -322,7 +374,16 @@ export function CelestialScene({
               directionRef.current,
             );
       renderedPull = dampPoint(renderedPull, targetPull, elapsed);
+      renderedBandPull = dampPoint(
+        renderedBandPull,
+        galacticBandDisplacement(
+          backgroundMotionRef.current.travelVelocity,
+        ),
+        elapsed,
+        650,
+      );
       context.clearRect(0, 0, width, height);
+      drawGalacticBand();
       drawStars(now);
       drawMeteor(now);
       root.style.setProperty(
@@ -366,7 +427,6 @@ export function CelestialScene({
         }
         data-camera-focused={camera.focused ? "true" : undefined}
       >
-        <div className="immersive-milky-way" aria-hidden="true" />
         <canvas
           className="celestial-field"
           data-testid="celestial-field"

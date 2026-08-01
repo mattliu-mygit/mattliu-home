@@ -115,4 +115,66 @@ describe("CelestialScene motion ownership", () => {
       "4px",
     );
   });
+
+  it("draws the immersive stellar band in the same reduced-motion canvas", () => {
+    const arc = vi.fn();
+    const context = {
+      arc,
+      beginPath: vi.fn(),
+      clearRect: vi.fn(),
+      createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
+      fill: vi.fn(),
+      lineTo: vi.fn(),
+      moveTo: vi.fn(),
+      restore: vi.fn(),
+      save: vi.fn(),
+      setTransform: vi.fn(),
+      stroke: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+    } as MediaQueryList);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+      context,
+    );
+
+    const scene = (immersive: boolean) => (
+      <CelestialScene
+        camera={{ focused: false, origin: { x: 50, y: 50 }, scale: 1 }}
+        constellationDirection={{ x: 1, y: 1 }}
+        immersive={immersive}
+        interactive={!immersive}
+        view="universe"
+      />
+    );
+    const { rerender } = render(scene(false));
+    const universeArcCount = arc.mock.calls.length;
+
+    rerender(scene(true));
+
+    expect(arc.mock.calls.length).toBeGreaterThan(universeArcCount + 200);
+  });
+
+  it("uses immersive wheel input for sky motion without navigating the story", () => {
+    const onOpenSkyWheel = vi.fn();
+    render(
+      <CelestialScene
+        camera={{ focused: false, origin: { x: 50, y: 50 }, scale: 1 }}
+        constellationDirection={{ x: 1, y: 1 }}
+        immersive
+        interactive={false}
+        onOpenSkyWheel={onOpenSkyWheel}
+        view="universe"
+      />,
+    );
+    const wheel = new WheelEvent("wheel", {
+      cancelable: true,
+      deltaY: 80,
+    });
+
+    window.dispatchEvent(wheel);
+
+    expect(wheel.defaultPrevented).toBe(true);
+    expect(onOpenSkyWheel).not.toHaveBeenCalled();
+  });
 });
