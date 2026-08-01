@@ -102,11 +102,11 @@ test("constellation connections stay solid across camera levels", async ({
   await page.setViewportSize({ width: 650, height: 650 });
   await page.goto("/");
 
-  for (const line of await page
-    .locator(
-      ".constellation-map--overview .constellation-connection__line",
-    )
-    .all()) {
+  const overviewLines = page.locator(
+    ".constellation-map--overview .constellation-connection__line",
+  );
+  await expect(overviewLines.first()).toHaveCSS("opacity", "0.25");
+  for (const line of await overviewLines.all()) {
     await expect(line).toHaveCSS("stroke-dasharray", "none");
   }
 
@@ -142,17 +142,17 @@ test("only the hovered constellation connection brightens", async ({ page }) => 
       firstVisible.evaluate((element) => getComputedStyle(element).filter),
     ]);
 
-  expect(firstIdleOpacity).toBe(0.26);
+  expect(firstIdleOpacity).toBe(0.32);
   expect(firstIdleFilter).toContain("drop-shadow");
   await expect(firstHit).toHaveCSS("pointer-events", "stroke");
   await firstHit.hover();
 
-  await expect(firstVisible).toHaveCSS("opacity", "0.62");
+  await expect(firstVisible).toHaveCSS("opacity", "0.7");
   await expect(secondVisible).toHaveCSS(
     "opacity",
     String(secondIdleOpacity),
   );
-  expect(0.62).toBeGreaterThan(firstIdleOpacity);
+  expect(0.7).toBeGreaterThan(firstIdleOpacity);
 });
 
 test("selected star aura is stronger than its peers", async ({ page }) => {
@@ -205,9 +205,9 @@ test("selected star aura is stronger than its peers", async ({ page }) => {
       .evaluate((element) => getComputedStyle(element).textShadow),
   ]);
 
-  expect(maxBlurRadius(inactiveShadow)).toBeGreaterThanOrEqual(20);
-  expect(maxBlurRadius(hoveredShadow)).toBeGreaterThanOrEqual(28);
-  expect(maxBlurRadius(selectedShadow)).toBeGreaterThanOrEqual(34);
+  expect(maxBlurRadius(inactiveShadow)).toBeGreaterThanOrEqual(24);
+  expect(maxBlurRadius(hoveredShadow)).toBeGreaterThanOrEqual(34);
+  expect(maxBlurRadius(selectedShadow)).toBeGreaterThanOrEqual(42);
   expect(maxBlurRadius(hoveredShadow)).toBeGreaterThan(
     maxBlurRadius(inactiveShadow),
   );
@@ -275,8 +275,10 @@ test("universe navigation labels remain legible at overview scale", async ({
   await page.goto("/");
 
   const destination = page.getByRole("button", { name: "Explore Path" });
-  const star = page
-    .locator(".constellation-map--overview.constellation-map--path")
+  const map = page.locator(
+    ".constellation-map--overview.constellation-map--path",
+  );
+  const star = map
     .getByRole("button", {
       name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
     });
@@ -284,17 +286,21 @@ test("universe navigation labels remain legible at overview scale", async ({
 
   await star.hover();
 
-  const [destinationSize, labelSize] = await Promise.all([
+  const [destinationSize, labelSize, ambientShadow] = await Promise.all([
     destination.evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).fontSize),
     ),
     label.evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).fontSize),
     ),
+    map.evaluate(
+      (element) => getComputedStyle(element, "::before").boxShadow,
+    ),
   ]);
 
-  expect(destinationSize).toBeGreaterThanOrEqual(11);
-  expect(labelSize).toBeGreaterThanOrEqual(10);
+  expect(destinationSize).toBeGreaterThanOrEqual(12.4);
+  expect(labelSize).toBeGreaterThanOrEqual(11.5);
+  expect(ambientShadow).toContain("0.14");
 });
 
 test("constellation stars render as view-scaled point sources", async ({
