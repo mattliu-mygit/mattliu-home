@@ -101,26 +101,41 @@ test("overview connections stay continuous at large map sizes", async ({
   ).toHaveCSS("stroke-dasharray", "none");
 });
 
-test("constellation stars use luminous cores instead of bordered circles", async ({
+test("constellation stars render as view-scaled point sources", async ({
   page,
 }) => {
   await page.goto("/");
-  const star = page
-    .getByRole("button", { name: "Open Projects with Monopole selected" })
+  const overviewPoint = page
+    .locator(".constellation-map--projects.constellation-map--overview")
+    .getByRole("button", {
+      name: "Open Projects with Monopole selected",
+    })
     .locator(".constellation-star__point");
-  const baselineStar = page
-    .getByRole("button", { name: "Open Projects with UCredit selected" })
-    .locator(".constellation-star__point");
+  const overviewButton = overviewPoint.locator("..");
 
-  await expect(star).toHaveCSS("border-top-width", "0px");
-  await expect(star).toHaveCSS("background-image", /radial-gradient/);
-  await expect(star).not.toHaveCSS("border-radius", "0px");
-  const background = await star.evaluate(
-    (element) => getComputedStyle(element).backgroundImage,
+  await expect(overviewPoint).toHaveCSS("border-top-width", "0px");
+  await expect(overviewPoint).toHaveCSS("background-image", "none");
+  const overviewBox = await overviewPoint.boundingBox();
+  const buttonBox = await overviewButton.boundingBox();
+  expect(overviewBox).not.toBeNull();
+  expect(buttonBox).not.toBeNull();
+  expect(overviewBox!.width).toBeGreaterThanOrEqual(3);
+  expect(overviewBox!.width).toBeLessThanOrEqual(4.5);
+  expect(buttonBox!.width).toBeGreaterThanOrEqual(44);
+
+  await page.getByRole("button", { name: "Explore Projects" }).click();
+  await page.locator(".constellation-world").evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
   );
-  expect(background).toContain("radial-gradient(circle,");
-  expect(background).not.toContain("38% 34%");
-  await expect(baselineStar).toHaveCSS("width", "5.4375px");
+  const detailPoint = page
+    .locator(".constellation-map--projects.constellation-map--detail")
+    .getByRole("button", { name: "Explore Monopole" })
+    .locator(".constellation-star__point");
+  const detailBox = await detailPoint.boundingBox();
+  expect(detailBox).not.toBeNull();
+  expect(detailBox!.width).toBeGreaterThanOrEqual(5);
+  expect(detailBox!.width).toBeLessThanOrEqual(7.5);
+  expect(detailBox!.width).toBeGreaterThan(overviewBox!.width * 1.5);
 });
 
 test("header identity follows the story and external links open separately", async ({
