@@ -14,7 +14,9 @@ import {
   createStarField,
   dampPoint,
   directionalConstellationDrift,
+  galacticBandHalfWidth,
   galacticBandDisplacement,
+  galacticBandRotation,
   galacticDustAttenuation,
   galacticPlaneY,
   meteorSegment,
@@ -285,15 +287,15 @@ describe("celestial motion", () => {
 
     expect(second).toEqual(first);
     expect(first).toHaveLength(GALACTIC_BAND_STAR_COUNT);
-    expect(GALACTIC_BAND_STAR_COUNT).toBeGreaterThan(BACKGROUND_STAR_COUNT);
+    expect(GALACTIC_BAND_STAR_COUNT).toBeGreaterThan(1_200);
     expect(first.every(({ x, y }) => x >= 0 && x <= 1 && y >= 0 && y <= 1)).toBe(
       true,
     );
     expect(new Set(first.map(({ temperature }) => temperature)).size).toBe(3);
     expect(Math.max(...first.map(({ alpha }) => alpha))).toBeLessThanOrEqual(
-      0.42,
+      0.52,
     );
-    expect(Math.max(...first.map(({ alpha }) => alpha))).toBeGreaterThan(0.34);
+    expect(Math.max(...first.map(({ alpha }) => alpha))).toBeGreaterThan(0.46);
     expect(Math.max(...first.map(({ size }) => size))).toBeGreaterThan(
       Math.min(...first.map(({ size }) => size)) * 2,
     );
@@ -303,7 +305,17 @@ describe("celestial motion", () => {
         (sum, star) => sum + Math.abs(star.y - galacticPlaneY(star.x)),
         0,
       ) / first.length;
-    expect(meanDistanceFromPlane).toBeLessThan(0.12);
+    expect(meanDistanceFromPlane).toBeLessThan(0.16);
+    expect(
+      first.filter(
+        ({ x, y }) => Math.abs(y - galacticPlaneY(x)) > 0.14,
+      ).length,
+    ).toBeGreaterThan(100);
+    expect(
+      Math.max(
+        ...first.map(({ x, y }) => Math.abs(y - galacticPlaneY(x))),
+      ),
+    ).toBeGreaterThan(0.3);
 
     const leftMeanY =
       first
@@ -329,18 +341,45 @@ describe("celestial motion", () => {
     ).toBeLessThan(
       first.reduce((sum, star) => sum + star.alpha, 0) / first.length,
     );
-    expect(galacticDustAttenuation(0.4, 0.02)).toBeLessThan(0.3);
+    expect(galacticDustAttenuation(0.4, 0.02)).toBeGreaterThanOrEqual(0.5);
+    expect(galacticDustAttenuation(0.4, 0.02)).toBeLessThan(0.7);
     expect(galacticDustAttenuation(0.55, 0.02)).toBe(1);
   });
 
-  it("keeps galactic drift sub-pixel and tied to scroll acceleration", () => {
+  it("tapers around a central bulge that contains every immersive constellation", () => {
+    const immersedConstellations = [
+      { x: 0.44, y: 0.25, radius: 0.06 },
+      { x: 0.6, y: 0.48, radius: 0.08 },
+      { x: 0.46, y: 0.72, radius: 0.05 },
+    ];
+
+    expect(galacticBandHalfWidth(0.6)).toBeGreaterThan(0.38);
+    expect(galacticBandHalfWidth(0.6)).toBeGreaterThan(
+      galacticBandHalfWidth(0.05) * 2,
+    );
+    for (const constellation of immersedConstellations) {
+      expect(
+        Math.abs(
+          constellation.y - galacticPlaneY(constellation.x),
+        ) + constellation.radius,
+      ).toBeLessThanOrEqual(galacticBandHalfWidth(constellation.x));
+    }
+  });
+
+  it("keeps the galaxy at the farthest bounded translation and rotation", () => {
     const forward = galacticBandDisplacement(20);
     const reverse = galacticBandDisplacement(-20);
+    const forwardRotation = galacticBandRotation(20);
+    const reverseRotation = galacticBandRotation(-20);
 
-    expect(Math.hypot(forward.x, forward.y)).toBeLessThan(1);
+    expect(Math.hypot(forward.x, forward.y)).toBeLessThan(0.3);
     expect(forward.x).toBeGreaterThan(0);
     expect(forward.y).toBeGreaterThan(0);
     expect(reverse).toEqual({ x: -forward.x, y: -forward.y });
     expect(galacticBandDisplacement(0)).toEqual({ x: 0, y: 0 });
+    expect(forwardRotation).toBeGreaterThan(0);
+    expect(Math.abs(forwardRotation)).toBeLessThan((0.12 * Math.PI) / 180);
+    expect(reverseRotation).toBe(-forwardRotation);
+    expect(galacticBandRotation(0)).toBe(0);
   });
 });

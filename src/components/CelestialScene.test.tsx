@@ -123,15 +123,18 @@ describe("CelestialScene motion ownership", () => {
       arc,
       beginPath: vi.fn(),
       clearRect: vi.fn(),
+      closePath: vi.fn(),
       createLinearGradient,
       createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
       fill: vi.fn(),
       lineTo: vi.fn(),
       moveTo: vi.fn(),
       restore: vi.fn(),
+      rotate: vi.fn(),
       save: vi.fn(),
       setTransform: vi.fn(),
       stroke: vi.fn(),
+      translate: vi.fn(),
     } as unknown as CanvasRenderingContext2D;
     vi.spyOn(window, "matchMedia").mockReturnValue({
       matches: true,
@@ -152,11 +155,15 @@ describe("CelestialScene motion ownership", () => {
     const { rerender } = render(scene(false));
     const universeArcCount = arc.mock.calls.length;
     expect(createLinearGradient).not.toHaveBeenCalled();
+    expect(context.closePath).not.toHaveBeenCalled();
+    expect(context.rotate).not.toHaveBeenCalled();
 
     rerender(scene(true));
 
     expect(arc.mock.calls.length).toBeGreaterThan(universeArcCount + 200);
     expect(createLinearGradient).toHaveBeenCalled();
+    expect(context.closePath).toHaveBeenCalled();
+    expect(context.rotate).toHaveBeenCalled();
   });
 
   it("uses immersive wheel input for sky motion without navigating the story", () => {

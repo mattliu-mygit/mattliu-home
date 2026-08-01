@@ -1,7 +1,7 @@
 import type { UniverseView } from "./navigation";
 
 export const BACKGROUND_STAR_COUNT = 330;
-export const GALACTIC_BAND_STAR_COUNT = 820;
+export const GALACTIC_BAND_STAR_COUNT = 1_500;
 
 export type CelestialMotion = {
   travel: number;
@@ -214,13 +214,22 @@ export function parallaxDisplacement(
 export function galacticBandDisplacement(travelVelocity: number): Point2d {
   const signedVelocity = clamp(travelVelocity, -1.8, 1.8);
   return {
-    x: signedVelocity * 0.42,
-    y: signedVelocity * 0.16,
+    x: signedVelocity * 0.14,
+    y: signedVelocity * 0.05,
   };
 }
 
+export function galacticBandRotation(travelVelocity: number): number {
+  return clamp(travelVelocity, -1.8, 1.8) * 0.0011;
+}
+
 export function galacticPlaneY(x: number): number {
-  return 0.22 + x * 0.58;
+  return 0.18 + x * 0.5;
+}
+
+export function galacticBandHalfWidth(x: number): number {
+  const centralBulge = Math.exp(-Math.pow((x - 0.6) / 0.3, 2));
+  return 0.16 + centralBulge * 0.26;
 }
 
 export function galacticDustAttenuation(
@@ -229,8 +238,8 @@ export function galacticDustAttenuation(
 ): number {
   const crossesDustLane =
     ((x >= 0.34 && x <= 0.47) || (x >= 0.69 && x <= 0.77)) &&
-    distanceFromPlane < 0.055;
-  return crossesDustLane ? 0.22 : 1;
+    distanceFromPlane < galacticBandHalfWidth(x) * 0.14;
+  return crossesDustLane ? 0.56 : 1;
 }
 
 export function createSeededRandom(seed: number) {
@@ -294,19 +303,23 @@ export function createGalacticBand(
   return Array.from({ length: count }, (_, index) => {
     const baseX = nextRandom();
     const x =
-      nextRandom() < 0.28
-        ? clamp(0.58 + (nextRandom() - 0.5) * 0.36, 0, 1)
+      nextRandom() < 0.38
+        ? clamp(0.6 + (nextRandom() - 0.5) * 0.48, 0, 1)
         : baseX;
     const centerY = galacticPlaneY(x);
+    const halfWidth = galacticBandHalfWidth(x);
     const planeOffset =
-      ((nextRandom() + nextRandom() + nextRandom()) / 3 - 0.5) * 0.24;
+      ((nextRandom() + nextRandom() + nextRandom()) / 3 - 0.5) *
+      halfWidth *
+      2;
     const y = clamp(centerY + planeOffset, 0, 1);
     const distanceFromPlane = Math.abs(planeOffset);
-    const bulgeLift = Math.exp(-Math.pow((x - 0.58) / 0.17, 2));
+    const bulgeLift = Math.exp(-Math.pow((x - 0.6) / 0.22, 2));
     const clusterLift =
-      0.82 +
-      Math.max(0, Math.sin(x * Math.PI * 7.2 + 0.8)) * 0.28;
-    const planeLift = 1 - Math.min(0.58, distanceFromPlane * 2.6);
+      0.88 +
+      Math.max(0, Math.sin(x * Math.PI * 7.2 + 0.8)) * 0.22;
+    const planeLift =
+      1 - Math.min(0.4, (distanceFromPlane / halfWidth) * 0.4);
     const dustAttenuation = galacticDustAttenuation(x, distanceFromPlane);
     const temperature: BackgroundStarTemperature =
       index % 11 === 0 ? "warm" : index % 5 === 0 ? "cool" : "neutral";
@@ -315,15 +328,15 @@ export function createGalacticBand(
       x,
       y,
       alpha: clamp(
-        (0.1 + nextRandom() * 0.24) *
+        (0.13 + nextRandom() * 0.29) *
           clusterLift *
           planeLift *
-          (1 + bulgeLift * 0.34) *
+          (1 + bulgeLift * 0.36) *
           dustAttenuation,
-        0.018,
-        0.42,
+        0.025,
+        0.52,
       ),
-      size: (0.32 + nextRandom() * 0.68) * (1 + bulgeLift * 0.1),
+      size: (0.3 + nextRandom() * 0.66) * (1 + bulgeLift * 0.08),
       temperature,
     };
   });

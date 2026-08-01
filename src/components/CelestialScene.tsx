@@ -18,7 +18,9 @@ import {
   createStarField,
   dampPoint,
   directionalConstellationDrift,
+  galacticBandHalfWidth,
   galacticBandDisplacement,
+  galacticBandRotation,
   galacticPlaneY,
   meteorSegment,
   parallaxDisplacement,
@@ -181,6 +183,7 @@ export function CelestialScene({
     let nextMeteorAt = lastTime + 1_000;
     let renderedPull = { x: 0, y: 0 };
     let renderedBandPull = { x: 0, y: 0 };
+    let renderedBandRotation = 0;
 
     const resize = () => {
       pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
@@ -314,21 +317,52 @@ export function CelestialScene({
         end.y,
       );
       outerLight.addColorStop(0, "rgba(116,130,174,0)");
-      outerLight.addColorStop(0.2, "rgba(126,143,188,0.012)");
-      outerLight.addColorStop(0.5, "rgba(183,190,218,0.028)");
-      outerLight.addColorStop(0.64, "rgba(203,199,211,0.038)");
-      outerLight.addColorStop(0.82, "rgba(126,143,188,0.014)");
+      outerLight.addColorStop(0.16, "rgba(126,143,188,0.018)");
+      outerLight.addColorStop(0.42, "rgba(183,190,218,0.045)");
+      outerLight.addColorStop(0.6, "rgba(203,199,211,0.068)");
+      outerLight.addColorStop(0.8, "rgba(126,143,188,0.026)");
       outerLight.addColorStop(1, "rgba(116,130,174,0)");
 
+      const positions = Array.from(
+        { length: 17 },
+        (_, index) => -0.08 + (index / 16) * 1.16,
+      );
+      const envelope = positions.map((position) => {
+        const center = pointOnPlane(position);
+        const halfWidth = galacticBandHalfWidth(position) * height;
+        return {
+          top: { x: center.x, y: center.y - halfWidth },
+          bottom: { x: center.x, y: center.y + halfWidth },
+        };
+      });
+
       context.save();
-      context.lineCap = "butt";
-      context.lineWidth = Math.min(width, height) * 0.11;
-      context.strokeStyle = outerLight;
-      context.filter = `blur(${Math.min(width, height) * 0.045}px)`;
+      context.fillStyle = outerLight;
+      context.filter = `blur(${Math.min(width, height) * 0.055}px)`;
       context.beginPath();
-      context.moveTo(start.x, start.y);
-      context.lineTo(end.x, end.y);
-      context.stroke();
+      context.moveTo(envelope[0].top.x, envelope[0].top.y);
+      for (const point of envelope.slice(1)) {
+        context.lineTo(point.top.x, point.top.y);
+      }
+      for (const point of [...envelope].reverse()) {
+        context.lineTo(point.bottom.x, point.bottom.y);
+      }
+      context.closePath();
+      context.fill();
+      context.restore();
+    };
+
+    const drawGalaxy = () => {
+      if (!immersiveRef.current) {
+        return;
+      }
+
+      context.save();
+      context.translate(width / 2, height / 2);
+      context.rotate(renderedBandRotation);
+      context.translate(-width / 2, -height / 2);
+      drawGalacticLight();
+      drawGalacticBand();
       context.restore();
     };
 
@@ -336,8 +370,7 @@ export function CelestialScene({
       const drawStaticField = () => {
         resize();
         context.clearRect(0, 0, width, height);
-        drawGalacticLight();
-        drawGalacticBand();
+        drawGalaxy();
         drawStars(0);
       };
       staticDrawRef.current = drawStaticField;
@@ -420,9 +453,15 @@ export function CelestialScene({
         elapsed,
         650,
       );
+      const targetBandRotation = galacticBandRotation(
+        backgroundMotionRef.current.travelVelocity,
+      );
+      const rotationAlpha =
+        1 - Math.exp(-Math.max(0, elapsed) / 900);
+      renderedBandRotation +=
+        (targetBandRotation - renderedBandRotation) * rotationAlpha;
       context.clearRect(0, 0, width, height);
-      drawGalacticLight();
-      drawGalacticBand();
+      drawGalaxy();
       drawStars(now);
       drawMeteor(now);
       root.style.setProperty(
