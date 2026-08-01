@@ -71,7 +71,13 @@ describe("ConstellationMap motion", () => {
     );
     const firstStar = screen.getByRole("button", { name: "First" });
     const secondStar = screen.getByRole("button", { name: "Second" });
-    const line = document.querySelector("line");
+    const connection = document.querySelector(".constellation-connection");
+    const hit = connection?.querySelector(
+      ".constellation-connection__hit",
+    );
+    const visible = connection?.querySelector(
+      ".constellation-connection__line",
+    );
 
     expect(firstStar.style.getPropertyValue("--star-x")).toBe(`${first[0]}%`);
     expect(firstStar.style.getPropertyValue("--star-y")).toBe(`${first[1]}%`);
@@ -79,10 +85,13 @@ describe("ConstellationMap motion", () => {
     expect(firstStar).toHaveAttribute("data-prominence", "3");
     expect(secondStar.style.getPropertyValue("--star-x")).toBe(`${second[0]}%`);
     expect(secondStar.style.getPropertyValue("--star-y")).toBe(`${second[1]}%`);
-    expect(line).toHaveAttribute("x1", String(first[0]));
-    expect(line).toHaveAttribute("y1", String(first[1]));
-    expect(line).toHaveAttribute("x2", String(second[0]));
-    expect(line).toHaveAttribute("y2", String(second[1]));
+    expect(connection?.querySelectorAll("line")).toHaveLength(2);
+    for (const line of [hit, visible]) {
+      expect(line).toHaveAttribute("x1", String(first[0]));
+      expect(line).toHaveAttribute("y1", String(first[1]));
+      expect(line).toHaveAttribute("x2", String(second[0]));
+      expect(line).toHaveAttribute("y2", String(second[1]));
+    }
     expect(requestFrame).not.toHaveBeenCalled();
   });
 });

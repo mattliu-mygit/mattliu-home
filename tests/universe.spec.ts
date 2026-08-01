@@ -103,7 +103,9 @@ test("constellation connections stay solid across camera levels", async ({
   await page.goto("/");
 
   for (const line of await page
-    .locator(".constellation-map--overview .constellation-map__connections line")
+    .locator(
+      ".constellation-map--overview .constellation-connection__line",
+    )
     .all()) {
     await expect(line).toHaveCSS("stroke-dasharray", "none");
   }
@@ -112,31 +114,123 @@ test("constellation connections stay solid across camera levels", async ({
   await expect(
     page
       .locator(
-        ".constellation-map--detail.constellation-map--projects .constellation-map__connections line",
+        ".constellation-map--detail.constellation-map--projects .constellation-connection__line",
       )
       .first(),
   ).toHaveCSS("stroke-dasharray", "none");
 });
 
+test("only the hovered constellation connection brightens", async ({ page }) => {
+  await page.goto("/#projects");
+
+  const map = page.locator(
+    ".constellation-map--detail.constellation-map--projects",
+  );
+  const visibleLines = map.locator(".constellation-connection__line");
+  const hitLines = map.locator(".constellation-connection__hit");
+  const firstVisible = visibleLines.first();
+  const secondVisible = visibleLines.nth(1);
+  const firstHit = hitLines.first();
+  const [firstIdleOpacity, secondIdleOpacity] = await Promise.all([
+    firstVisible.evaluate((element) => Number(getComputedStyle(element).opacity)),
+    secondVisible.evaluate((element) => Number(getComputedStyle(element).opacity)),
+  ]);
+
+  await expect(firstHit).toHaveCSS("pointer-events", "stroke");
+  await firstHit.hover();
+
+  await expect(firstVisible).toHaveCSS("opacity", "0.62");
+  await expect(secondVisible).toHaveCSS(
+    "opacity",
+    String(secondIdleOpacity),
+  );
+  expect(0.62).toBeGreaterThan(firstIdleOpacity);
+});
+
 test("selected star aura is stronger than its peers", async ({ page }) => {
   await page.goto("/#projects");
 
-  const selectedPoint = page
+  const map = page.locator(
+    ".constellation-map--detail.constellation-map--projects",
+  );
+  const selectedStar = map
     .locator('.constellation-star[data-active="true"]')
-    .first()
-    .locator(".constellation-star__point");
-  const inactivePoint = page
+    .first();
+  const inactiveStar = map
     .locator('.constellation-star:not([data-active="true"])')
-    .first()
-    .locator(".constellation-star__point");
-  const [selectedShadow, inactiveShadow] = await Promise.all([
-    selectedPoint.evaluate((element) => getComputedStyle(element).boxShadow),
-    inactivePoint.evaluate((element) => getComputedStyle(element).boxShadow),
-  ]);
+    .first();
+  const selectedPoint = selectedStar.locator(".constellation-star__point");
+  const inactivePoint = inactiveStar.locator(".constellation-star__point");
+  const inactiveShadow = await inactivePoint.evaluate(
+    (element) => getComputedStyle(element).boxShadow,
+  );
+
+  await inactiveStar.hover();
+
+  const [selectedShadow, hoveredShadow, selectedLabelColor, hoveredLabelColor] =
+    await Promise.all([
+      selectedPoint.evaluate((element) => getComputedStyle(element).boxShadow),
+      inactivePoint.evaluate((element) => getComputedStyle(element).boxShadow),
+      selectedStar
+        .locator(".constellation-star__label")
+        .evaluate((element) => getComputedStyle(element).color),
+      inactiveStar
+        .locator(".constellation-star__label")
+        .evaluate((element) => getComputedStyle(element).color),
+    ]);
 
   expect(selectedShadow).not.toBe(inactiveShadow);
+  expect(hoveredShadow).not.toBe(selectedShadow);
   expect(selectedShadow.match(/rgba?\(/g)?.length).toBe(3);
   expect(inactiveShadow.match(/rgba?\(/g)?.length).toBe(2);
+  expect(hoveredShadow.match(/rgba?\(/g)?.length).toBe(3);
+  expect(selectedLabelColor).not.toBe(hoveredLabelColor);
+});
+
+test("selected quote metadata identifies its active star", async ({ page }) => {
+  await page.goto("/#quotes");
+
+  const map = page.locator(
+    ".constellation-map--detail.constellation-map--quotes",
+  );
+  const [selectedColor, inactiveColor] = await Promise.all([
+    map
+      .locator('.constellation-star[data-active="true"]')
+      .locator(".constellation-star__meta")
+      .evaluate((element) => getComputedStyle(element).color),
+    map
+      .locator('.constellation-star:not([data-active="true"])')
+      .first()
+      .locator(".constellation-star__meta")
+      .evaluate((element) => getComputedStyle(element).color),
+  ]);
+
+  expect(selectedColor).not.toBe(inactiveColor);
+});
+
+test("a visible star label activates its owning star", async ({ page }) => {
+  await page.goto("/");
+
+  const star = page
+    .locator(".constellation-map--overview.constellation-map--path")
+    .getByRole("button", {
+      name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+    });
+  const copy = star.locator(".constellation-star__copy");
+  const label = star.locator(".constellation-star__label");
+
+  await star.hover();
+  await expect(copy).toHaveCSS("pointer-events", "auto");
+  await label.click();
+
+  await expect(page).toHaveURL(/#path\/johns-hopkins$/);
+  await expect(
+    page
+      .locator(".constellation-map--detail.constellation-map--path")
+      .getByRole("button", {
+        name: "Focus Johns Hopkins Whiting School of Engineering",
+      }),
+  ).toHaveAttribute("aria-pressed", "true");
 });
 
 test("constellation stars render as view-scaled point sources", async ({
@@ -279,7 +373,7 @@ test("a Path star zooms to its matching professional card", async ({ page }) => 
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
     page.locator(
-      ".constellation-view--path .constellation-map__connections line",
+      ".constellation-view--path .constellation-connection__line",
     ).first(),
   ).toHaveCSS("stroke-dasharray", "none");
 });
@@ -366,8 +460,12 @@ test("constellations keep one visible identity through camera travel", async ({
     "1",
   );
   await expect(
-    page.locator('[data-testid="path-constellation"] line').first(),
-  ).toHaveCSS("transition-property", "stroke");
+    page
+      .locator(
+        '[data-testid="path-constellation"] .constellation-connection__line',
+      )
+      .first(),
+  ).toHaveCSS("transition-property", "opacity, stroke");
   await expect(
     page.locator('[data-testid="projects-constellation"]'),
   ).not.toHaveCSS("display", "none");

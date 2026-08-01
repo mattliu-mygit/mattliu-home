@@ -49,7 +49,7 @@ export function ConstellationMap({
   const variant = mode === "detail" ? "detail" : "overview";
   const rootRef = useRef<HTMLDivElement>(null);
   const starRefs = useRef(new Map<string, HTMLButtonElement>());
-  const lineRefs = useRef(new Map<string, SVGLineElement>());
+  const connectionRefs = useRef(new Map<string, SVGGElement>());
   const motionChannel = useCelestialMotionChannel();
 
   useLayoutEffect(() => {
@@ -77,14 +77,16 @@ export function ConstellationMap({
       }
 
       for (const [from, to] of connections) {
-        const line = lineRefs.current.get(`${from}-${to}`);
+        const connection = connectionRefs.current.get(`${from}-${to}`);
         const fromPosition = projected.get(from);
         const toPosition = projected.get(to);
-        if (line && fromPosition && toPosition) {
-          line.setAttribute("x1", String(fromPosition[0]));
-          line.setAttribute("y1", String(fromPosition[1]));
-          line.setAttribute("x2", String(toPosition[0]));
-          line.setAttribute("y2", String(toPosition[1]));
+        if (connection && fromPosition && toPosition) {
+          for (const line of connection.querySelectorAll("line")) {
+            line.setAttribute("x1", String(fromPosition[0]));
+            line.setAttribute("y1", String(fromPosition[1]));
+            line.setAttribute("x2", String(toPosition[0]));
+            line.setAttribute("y2", String(toPosition[1]));
+          }
         }
       }
     };
@@ -138,21 +140,33 @@ export function ConstellationMap({
             const fromItem = items.find((item) => item.slug === from);
             const toItem = items.find((item) => item.slug === to);
             return fromItem && toItem ? (
-              <line
+              <g
+                className="constellation-connection"
                 key={`${from}-${to}`}
                 ref={(element) => {
                   const key = `${from}-${to}`;
                   if (element) {
-                    lineRefs.current.set(key, element);
+                    connectionRefs.current.set(key, element);
                   } else {
-                    lineRefs.current.delete(key);
+                    connectionRefs.current.delete(key);
                   }
                 }}
-                x1={fromItem.position[0]}
-                y1={fromItem.position[1]}
-                x2={toItem.position[0]}
-                y2={toItem.position[1]}
-              />
+              >
+                <line
+                  className="constellation-connection__hit"
+                  x1={fromItem.position[0]}
+                  y1={fromItem.position[1]}
+                  x2={toItem.position[0]}
+                  y2={toItem.position[1]}
+                />
+                <line
+                  className="constellation-connection__line"
+                  x1={fromItem.position[0]}
+                  y1={fromItem.position[1]}
+                  x2={toItem.position[0]}
+                  y2={toItem.position[1]}
+                />
+              </g>
             ) : null;
           })}
         </svg>
