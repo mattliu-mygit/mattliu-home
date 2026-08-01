@@ -172,27 +172,55 @@ test("selected star aura is stronger than its peers", async ({ page }) => {
   const inactiveShadow = await inactivePoint.evaluate(
     (element) => getComputedStyle(element).boxShadow,
   );
+  const maxBlurRadius = (shadow: string) =>
+    Math.max(
+      ...Array.from(
+        shadow.matchAll(/0px 0px ([\d.]+)px/g),
+        (match) => Number(match[1]),
+      ),
+    );
 
   await inactiveStar.hover();
+  await inactivePoint.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
 
-  const [selectedShadow, hoveredShadow, selectedLabelColor, hoveredLabelColor] =
-    await Promise.all([
-      selectedPoint.evaluate((element) => getComputedStyle(element).boxShadow),
-      inactivePoint.evaluate((element) => getComputedStyle(element).boxShadow),
-      selectedStar
-        .locator(".constellation-star__label")
-        .evaluate((element) => getComputedStyle(element).color),
-      inactiveStar
-        .locator(".constellation-star__label")
-        .evaluate((element) => getComputedStyle(element).color),
-    ]);
+  const [
+    selectedShadow,
+    hoveredShadow,
+    selectedLabelColor,
+    hoveredLabelColor,
+    hoveredTextShadow,
+  ] = await Promise.all([
+    selectedPoint.evaluate((element) => getComputedStyle(element).boxShadow),
+    inactivePoint.evaluate((element) => getComputedStyle(element).boxShadow),
+    selectedStar
+      .locator(".constellation-star__label")
+      .evaluate((element) => getComputedStyle(element).color),
+    inactiveStar
+      .locator(".constellation-star__label")
+      .evaluate((element) => getComputedStyle(element).color),
+    inactiveStar
+      .locator(".constellation-star__label")
+      .evaluate((element) => getComputedStyle(element).textShadow),
+  ]);
 
+  expect(maxBlurRadius(inactiveShadow)).toBeGreaterThanOrEqual(20);
+  expect(maxBlurRadius(hoveredShadow)).toBeGreaterThanOrEqual(28);
+  expect(maxBlurRadius(selectedShadow)).toBeGreaterThanOrEqual(34);
+  expect(maxBlurRadius(hoveredShadow)).toBeGreaterThan(
+    maxBlurRadius(inactiveShadow),
+  );
+  expect(maxBlurRadius(selectedShadow)).toBeGreaterThan(
+    maxBlurRadius(hoveredShadow),
+  );
   expect(selectedShadow).not.toBe(inactiveShadow);
   expect(hoveredShadow).not.toBe(selectedShadow);
   expect(selectedShadow.match(/rgba?\(/g)?.length).toBe(3);
   expect(inactiveShadow.match(/rgba?\(/g)?.length).toBe(3);
   expect(hoveredShadow.match(/rgba?\(/g)?.length).toBe(3);
   expect(selectedLabelColor).not.toBe(hoveredLabelColor);
+  expect(hoveredTextShadow).not.toBe("none");
 });
 
 test("selected quote metadata identifies its active star", async ({ page }) => {
@@ -239,6 +267,34 @@ test("a visible star label activates its owning star", async ({ page }) => {
         name: "Focus Johns Hopkins Whiting School of Engineering",
       }),
   ).toHaveAttribute("aria-pressed", "true");
+});
+
+test("universe navigation labels remain legible at overview scale", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const destination = page.getByRole("button", { name: "Explore Path" });
+  const star = page
+    .locator(".constellation-map--overview.constellation-map--path")
+    .getByRole("button", {
+      name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+    });
+  const label = star.locator(".constellation-star__label");
+
+  await star.hover();
+
+  const [destinationSize, labelSize] = await Promise.all([
+    destination.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).fontSize),
+    ),
+    label.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).fontSize),
+    ),
+  ]);
+
+  expect(destinationSize).toBeGreaterThanOrEqual(11);
+  expect(labelSize).toBeGreaterThanOrEqual(10);
 });
 
 test("constellation stars render as view-scaled point sources", async ({
