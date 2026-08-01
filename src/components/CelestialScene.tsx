@@ -34,6 +34,7 @@ import type { NarrativeWheelInput } from "../wheel-input";
 type CelestialSceneProps = PropsWithChildren<{
   camera: WorldCamera;
   constellationDirection: Point2d;
+  immersive: boolean;
   interactive: boolean;
   view: UniverseView;
   onOpenSkyWheel?: (input: NarrativeWheelInput) => void;
@@ -52,6 +53,7 @@ export function CelestialScene({
   camera,
   children,
   constellationDirection,
+  immersive,
   interactive,
   onOpenSkyWheel,
   view,
@@ -349,6 +351,7 @@ export function CelestialScene({
     <CelestialMotionProvider value={motionChannel}>
       <main
         className="universe"
+        data-immersive={immersive ? "true" : undefined}
         data-view={view}
         ref={rootRef}
         style={
@@ -363,6 +366,7 @@ export function CelestialScene({
         }
         data-camera-focused={camera.focused ? "true" : undefined}
       >
+        <div className="immersive-milky-way" aria-hidden="true" />
         <canvas
           className="celestial-field"
           data-testid="celestial-field"

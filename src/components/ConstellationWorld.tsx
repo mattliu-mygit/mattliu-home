@@ -18,6 +18,7 @@ type Destination = SiteContent["destinations"][number];
 type ConstellationWorldProps = {
   activeSlugs: Partial<Record<DestinationSlug, string>>;
   destinations: readonly Destination[];
+  interactive: boolean;
   items: Record<DestinationSlug, readonly ConstellationItem[]>;
   onEnter: (destination: DestinationSlug, itemSlug?: string) => void;
   onSelect: (destination: DestinationSlug, itemSlug: string) => void;
@@ -36,6 +37,7 @@ export const ConstellationWorld = forwardRef<
   {
     activeSlugs,
     destinations,
+    interactive,
     items,
     onCameraSettled,
     onEnter,
@@ -58,8 +60,10 @@ export const ConstellationWorld = forwardRef<
 
   return (
     <div
+      aria-hidden={!interactive ? "true" : undefined}
       className="constellation-world"
       data-testid="constellation-world"
+      inert={!interactive ? true : undefined}
       onTransitionEnd={(event) => {
         if (
           event.target === event.currentTarget &&
@@ -97,6 +101,7 @@ export const ConstellationWorld = forwardRef<
                     : `Explore ${item.label}`
             }
             items={items[destination.slug]}
+            interactive={interactive}
             key={destination.slug}
             kind={destination.slug}
             label={destination.label}

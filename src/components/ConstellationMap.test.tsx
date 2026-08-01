@@ -1,4 +1,5 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -93,5 +94,36 @@ describe("ConstellationMap motion", () => {
       expect(line).toHaveAttribute("y2", String(second[1]));
     }
     expect(requestFrame).not.toHaveBeenCalled();
+  });
+
+  it("keeps immersive stars observational", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <ConstellationMap
+        connections={[]}
+        getAccessibleName={(item) => item.label}
+        interactive={false}
+        items={[
+          {
+            slug: "observer",
+            label: "Observer",
+            meta: "Still",
+            position: [50, 50],
+            depth: 1,
+            tone: "cool",
+            prominence: 2,
+          },
+        ]}
+        kind="path"
+        onSelect={onSelect}
+      />,
+    );
+
+    const star = screen.getByRole("button", { name: "Observer" });
+    expect(star).toHaveAttribute("aria-disabled", "true");
+    expect(star).toHaveAttribute("tabindex", "-1");
+    await user.click(star);
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });

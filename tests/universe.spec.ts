@@ -305,24 +305,48 @@ test("universe navigation labels remain legible at overview scale", async ({
       name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
     });
   const label = star.locator(".constellation-star__label");
+  const destinationBeat = page.locator(
+    '[data-story-beat="path"] .narrative-card--destination',
+  );
 
   await star.hover();
 
-  const [destinationSize, labelSize, ambientShadow] = await Promise.all([
-    destination.evaluate((element) =>
-      Number.parseFloat(getComputedStyle(element).fontSize),
-    ),
-    label.evaluate((element) =>
-      Number.parseFloat(getComputedStyle(element).fontSize),
-    ),
-    map.evaluate(
-      (element) => getComputedStyle(element, "::before").boxShadow,
-    ),
-  ]);
+  const [destinationSize, labelSize, ambientField, destinationStyle] =
+    await Promise.all([
+      destination.evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).fontSize),
+      ),
+      label.evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).fontSize),
+      ),
+      map.evaluate((element) => {
+        const styles = getComputedStyle(element, "::before");
+        return {
+          backgroundImage: styles.backgroundImage,
+          boxShadow: styles.boxShadow,
+          width: Number.parseFloat(styles.width),
+        };
+      }),
+      destinationBeat.evaluate((element) => {
+        const styles = getComputedStyle(element);
+        return {
+          backgroundColor: styles.backgroundColor,
+          borderWidth: styles.borderTopWidth,
+          boxShadow: styles.boxShadow,
+        };
+      }),
+    ]);
 
   expect(destinationSize).toBeGreaterThanOrEqual(12.4);
   expect(labelSize).toBeGreaterThanOrEqual(11.5);
-  expect(ambientShadow).toContain("0.1");
+  expect(ambientField.backgroundImage).toContain("radial-gradient");
+  expect(ambientField.boxShadow).toBe("none");
+  expect(ambientField.width).toBeGreaterThan(200);
+  expect(destinationStyle).toEqual({
+    backgroundColor: "rgba(0, 0, 0, 0)",
+    borderWidth: "0px",
+    boxShadow: "none",
+  });
 });
 
 test("constellation stars render as view-scaled point sources", async ({
@@ -384,7 +408,7 @@ test("header identity follows the story and external links open separately", asy
   await expect(identity).not.toHaveAttribute("aria-hidden");
   await expect(identity).toHaveCSS("opacity", "1");
 
-  const github = page.getByRole("link", { name: "GitHub" });
+  const github = page.locator('.site-nav__icon-link[aria-label="GitHub"]');
   await expect(github).toHaveAttribute("target", "_blank");
   await expect(github).toHaveAttribute("rel", "noopener noreferrer");
 
@@ -399,6 +423,100 @@ test("header identity follows the story and external links open separately", asy
   await page.getByRole("button", { name: "Go to Intro" }).click();
   await expect(identity).toHaveAttribute("aria-hidden", "true");
   await expect(identity).toHaveCSS("opacity", "0");
+});
+
+test("immersive view becomes a centered observational sky and restores context", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const universe = page.locator(".universe");
+  const story = page.locator(".narrative-wheel");
+  const rail = page.locator(".route-rail");
+  const world = page.locator(".constellation-world");
+  const github = page.locator('.site-nav__icon-link[aria-label="GitHub"]');
+  const star = page.locator("#constellation-star-path-johns-hopkins");
+  const storyId = await story.getAttribute("data-active-beat");
+
+  const centroid = async () => {
+    const boxes = await page.locator(".universe-constellation").evaluateAll(
+      (elements) =>
+        elements.map((element) => {
+          const box = element.getBoundingClientRect();
+          return box.x + box.width / 2;
+        }),
+    );
+    return boxes.reduce((total, value) => total + value, 0) / boxes.length;
+  };
+  const beforeCentroid = await centroid();
+  const viewportCenter = (page.viewportSize()?.width ?? 0) / 2;
+
+  await page.getByRole("button", { name: "Enter immersive view" }).click();
+
+  await expect(universe).toHaveAttribute("data-immersive", "true");
+  await expect(story).toHaveCSS("opacity", "0");
+  await expect(rail).toHaveCSS("opacity", "0");
+  await expect(github).toHaveCSS("opacity", "0");
+  await expect(page.locator(".immersive-milky-way")).toHaveCSS(
+    "opacity",
+    "1",
+  );
+  await expect(universe).toHaveCSS("--camera-target-x", "50%");
+  await expect(world).toHaveAttribute("inert", "");
+  await expect(world).toHaveAttribute("aria-hidden", "true");
+  await expect(
+    page.getByRole("button", {
+      name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+    }),
+  ).toHaveCount(0);
+  await expect(star).toHaveAttribute("aria-disabled", "true");
+  await expect(star).toHaveAttribute("tabindex", "-1");
+  await star.click({ force: true });
+  await expect(page).toHaveURL(/\/$/);
+  expect(Math.abs((await centroid()) - viewportCenter)).toBeLessThan(
+    Math.abs(beforeCentroid - viewportCenter),
+  );
+  await expect(world).toBeVisible();
+
+  await page.keyboard.press("Escape");
+
+  await expect(universe).not.toHaveAttribute("data-immersive");
+  await expect(story).toHaveCSS("opacity", "1");
+  await expect(story).toHaveAttribute("data-active-beat", storyId!);
+  await expect(
+    page.getByRole("button", { name: "Enter immersive view" }),
+  ).toBeFocused();
+
+  await page.getByRole("button", { name: "Explore Path" }).click();
+  await expect(universe).toHaveAttribute("data-camera-focused", "true");
+  await page.getByRole("button", { name: "Enter immersive view" }).click();
+  await expect(page).toHaveURL(/#path$/);
+  await expect(universe).not.toHaveAttribute("data-camera-focused");
+  await expect(page.locator(".constellation-map--overview")).toHaveCount(3);
+  await expect(page.locator(".constellation-map--detail")).toHaveCount(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await world.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
+  const mobileBoxes = await page.locator(".universe-constellation").evaluateAll(
+    (elements) =>
+      elements.map((element) => {
+        const box = element.getBoundingClientRect();
+        return {
+          bottom: box.bottom,
+          left: box.left,
+          right: box.right,
+          top: box.top,
+        };
+      }),
+  );
+  expect(mobileBoxes).toHaveLength(3);
+  for (const box of mobileBoxes) {
+    expect(box.left).toBeGreaterThanOrEqual(-8);
+    expect(box.right).toBeLessThanOrEqual(398);
+    expect(box.top).toBeGreaterThanOrEqual(80);
+    expect(box.bottom).toBeLessThanOrEqual(780);
+  }
 });
 
 test("route chapter labels align above their opening ticks at desktop and mobile widths", async ({
@@ -476,31 +594,6 @@ test("a Path star zooms to its matching professional card", async ({ page }) => 
       ".constellation-view--path .constellation-connection__line",
     ).first(),
   ).toHaveCSS("stroke-dasharray", "none");
-});
-
-test("the narrative wheel can hide and restore without changing navigation", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const wheel = page.locator(".narrative-wheel");
-  await expect(wheel).toHaveAttribute("data-active-beat", "intro/name");
-
-  await page.getByRole("button", { name: "Hide story" }).click();
-  await expect(wheel).toHaveAttribute("data-collapsed", "true");
-  await page.evaluate(() => {
-    window.dispatchEvent(
-      new WheelEvent("wheel", {
-        bubbles: true,
-        cancelable: true,
-        deltaY: 480,
-      }),
-    );
-  });
-  await expect(wheel).toHaveAttribute("data-active-beat", "intro/name");
-
-  await page.getByRole("button", { name: "Show story" }).click();
-  await expect(wheel).not.toHaveAttribute("data-collapsed", "true");
-  await expect(page).toHaveURL(/\/$/);
 });
 
 test("scrolling the narrative wheel pans directly between constellations", async ({
@@ -597,21 +690,13 @@ test("Quotes is a constellation with selectable stars", async ({ page }) => {
   await page
     .getByRole("button", { name: "Read quote: Strong opinions, weakly held." })
     .click();
-  await expect(page.locator(".quote-readout")).toHaveCSS("opacity", "0");
-  await expect(page.locator(".quote-readout blockquote")).toHaveText(
-    "Strong opinions, weakly held.",
-  );
-  await expect(page.locator(".quote-readout figcaption")).toContainText(
-    "Paul Saffo",
-  );
+  await expect(
+    page.getByRole("button", { name: "Read quote: Strong opinions, weakly held." }),
+  ).toHaveAttribute("aria-pressed", "true");
 
   await expect(
     page.getByRole("button", { name: /^(Show|Hide) story$/ }),
   ).toHaveCount(0);
-  await expect(page.locator(".quote-readout")).toHaveAttribute(
-    "data-hidden",
-    "true",
-  );
 });
 
 test("project lenses preserve URL hierarchy, truthfulness, and focus", async ({

@@ -27,6 +27,7 @@ type ConstellationMapProps = {
   items: readonly ConstellationItem[];
   connections: readonly Connection[];
   activeSlug?: string;
+  interactive?: boolean;
   label?: string;
   position?: Point;
   getAccessibleName: (item: ConstellationItem) => string;
@@ -40,6 +41,7 @@ export function ConstellationMap({
   items,
   connections,
   activeSlug,
+  interactive = true,
   label,
   position,
   getAccessibleName,
@@ -199,14 +201,19 @@ export function ConstellationMap({
                 } as CSSProperties
               }
               type="button"
-              tabIndex={mode === "inactive" ? -1 : 0}
               aria-label={getAccessibleName(item)}
               aria-pressed={
                 mode === "detail"
                   ? activeSlug === item.slug
                   : undefined
               }
-              onClick={() => onSelect(item.slug)}
+              aria-disabled={!interactive ? "true" : undefined}
+              onClick={() => {
+                if (interactive) {
+                  onSelect(item.slug);
+                }
+              }}
+              tabIndex={mode === "inactive" || !interactive ? -1 : 0}
             >
               <span
                 className="constellation-star__point"
@@ -229,7 +236,13 @@ export function ConstellationMap({
           id={`universe-destination-${kind}`}
           type="button"
           aria-label={`Explore ${label}`}
-          onClick={onOpen}
+          aria-disabled={!interactive ? "true" : undefined}
+          onClick={() => {
+            if (interactive) {
+              onOpen();
+            }
+          }}
+          tabIndex={!interactive ? -1 : 0}
         >
           {label}
         </button>

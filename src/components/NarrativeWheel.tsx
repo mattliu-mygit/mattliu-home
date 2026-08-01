@@ -29,11 +29,8 @@ export type NarrativeWheelHandle = {
 type NarrativeWheelProps = {
   beats: readonly StoryBeat[];
   activeId: string;
-  collapsed: boolean;
-  collapsible: boolean;
   onActiveBeat: (beat: StoryBeat) => void;
   onActivate: (beat: StoryBeat) => void;
-  onCollapsedChange: (collapsed: boolean) => void;
   onProgressChange: (
     progress: number,
     travel: ConstellationTravel | null,
@@ -47,11 +44,8 @@ export const NarrativeWheel = forwardRef<
   {
     beats,
     activeId,
-    collapsed,
-    collapsible,
     onActiveBeat,
     onActivate,
-    onCollapsedChange,
     onProgressChange,
   },
   forwardedRef,
@@ -95,12 +89,6 @@ export const NarrativeWheel = forwardRef<
     }),
     [applyWheelInput, scrollToBeat],
   );
-
-  useEffect(() => {
-    if (!collapsed) {
-      scrollToBeat(activeId, "auto");
-    }
-  }, [collapsed]);
 
   useEffect(() => {
     const scroll = scrollRef.current;
@@ -166,23 +154,9 @@ export const NarrativeWheel = forwardRef<
       aria-label="Portfolio story"
       className="narrative-wheel"
       data-active-beat={activeId}
-      data-collapsed={collapsed ? "true" : undefined}
       role="region"
     >
-      {collapsible ? (
-        <button
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? "Show story" : "Hide story"}
-          className="narrative-wheel__toggle"
-          onClick={() => onCollapsedChange(!collapsed)}
-          type="button"
-        >
-          <span aria-hidden="true">{collapsed ? "→" : "←"}</span>
-        </button>
-      ) : null}
-
       <div
-        aria-hidden={collapsed ? "true" : undefined}
         aria-label="Story sequence"
         className="narrative-wheel__scroll"
         data-story-scroll
@@ -191,7 +165,7 @@ export const NarrativeWheel = forwardRef<
         }}
         onScroll={handleScroll}
         ref={scrollRef}
-        tabIndex={collapsed ? -1 : 0}
+        tabIndex={0}
       >
         <ol className="narrative-wheel__sequence">
           {beats.map((beat) => (
@@ -203,7 +177,6 @@ export const NarrativeWheel = forwardRef<
             >
               <NarrativeCard
                 beat={beat}
-                disabled={collapsed}
                 onActivate={onActivate}
               />
             </li>
@@ -216,11 +189,9 @@ export const NarrativeWheel = forwardRef<
 
 function NarrativeCard({
   beat,
-  disabled,
   onActivate,
 }: {
   beat: StoryBeat;
-  disabled: boolean;
   onActivate: (beat: StoryBeat) => void;
 }) {
   if (beat.kind === "intro") {
@@ -253,7 +224,6 @@ function NarrativeCard({
         aria-label={`Open ${beat.view} constellation`}
         className="narrative-card narrative-card--destination"
         onClick={() => onActivate(beat)}
-        tabIndex={disabled ? -1 : 0}
         type="button"
       >
         <span>{beat.view}</span>
@@ -268,7 +238,6 @@ function NarrativeCard({
           aria-label={`Focus ${beat.entry.organization}`}
           className="narrative-card__action"
           onClick={() => onActivate(beat)}
-          tabIndex={disabled ? -1 : 0}
           type="button"
         />
         <span className="narrative-card__eyebrow">{beat.entry.area}</span>
@@ -285,7 +254,6 @@ function NarrativeCard({
           aria-label={`Open ${beat.project.title}`}
           className="narrative-card__action"
           onClick={() => onActivate(beat)}
-          tabIndex={disabled ? -1 : 0}
           type="button"
         />
         <ArtifactPreview project={beat.project} />
@@ -307,14 +275,12 @@ function NarrativeCard({
         aria-label={`Select quote: ${beat.quote.text}`}
         className="narrative-card__quote-action"
         onClick={() => onActivate(beat)}
-        tabIndex={disabled ? -1 : 0}
         type="button"
       >
         <blockquote>{beat.quote.text}</blockquote>
       </button>
       <ExternalLink
         href={beat.quote.sourceUrl}
-        tabIndex={disabled ? -1 : 0}
       >
         {beat.quote.author} <span aria-hidden="true">↗</span>
       </ExternalLink>

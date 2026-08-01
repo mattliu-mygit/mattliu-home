@@ -74,6 +74,92 @@ describe("personal universe", () => {
     expect(identity).toHaveAttribute("aria-hidden", "true");
   });
 
+  it("enters an observational immersive view without changing the story", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const story = screen.getByRole("region", { name: "Portfolio story" });
+    const initialHash = window.location.hash;
+    expect(
+      screen.queryByRole("button", { name: /^(Show|Hide) story$/ }),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Enter immersive view" }),
+    );
+
+    expect(screen.getByRole("main")).toHaveAttribute(
+      "data-immersive",
+      "true",
+    );
+    expect(window.location.hash).toBe(initialHash);
+    expect(story).toHaveAttribute("data-active-beat", "intro/name");
+    expect(screen.getByTestId("constellation-world")).toHaveAttribute("inert");
+    expect(screen.getByTestId("constellation-world")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+    expect(
+      screen.queryByRole("button", {
+        name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Exit immersive view" }),
+    ).toBeVisible();
+    expect(
+      screen
+        .getByRole("button", { name: "Exit immersive view" })
+        .querySelector("svg"),
+    ).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.getByRole("main")).not.toHaveAttribute("data-immersive");
+    expect(
+      screen.getByRole("button", { name: "Enter immersive view" }),
+    ).toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: "Explore Path" }));
+    expect(screen.getByRole("main")).toHaveAttribute(
+      "data-camera-focused",
+      "true",
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Enter immersive view" }),
+    );
+
+    expect(window.location.hash).toBe("#path");
+    expect(screen.getByRole("main")).not.toHaveAttribute(
+      "data-camera-focused",
+    );
+    expect(screen.getByTestId("constellation-world")).toHaveAttribute("inert");
+  });
+
+  it("cancels a pending project lens when immersive mode takes over", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Projects with Monopole selected",
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Enter immersive view" }),
+    );
+    fireEvent.transitionEnd(screen.getByTestId("constellation-world"), {
+      propertyName: "transform",
+    });
+
+    expect(window.location.hash).toBe("#projects");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("main")).toHaveAttribute(
+      "data-immersive",
+      "true",
+    );
+  });
+
   it("uses a project card to enter its existing constellation selection", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -88,25 +174,6 @@ describe("personal universe", () => {
       screen.getByRole("button", { name: "Explore Monopole" }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it("reveals and locks the story open after entering a constellation", async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(screen.getByRole("button", { name: "Hide story" }));
-    await user.click(screen.getByRole("button", { name: "Explore Projects" }));
-
-    expect(
-      screen.queryByRole("button", { name: /^(Show|Hide) story$/ }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("region", { name: "Portfolio story" }),
-    ).not.toHaveAttribute("data-collapsed");
-    expect(window.location.hash).toBe("#projects");
-    expect(window.sessionStorage.getItem("narrative-wheel-collapsed")).toBe(
-      "false",
-    );
   });
 
   it("carries a universe star selection into its constellation", async () => {
@@ -204,39 +271,6 @@ describe("personal universe", () => {
       block: "center",
     });
     expect(window.location.hash).toBe("#path/aws-sagemaker");
-  });
-
-  it("opens a selected universe project after the persistent camera settles", async () => {
-    const user = userEvent.setup();
-    const startViewTransition = vi.fn((update: () => void) => {
-      update();
-      return { finished: Promise.resolve() };
-    });
-    Object.defineProperty(document, "startViewTransition", {
-      configurable: true,
-      value: startViewTransition,
-    });
-    render(<App />);
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Open Projects with Monopole selected",
-      }),
-    );
-
-    expect(startViewTransition).not.toHaveBeenCalled();
-    expect(window.location.hash).toBe("#projects");
-    expect(
-      screen.getByRole("region", { name: "Projects constellation" }),
-    ).toBeVisible();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-
-    fireEvent.transitionEnd(screen.getByTestId("constellation-world"), {
-      propertyName: "transform",
-    });
-
-    expect(window.location.hash).toBe("#projects/monopole");
-    expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
   });
 
   it("never snapshots constellation travel in either direction", async () => {
@@ -431,8 +465,10 @@ describe("personal universe", () => {
       }),
     );
     expect(
-      screen.getByText("Paul Saffo", { selector: ".quote-readout a" }),
-    ).toBeVisible();
+      screen.getByRole("button", {
+        name: /read quote: strong opinions, weakly held/i,
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("links the playful Churchill attribution to its research", async () => {
@@ -459,14 +495,20 @@ describe("personal universe", () => {
   it("links only to verified public profiles", () => {
     render(<App />);
 
-    expect(screen.getByRole("link", { name: "GitHub" })).toHaveAttribute(
+    const github = screen.getByRole("link", { name: "GitHub" });
+    const linkedIn = screen.getByRole("link", { name: "LinkedIn" });
+    expect(github).toHaveAttribute(
       "href",
       "https://github.com/mattliu-mygit",
     );
-    expect(screen.getByRole("link", { name: "LinkedIn" })).toHaveAttribute(
+    expect(linkedIn).toHaveAttribute(
       "href",
       "https://www.linkedin.com/in/mattliuhew/",
     );
+    expect(github.querySelector("svg")).toBeInTheDocument();
+    expect(linkedIn.querySelector("svg")).toBeInTheDocument();
+    expect(github).toHaveClass("site-nav__icon-link");
+    expect(linkedIn).toHaveClass("site-nav__icon-link");
     expect(screen.queryByRole("link", { name: "Email" })).not.toBeInTheDocument();
   });
 

@@ -52,6 +52,7 @@ describe("CelestialScene motion ownership", () => {
       <CelestialScene
         camera={{ focused: false, origin: { x: 50, y: 50 }, scale: 1 }}
         constellationDirection={{ x: 1, y: 1 }}
+        immersive={false}
         interactive
         view="universe"
       />,
@@ -85,6 +86,7 @@ describe("CelestialScene motion ownership", () => {
           scale: view === "universe" ? 1 : 3.4,
         }}
         constellationDirection={{ x: 1, y: 1 }}
+        immersive={false}
         interactive
         view={view}
       >

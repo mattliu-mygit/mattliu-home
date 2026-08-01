@@ -1,4 +1,4 @@
-import { createRef } from "react";
+import { createRef, type ComponentProps, type RefObject } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -12,6 +12,22 @@ import {
 
 const beats = createStoryBeats(siteContent);
 
+const renderWheel = (
+  overrides: Partial<ComponentProps<typeof NarrativeWheel>> = {},
+  ref?: RefObject<NarrativeWheelHandle | null>,
+) =>
+  render(
+    <NarrativeWheel
+      activeId="intro/name"
+      beats={beats}
+      onActivate={() => undefined}
+      onActiveBeat={() => undefined}
+      onProgressChange={() => undefined}
+      ref={ref}
+      {...overrides}
+    />,
+  );
+
 afterEach(cleanup);
 
 describe("NarrativeWheel", () => {
@@ -24,18 +40,7 @@ describe("NarrativeWheel", () => {
   };
 
   it("introduces Matthew line by line before the Path cards", () => {
-    render(
-      <NarrativeWheel
-        activeId="intro/name"
-        beats={beats}
-        collapsed={false}
-        collapsible={true}
-        onActivate={() => undefined}
-        onActiveBeat={() => undefined}
-        onCollapsedChange={() => undefined}
-        onProgressChange={() => undefined}
-      />,
-    );
+    renderWheel();
 
     expect(screen.getByRole("heading", { name: "Matthew Liu" })).toBeVisible();
     expect(screen.getByText(/keep intelligent software/i)).toBeVisible();
@@ -43,40 +48,10 @@ describe("NarrativeWheel", () => {
     expect(screen.getByText("AWS SageMaker")).toBeVisible();
   });
 
-  it("omits the drawer visibility control when collapsing is unavailable", () => {
-    render(
-      <NarrativeWheel
-        activeId="projects"
-        beats={beats}
-        collapsed={false}
-        collapsible={false}
-        onActivate={() => undefined}
-        onActiveBeat={() => undefined}
-        onCollapsedChange={() => undefined}
-        onProgressChange={() => undefined}
-      />,
-    );
-
-    expect(
-      screen.queryByRole("button", { name: /^(Show|Hide) story$/ }),
-    ).not.toBeInTheDocument();
-  });
-
   it("activates a project card explicitly", async () => {
     const user = userEvent.setup();
     const onActivate = vi.fn();
-    render(
-      <NarrativeWheel
-        activeId="projects/ucredit"
-        beats={beats}
-        collapsed={false}
-        collapsible={true}
-        onActivate={onActivate}
-        onActiveBeat={() => undefined}
-        onCollapsedChange={() => undefined}
-        onProgressChange={() => undefined}
-      />,
-    );
+    renderWheel({ activeId: "projects/ucredit", onActivate });
 
     await user.click(screen.getByRole("button", { name: "Open Monopole" }));
     expect(onActivate).toHaveBeenCalledWith(
@@ -91,19 +66,7 @@ describe("NarrativeWheel", () => {
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
     HTMLElement.prototype.scrollBy = scrollBy;
 
-    render(
-      <NarrativeWheel
-        activeId="intro/name"
-        beats={beats}
-        collapsed={false}
-        collapsible={true}
-        onActivate={() => undefined}
-        onActiveBeat={() => undefined}
-        onCollapsedChange={() => undefined}
-        onProgressChange={() => undefined}
-        ref={ref}
-      />,
-    );
+    renderWheel({}, ref);
 
     scrollIntoView.mockClear();
     ref.current?.scrollToBeat("path/aws-sagemaker", "auto");
@@ -122,19 +85,7 @@ describe("NarrativeWheel", () => {
     const scrollBy = vi.fn();
     HTMLElement.prototype.scrollBy = scrollBy;
 
-    render(
-      <NarrativeWheel
-        activeId="intro/name"
-        beats={beats}
-        collapsed={false}
-        collapsible={true}
-        onActivate={() => undefined}
-        onActiveBeat={() => undefined}
-        onCollapsedChange={() => undefined}
-        onProgressChange={() => undefined}
-        ref={ref}
-      />,
-    );
+    renderWheel({}, ref);
 
     const scroll = screen.getByLabelText("Story sequence");
     makeScrollable(scroll);
@@ -156,19 +107,7 @@ describe("NarrativeWheel", () => {
     const scrollBy = vi.fn();
     HTMLElement.prototype.scrollBy = scrollBy;
 
-    render(
-      <NarrativeWheel
-        activeId="intro/name"
-        beats={beats}
-        collapsed={false}
-        collapsible={true}
-        onActivate={() => undefined}
-        onActiveBeat={() => undefined}
-        onCollapsedChange={() => undefined}
-        onProgressChange={() => undefined}
-        ref={ref}
-      />,
-    );
+    renderWheel({}, ref);
 
     const scroll = screen.getByLabelText("Story sequence");
     makeScrollable(scroll, 0);
@@ -181,18 +120,7 @@ describe("NarrativeWheel", () => {
 
   it("reports continuous progress before the nearest beat changes", () => {
     const onProgressChange = vi.fn();
-    render(
-      <NarrativeWheel
-        activeId="intro/name"
-        beats={beats}
-        collapsed={false}
-        collapsible={true}
-        onActivate={() => undefined}
-        onActiveBeat={() => undefined}
-        onCollapsedChange={() => undefined}
-        onProgressChange={onProgressChange}
-      />,
-    );
+    renderWheel({ onProgressChange });
 
     const scroll = screen.getByLabelText("Story sequence");
     scroll.getBoundingClientRect = () =>
@@ -215,18 +143,11 @@ describe("NarrativeWheel", () => {
   it("reports star-to-star travel before the active card changes", () => {
     const onProgressChange = vi.fn();
     const onActiveBeat = vi.fn();
-    render(
-      <NarrativeWheel
-        activeId="path/johns-hopkins"
-        beats={beats}
-        collapsed={false}
-        collapsible={true}
-        onActivate={() => undefined}
-        onActiveBeat={onActiveBeat}
-        onCollapsedChange={() => undefined}
-        onProgressChange={onProgressChange}
-      />,
-    );
+    renderWheel({
+      activeId: "path/johns-hopkins",
+      onActiveBeat,
+      onProgressChange,
+    });
 
     const scroll = screen.getByLabelText("Story sequence");
     scroll.getBoundingClientRect = () =>

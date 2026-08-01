@@ -12,14 +12,13 @@ import {
   ConstellationWorld,
   type ConstellationWorldHandle,
 } from "./components/ConstellationWorld";
-import { ExternalLink } from "./components/ExternalLink";
 import {
   NarrativeWheel,
   type NarrativeWheelHandle,
 } from "./components/NarrativeWheel";
 import { ProjectLens } from "./components/ProjectLens";
-import { QuoteReadout } from "./components/QuoteReadout";
 import { RouteRail, type RouteRailHandle } from "./components/RouteRail";
+import { SiteNav } from "./components/SiteNav";
 import {
   projectBySlug,
   siteContent,
@@ -158,12 +157,11 @@ export default function App() {
         : index / (storyBeats.length - 1);
     })(),
   );
-  const [wheelCollapsed, setWheelCollapsed] = useState(
-    () => window.sessionStorage.getItem("narrative-wheel-collapsed") === "true",
-  );
+  const [immersive, setImmersive] = useState(false);
   const [constellationDirection, setConstellationDirection] =
     useState<Point2d>(() => directionForSelection("path"));
   const viewHeading = useRef<HTMLHeadingElement>(null);
+  const immersiveButtonRef = useRef<HTMLButtonElement>(null);
   const wheelRef = useRef<NarrativeWheelHandle>(null);
   const routeRailRef = useRef<RouteRailHandle>(null);
   const constellationWorldRef = useRef<ConstellationWorldHandle>(null);
@@ -188,10 +186,12 @@ export default function App() {
           y: destinationBySlug[location.view].position[1],
         };
   const camera = worldCameraFor(location.view, cameraDestination);
+  const sceneCamera = immersive
+    ? worldCameraFor("universe", { x: 50, y: 50 })
+    : camera;
+  const sceneView = immersive ? "universe" : location.view;
   const showHeaderIdentity =
     location.view !== "universe" || !activeStoryId.startsWith("intro/");
-  const effectiveWheelCollapsed =
-    location.view === "universe" && wheelCollapsed;
 
   const aimConstellation = useCallback(
     (view: DestinationSlug, toSlug?: string) => {
@@ -442,17 +442,6 @@ export default function App() {
     }
   }, [openProject]);
 
-  const changeWheelVisibility = useCallback((collapsed: boolean) => {
-    setWheelCollapsed(collapsed);
-    window.sessionStorage.setItem("narrative-wheel-collapsed", String(collapsed));
-  }, []);
-
-  useEffect(() => {
-    if (location.view !== "universe" && wheelCollapsed) {
-      changeWheelVisibility(false);
-    }
-  }, [changeWheelVisibility, location.view, wheelCollapsed]);
-
   const updateRouteProgress = useCallback(
     (progress: number, travel: ConstellationTravel | null) => {
       routeRailRef.current?.setProgress(progress);
@@ -485,6 +474,11 @@ export default function App() {
     },
     [location.view],
   );
+
+  const toggleImmersive = useCallback(() => {
+    pendingProjectOpen.current = null;
+    setImmersive((active) => !active);
+  }, []);
 
   useEffect(() => {
     constellationWorldRef.current?.setFocusOffset({ x: 0, y: 0 });
@@ -543,58 +537,50 @@ export default function App() {
       }
       if (location.view === "projects" && location.projectSlug) {
         closeProject();
+      } else if (immersive) {
+        immersiveButtonRef.current?.focus();
+        setImmersive(false);
       } else if (location.view !== "universe") {
         returnToUniverse();
       }
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [closeProject, location, returnToUniverse]);
+  }, [closeProject, immersive, location, returnToUniverse]);
 
   const constellationView = location.view as Exclude<UniverseView, "universe">;
 
   return (
     <CelestialScene
-      camera={camera}
+      camera={sceneCamera}
       constellationDirection={constellationDirection}
+      immersive={immersive}
       interactive={!selectedProject}
       onOpenSkyWheel={(input) => {
-        if (!effectiveWheelCollapsed) {
+        if (!immersive) {
           wheelRef.current?.scrollBy(input);
         }
       }}
-      view={location.view}
+      view={sceneView}
     >
-      <nav className="site-nav" aria-label="Profile links">
-        <span
-          aria-hidden={showHeaderIdentity ? undefined : true}
-          className="site-nav__identity"
-          data-visible={showHeaderIdentity ? "true" : undefined}
-        >
-          {person.name}
-        </span>
-        <div className="site-nav__links">
-          {person.links.map((link) => (
-            <ExternalLink href={link.url} key={link.label}>
-              {link.label}
-            </ExternalLink>
-          ))}
-        </div>
-      </nav>
+      <SiteNav
+        immersive={immersive}
+        immersiveButtonRef={immersiveButtonRef}
+        links={person.links}
+        name={person.name}
+        onToggleImmersive={toggleImmersive}
+        showIdentity={showHeaderIdentity}
+      />
 
       <div
         className="universe-stage"
-        data-wheel-collapsed={effectiveWheelCollapsed ? "true" : undefined}
         data-view={location.view}
       >
         <NarrativeWheel
           activeId={activeStoryId}
           beats={storyBeats}
-          collapsed={effectiveWheelCollapsed}
-          collapsible={location.view === "universe"}
           onActivate={activateStoryBeat}
           onActiveBeat={handleStoryBeat}
-          onCollapsedChange={changeWheelVisibility}
           onProgressChange={updateRouteProgress}
           ref={wheelRef}
         />
@@ -612,23 +598,14 @@ export default function App() {
           role="region"
         >
           {location.view !== "universe" ? (
-            <>
-              <h2
-                className="constellation-view__title"
-                id="constellation-view-title"
-                ref={viewHeading}
-                tabIndex={-1}
-              >
-                {destinationBySlug[constellationView].label} constellation
-              </h2>
-
-              {constellationView === "quotes" ? (
-                <QuoteReadout
-                  hidden={!effectiveWheelCollapsed}
-                  quote={selectedQuote}
-                />
-              ) : null}
-            </>
+            <h2
+              className="constellation-view__title"
+              id="constellation-view-title"
+              ref={viewHeading}
+              tabIndex={-1}
+            >
+              {destinationBySlug[constellationView].label} constellation
+            </h2>
           ) : null}
           <ConstellationWorld
             activeSlugs={{
@@ -637,6 +614,7 @@ export default function App() {
               quotes: selectedQuote.slug,
             }}
             destinations={destinations}
+            interactive={!immersive}
             items={constellationItems}
             onEnter={enterConstellation}
             onCameraSettled={finishCameraArrival}
@@ -649,7 +627,7 @@ export default function App() {
                 selectQuote(slug);
               }
             }}
-            view={location.view}
+            view={sceneView}
             ref={constellationWorldRef}
           />
         </section>
