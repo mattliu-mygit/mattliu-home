@@ -1,7 +1,7 @@
 import type { UniverseView } from "./navigation";
 
 export const BACKGROUND_STAR_COUNT = 330;
-export const GALACTIC_BAND_STAR_COUNT = 1_500;
+export const GALACTIC_BAND_STAR_COUNT = 6_000;
 
 export type CelestialMotion = {
   travel: number;
@@ -42,6 +42,20 @@ export type GalacticBandStar = Point2d & {
   alpha: number;
   size: number;
   temperature: BackgroundStarTemperature;
+};
+
+export type GalacticCloud = Point2d & {
+  alpha: number;
+  radiusX: number;
+  radiusY: number;
+  temperature: BackgroundStarTemperature;
+};
+
+export type GalacticDustPatch = Point2d & {
+  alpha: number;
+  radiusX: number;
+  radiusY: number;
+  rotation: number;
 };
 
 export type MeteorEdge = "top" | "left" | "right";
@@ -242,6 +256,21 @@ export function galacticDustAttenuation(
   return crossesDustLane ? 0.56 : 1;
 }
 
+export function advanceGalaxyPresence(
+  current: number,
+  active: boolean,
+  elapsedMs: number,
+): number {
+  if (elapsedMs <= 0) {
+    return current;
+  }
+
+  const target = active ? 1 : 0;
+  const alpha = 1 - Math.exp(-elapsedMs / 420);
+  const next = current + (target - current) * alpha;
+  return Math.abs(target - next) < 0.001 ? target : clamp(next, 0, 1);
+}
+
 export function createSeededRandom(seed: number) {
   let state = seed >>> 0;
   return () => {
@@ -321,23 +350,91 @@ export function createGalacticBand(
     const planeLift =
       1 - Math.min(0.4, (distanceFromPlane / halfWidth) * 0.4);
     const dustAttenuation = galacticDustAttenuation(x, distanceFromPlane);
+    const temperatureIndex = index % 20;
     const temperature: BackgroundStarTemperature =
-      index % 11 === 0 ? "warm" : index % 5 === 0 ? "cool" : "neutral";
+      temperatureIndex < 4
+        ? "warm"
+        : temperatureIndex < 11
+          ? "cool"
+          : "neutral";
 
     return {
       x,
       y,
       alpha: clamp(
-        (0.13 + nextRandom() * 0.29) *
+        (0.15 + nextRandom() * 0.34) *
           clusterLift *
           planeLift *
           (1 + bulgeLift * 0.36) *
           dustAttenuation,
         0.025,
-        0.52,
+        0.62,
       ),
-      size: (0.3 + nextRandom() * 0.66) * (1 + bulgeLift * 0.08),
+      size: (0.24 + nextRandom() * 0.62) * (1 + bulgeLift * 0.08),
       temperature,
+    };
+  });
+}
+
+export function createGalacticClouds(
+  count: number,
+  nextRandom: () => number,
+): GalacticCloud[] {
+  return Array.from({ length: count }, (_, index) => {
+    const x = clamp(
+      (index + 0.5) / count + (nextRandom() - 0.5) * 0.025,
+      0,
+      1,
+    );
+    const centralBulge = Math.exp(-Math.pow((x - 0.54) / 0.28, 2));
+    const halfWidth = galacticBandHalfWidth(x);
+    const temperatureIndex = index % 10;
+    const temperature: BackgroundStarTemperature =
+      temperatureIndex < 2
+        ? "warm"
+        : temperatureIndex < 7
+          ? "cool"
+          : "neutral";
+
+    return {
+      x,
+      y: clamp(
+        galacticPlaneY(x) + (nextRandom() - 0.5) * halfWidth * 0.16,
+        0,
+        1,
+      ),
+      radiusX: 0.05 + centralBulge * 0.04 + nextRandom() * 0.03,
+      radiusY: 0.04 + centralBulge * 0.055 + nextRandom() * 0.025,
+      alpha: clamp(
+        0.018 + centralBulge * 0.1 + nextRandom() * 0.035,
+        0.018,
+        0.16,
+      ),
+      temperature,
+    };
+  });
+}
+
+export function createGalacticDustPatches(
+  count: number,
+  nextRandom: () => number,
+): GalacticDustPatch[] {
+  const segmentCount = 8;
+  return Array.from({ length: count }, (_, index) => {
+    const segment = index % segmentCount;
+    const segmentStart = 0.04 + segment * 0.12;
+    const x = clamp(segmentStart + nextRandom() * 0.075, 0, 1);
+    const halfWidth = galacticBandHalfWidth(x);
+    const offset =
+      ((nextRandom() + nextRandom()) / 2 - 0.5) * halfWidth * 0.34;
+
+    return {
+      x,
+      y: clamp(galacticPlaneY(x) + offset, 0, 1),
+      radiusX: 0.008 + nextRandom() * 0.026,
+      radiusY: 0.003 + nextRandom() * 0.009,
+      rotation: (nextRandom() - 0.5) * 1.4,
+      alpha: 0.06 + nextRandom() * 0.18,
     };
   });
 }

@@ -784,8 +784,8 @@ a:focus-visible {
   inset: 0;
   transform-origin: var(--camera-origin-x) var(--camera-origin-y);
   transition:
-    transform 820ms cubic-bezier(0.22, 0.7, 0.18, 1),
-    transform-origin 820ms cubic-bezier(0.22, 0.7, 0.18, 1);
+    transform 1080ms cubic-bezier(0.22, 0.7, 0.18, 1),
+    transform-origin 1080ms cubic-bezier(0.22, 0.7, 0.18, 1);
   will-change: transform;
 }
 
@@ -801,7 +801,7 @@ a:focus-visible {
 
 .universe[data-immersive="true"]:not([data-camera-focused="true"])
   .constellation-world {
-  transform: translate3d(-17vw, 0, 0) scale(1.04);
+  transform: translate3d(0, 0, 0) scale(0.82);
 }
 
 .constellation-map {
@@ -826,7 +826,26 @@ a:focus-visible {
       var(--constellation-pull-y),
       0
     );
-  will-change: transform;
+  transition:
+    top 1080ms cubic-bezier(0.22, 0.7, 0.18, 1),
+    left 1080ms cubic-bezier(0.22, 0.7, 0.18, 1),
+    transform 1080ms cubic-bezier(0.22, 0.7, 0.18, 1);
+  will-change: top, left, transform;
+}
+
+.universe[data-immersive="true"] .constellation-map--path {
+  top: 30%;
+  left: 38%;
+}
+
+.universe[data-immersive="true"] .constellation-map--projects {
+  top: 50%;
+  left: 60%;
+}
+
+.universe[data-immersive="true"] .constellation-map--quotes {
+  top: 70%;
+  left: 44%;
 }
 
 .constellation-map--inactive {
@@ -1536,22 +1555,22 @@ a:focus-visible {
 
   .universe[data-immersive="true"]:not([data-camera-focused="true"])
     .constellation-world {
-    transform: scale(0.94);
+    transform: scale(0.82);
   }
 
-  .universe[data-immersive="true"]
-    .constellation-map--overview:nth-child(1) {
-    top: 32%;
+  .universe[data-immersive="true"] .constellation-map--path {
+    top: 28%;
+    left: 32%;
   }
 
-  .universe[data-immersive="true"]
-    .constellation-map--overview:nth-child(2) {
+  .universe[data-immersive="true"] .constellation-map--projects {
     top: 48%;
+    left: 66%;
   }
 
-  .universe[data-immersive="true"]
-    .constellation-map--overview:nth-child(3) {
-    top: 68%;
+  .universe[data-immersive="true"] .constellation-map--quotes {
+    top: 70%;
+    left: 44%;
   }
 
   .constellation-view {

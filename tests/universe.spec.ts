@@ -452,6 +452,7 @@ test("immersive view becomes a centered observational sky and restores context",
   const story = page.locator(".narrative-wheel");
   const rail = page.locator(".route-rail");
   const world = page.locator(".constellation-world");
+  const maps = page.locator(".universe-constellation");
   const github = page.locator('.site-nav__icon-link[aria-label="GitHub"]');
   const star = page.locator("#constellation-star-path-johns-hopkins");
   const storyId = await story.getAttribute("data-active-beat");
@@ -468,6 +469,12 @@ test("immersive view becomes a centered observational sky and restores context",
   };
   const beforeCentroid = await centroid();
   const viewportCenter = (page.viewportSize()?.width ?? 0) / 2;
+  const beforeWidths = await maps.evaluateAll((elements) =>
+    elements.map((element) => element.getBoundingClientRect().width),
+  );
+  const beforeMeanWidth =
+    beforeWidths.reduce((total, width) => total + width, 0) /
+    beforeWidths.length;
 
   await page.getByRole("button", { name: "Enter immersive view" }).click();
 
@@ -490,6 +497,40 @@ test("immersive view becomes a centered observational sky and restores context",
   expect(Math.abs((await centroid()) - viewportCenter)).toBeLessThan(
     Math.abs(beforeCentroid - viewportCenter),
   );
+  await expect
+    .poll(async () => {
+      const widths = await maps.evaluateAll((elements) =>
+        elements.map((element) => element.getBoundingClientRect().width),
+      );
+      return widths.reduce((total, width) => total + width, 0) / widths.length;
+    })
+    .toBeLessThan(beforeMeanWidth * 0.9);
+  const immersiveCenters = await maps.evaluateAll((elements) =>
+    elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return {
+        x: box.x + box.width / 2,
+        y: box.y + box.height / 2,
+      };
+    }),
+  );
+  const viewport = page.viewportSize()!;
+  expect(
+    immersiveCenters.every(
+      ({ x, y }) =>
+        x > viewport.width * 0.24 &&
+        x < viewport.width * 0.76 &&
+        y > viewport.height * 0.18 &&
+        y < viewport.height * 0.82,
+    ),
+  ).toBe(true);
+  expect(
+    await maps.first().evaluate((element) => {
+      const style = getComputedStyle(element);
+      return style.transitionProperty.includes("top") &&
+        style.transitionProperty.includes("left");
+    }),
+  ).toBe(true);
   await expect(world).toBeVisible();
 
   await page.keyboard.press("Escape");
@@ -497,6 +538,14 @@ test("immersive view becomes a centered observational sky and restores context",
   await expect(universe).not.toHaveAttribute("data-immersive");
   await expect(story).toHaveCSS("opacity", "1");
   await expect(story).toHaveAttribute("data-active-beat", storyId!);
+  await expect
+    .poll(async () => {
+      const widths = await maps.evaluateAll((elements) =>
+        elements.map((element) => element.getBoundingClientRect().width),
+      );
+      return widths.reduce((total, width) => total + width, 0) / widths.length;
+    })
+    .toBeGreaterThan(beforeMeanWidth * 0.98);
   await expect(
     page.getByRole("button", { name: "Enter immersive view" }),
   ).toBeFocused();

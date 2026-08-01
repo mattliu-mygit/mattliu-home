@@ -9,10 +9,13 @@ import {
 import {
   BACKGROUND_STAR_COUNT,
   GALACTIC_BAND_STAR_COUNT,
+  advanceGalaxyPresence,
   advanceCelestialMotion,
   applyWheelImpulse,
   constellationDrift,
   createGalacticBand,
+  createGalacticClouds,
+  createGalacticDustPatches,
   createMeteor,
   createSeededRandom,
   createStarField,
@@ -50,9 +53,9 @@ const wrap = (value: number, extent: number) =>
   ((value % extent) + extent) % extent;
 
 const starTemperature = {
-  warm: [255, 224, 190],
+  warm: [255, 218, 174],
   neutral: [225, 232, 245],
-  cool: [190, 208, 255],
+  cool: [176, 204, 255],
 } as const;
 
 export function CelestialScene({
@@ -174,6 +177,14 @@ export function CelestialScene({
       GALACTIC_BAND_STAR_COUNT,
       createSeededRandom(80317),
     );
+    const galacticClouds = createGalacticClouds(
+      31,
+      createSeededRandom(1193),
+    );
+    const galacticDust = createGalacticDustPatches(
+      44,
+      createSeededRandom(491),
+    );
     let width = 0;
     let height = 0;
     let pixelRatio = 1;
@@ -184,6 +195,7 @@ export function CelestialScene({
     let renderedPull = { x: 0, y: 0 };
     let renderedBandPull = { x: 0, y: 0 };
     let renderedBandRotation = 0;
+    let renderedGalaxyPresence = immersiveRef.current ? 1 : 0;
 
     const resize = () => {
       pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
@@ -277,33 +289,86 @@ export function CelestialScene({
     };
 
     const drawGalacticBand = () => {
-      if (!immersiveRef.current) {
-        return;
-      }
-
       for (const star of galacticBand) {
         const x = star.x * width + renderedBandPull.x;
         const y = star.y * height + renderedBandPull.y;
         const temperature = starTemperature[star.temperature];
 
-        context.save();
-        if (star.alpha > 0.18) {
+        if (star.alpha > 0.34) {
           context.shadowColor = `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${star.alpha * 0.45})`;
-          context.shadowBlur = 2.4;
+          context.shadowBlur = 2.8;
+        } else {
+          context.shadowBlur = 0;
         }
         context.beginPath();
         context.fillStyle = `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${star.alpha})`;
         context.arc(x, y, star.size, 0, Math.PI * 2);
         context.fill();
+      }
+      context.shadowBlur = 0;
+    };
+
+    const drawGalacticClouds = () => {
+      for (const cloud of galacticClouds) {
+        const x = cloud.x * width + renderedBandPull.x;
+        const y = cloud.y * height + renderedBandPull.y;
+        const radiusX = cloud.radiusX * width;
+        const radiusY = cloud.radiusY * height;
+        const temperature = starTemperature[cloud.temperature];
+
+        context.save();
+        context.translate(x, y);
+        context.scale(1, radiusY / radiusX);
+        const gradient = context.createRadialGradient(
+          0,
+          0,
+          0,
+          0,
+          0,
+          radiusX,
+        );
+        gradient.addColorStop(
+          0,
+          `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${cloud.alpha})`,
+        );
+        gradient.addColorStop(
+          0.45,
+          `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${cloud.alpha * 0.54})`,
+        );
+        gradient.addColorStop(
+          1,
+          `rgba(${temperature[0]},${temperature[1]},${temperature[2]},0)`,
+        );
+        context.fillStyle = gradient;
+        context.beginPath();
+        context.arc(0, 0, radiusX, 0, Math.PI * 2);
+        context.fill();
         context.restore();
       }
     };
 
-    const drawGalacticLight = () => {
-      if (!immersiveRef.current) {
-        return;
+    const drawGalacticDust = () => {
+      context.save();
+      context.globalCompositeOperation = "destination-out";
+      context.filter = `blur(${Math.max(3, Math.min(width, height) * 0.008)}px)`;
+      for (const patch of galacticDust) {
+        context.fillStyle = `rgba(0,0,0,${patch.alpha})`;
+        context.beginPath();
+        context.ellipse(
+          patch.x * width + renderedBandPull.x,
+          patch.y * height + renderedBandPull.y,
+          patch.radiusX * width,
+          patch.radiusY * height,
+          patch.rotation,
+          0,
+          Math.PI * 2,
+        );
+        context.fill();
       }
+      context.restore();
+    };
 
+    const drawGalacticLight = () => {
       const pointOnPlane = (position: number) => ({
         x: position * width + renderedBandPull.x,
         y: galacticPlaneY(position) * height + renderedBandPull.y,
@@ -317,10 +382,11 @@ export function CelestialScene({
         end.y,
       );
       outerLight.addColorStop(0, "rgba(116,130,174,0)");
-      outerLight.addColorStop(0.16, "rgba(126,143,188,0.018)");
-      outerLight.addColorStop(0.42, "rgba(183,190,218,0.045)");
-      outerLight.addColorStop(0.6, "rgba(203,199,211,0.068)");
-      outerLight.addColorStop(0.8, "rgba(126,143,188,0.026)");
+      outerLight.addColorStop(0.14, "rgba(98,129,184,0.026)");
+      outerLight.addColorStop(0.34, "rgba(126,161,216,0.078)");
+      outerLight.addColorStop(0.49, "rgba(229,209,174,0.16)");
+      outerLight.addColorStop(0.62, "rgba(174,186,218,0.108)");
+      outerLight.addColorStop(0.84, "rgba(101,132,186,0.032)");
       outerLight.addColorStop(1, "rgba(116,130,174,0)");
 
       const positions = Array.from(
@@ -353,21 +419,27 @@ export function CelestialScene({
     };
 
     const drawGalaxy = () => {
-      if (!immersiveRef.current) {
+      if (renderedGalaxyPresence <= 0) {
         return;
       }
 
       context.save();
+      context.globalAlpha = renderedGalaxyPresence;
       context.translate(width / 2, height / 2);
       context.rotate(renderedBandRotation);
+      const transitionScale = 1 + (1 - renderedGalaxyPresence) * 0.12;
+      context.scale(transitionScale, transitionScale);
       context.translate(-width / 2, -height / 2);
       drawGalacticLight();
+      drawGalacticClouds();
       drawGalacticBand();
+      drawGalacticDust();
       context.restore();
     };
 
     if (reducedMotion) {
       const drawStaticField = () => {
+        renderedGalaxyPresence = immersiveRef.current ? 1 : 0;
         resize();
         context.clearRect(0, 0, width, height);
         drawGalaxy();
@@ -460,6 +532,11 @@ export function CelestialScene({
         1 - Math.exp(-Math.max(0, elapsed) / 900);
       renderedBandRotation +=
         (targetBandRotation - renderedBandRotation) * rotationAlpha;
+      renderedGalaxyPresence = advanceGalaxyPresence(
+        renderedGalaxyPresence,
+        immersiveRef.current,
+        elapsed,
+      );
       context.clearRect(0, 0, width, height);
       drawGalaxy();
       drawStars(now);
