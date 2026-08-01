@@ -142,7 +142,7 @@ test("only the hovered constellation connection brightens", async ({ page }) => 
       firstVisible.evaluate((element) => getComputedStyle(element).filter),
     ]);
 
-  expect(firstIdleOpacity).toBe(0.2);
+  expect(firstIdleOpacity).toBe(0.26);
   expect(firstIdleFilter).toContain("drop-shadow");
   await expect(firstHit).toHaveCSS("pointer-events", "stroke");
   await firstHit.hover();
@@ -257,11 +257,19 @@ test("constellation stars render as view-scaled point sources", async ({
   await expect(overviewPoint).toHaveCSS("background-image", "none");
   const overviewBox = await overviewPoint.boundingBox();
   const buttonBox = await overviewButton.boundingBox();
+  const overviewShadow = await overviewPoint.evaluate(
+    (element) => getComputedStyle(element).boxShadow,
+  );
+  const overviewBlurRadii = Array.from(
+    overviewShadow.matchAll(/0px 0px ([\d.]+)px/g),
+    (match) => Number(match[1]),
+  );
   expect(overviewBox).not.toBeNull();
   expect(buttonBox).not.toBeNull();
-  expect(overviewBox!.width).toBeGreaterThanOrEqual(3);
-  expect(overviewBox!.width).toBeLessThanOrEqual(4.5);
+  expect(overviewBox!.width).toBeGreaterThanOrEqual(3.4);
+  expect(overviewBox!.width).toBeLessThanOrEqual(4);
   expect(buttonBox!.width).toBeGreaterThanOrEqual(44);
+  expect(Math.max(...overviewBlurRadii)).toBeGreaterThan(18);
 
   await page.getByRole("button", { name: "Explore Projects" }).click();
   await page.locator(".constellation-world").evaluate((element) =>
@@ -273,8 +281,8 @@ test("constellation stars render as view-scaled point sources", async ({
     .locator(".constellation-star__point");
   const detailBox = await detailPoint.boundingBox();
   expect(detailBox).not.toBeNull();
-  expect(detailBox!.width).toBeGreaterThanOrEqual(5);
-  expect(detailBox!.width).toBeLessThanOrEqual(7.5);
+  expect(detailBox!.width).toBeGreaterThanOrEqual(5.8);
+  expect(detailBox!.width).toBeLessThanOrEqual(6.8);
   expect(detailBox!.width).toBeGreaterThan(overviewBox!.width * 1.5);
 });
 
@@ -312,7 +320,7 @@ test("header identity follows the story and external links open separately", asy
 test("route chapter labels align above their opening ticks at desktop and mobile widths", async ({
   page,
 }) => {
-  const chapterOpeningIndices = [0, 3, 7, 13, 20];
+  const chapterOpeningIndices = [0, 3, 7, 13, 17];
 
   for (const viewport of [
     { width: 1440, height: 900 },
@@ -501,7 +509,7 @@ test("Quotes is a constellation with selectable stars", async ({ page }) => {
   await expect(page).toHaveURL(/#quotes$/);
   await expect(
     page.getByRole("button", { name: /^Read quote:/ }),
-  ).toHaveCount(7);
+  ).toHaveCount(4);
   await page
     .getByRole("button", { name: "Read quote: Strong opinions, weakly held." })
     .click();

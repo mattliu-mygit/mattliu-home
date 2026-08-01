@@ -3,12 +3,7 @@ import rawSiteContent from "./site-content.json";
 export type Point = readonly [x: number, y: number];
 export type Connection = readonly [from: string, to: string];
 export type DestinationSlug = "path" | "projects" | "quotes";
-export type ArtifactType =
-  | "ucredit"
-  | "customization"
-  | "judge"
-  | "trace"
-  | "interface";
+export type ArtifactType = "judge";
 export type StarTone = "warm" | "neutral" | "cool" | "violet";
 export type StarProminence = 1 | 2 | 3;
 
@@ -28,7 +23,10 @@ export type Project = {
   technologies: readonly string[];
   repositoryUrl?: string;
   linkLabel?: string;
-  artifact: ArtifactType;
+  artifact?: ArtifactType;
+  previewImage?: string;
+  previewAlt?: string;
+  previewSourceUrl?: string;
   position: Point;
   depth: number;
   tone: StarTone;
@@ -89,13 +87,7 @@ export type SiteContent = {
   quotes: readonly Quote[];
 };
 
-const artifactTypes = new Set<ArtifactType>([
-  "ucredit",
-  "customization",
-  "judge",
-  "trace",
-  "interface",
-]);
+const artifactTypes = new Set<ArtifactType>(["judge"]);
 
 const record = (value: unknown, path: string): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -211,6 +203,15 @@ const optionalText = (value: unknown, path: string) =>
 const optionalHttpsUrl = (value: unknown, path: string) =>
   value === undefined ? undefined : httpsUrl(value, path);
 
+const optionalPreviewImage = (value: unknown, path: string) => {
+  if (value === undefined) return undefined;
+  const candidate = text(value, path);
+  if (!candidate.startsWith("/project-previews/")) {
+    throw new Error(`${path} must be a local project preview path`);
+  }
+  return candidate;
+};
+
 const assertUniqueSlugs = (
   values: readonly { slug: string }[],
   kind: string,
@@ -301,12 +302,39 @@ export function validateSiteContent(value: unknown): SiteContent {
 
   const projects = array(root.projects, "projects").map((value, index) => {
     const project = record(value, `projects[${index}]`);
-    const artifact = text(
+    const artifact = optionalText(
       project.artifact,
       `projects[${index}].artifact`,
-    ) as ArtifactType;
-    if (!artifactTypes.has(artifact)) {
+    ) as ArtifactType | undefined;
+    if (artifact && !artifactTypes.has(artifact)) {
       throw new Error(`projects[${index}].artifact is not supported`);
+    }
+    const previewImage = optionalPreviewImage(
+      project.previewImage,
+      `projects[${index}].previewImage`,
+    );
+    if (Boolean(artifact) === Boolean(previewImage)) {
+      throw new Error(
+        `projects[${index}] must define exactly one of artifact or previewImage`,
+      );
+    }
+    const previewAlt = optionalText(
+      project.previewAlt,
+      `projects[${index}].previewAlt`,
+    );
+    const previewSourceUrl = optionalHttpsUrl(
+      project.previewSourceUrl,
+      `projects[${index}].previewSourceUrl`,
+    );
+    if (previewImage && (!previewAlt || !previewSourceUrl)) {
+      throw new Error(
+        `projects[${index}] image previews require previewAlt and previewSourceUrl`,
+      );
+    }
+    if (!previewImage && (previewAlt || previewSourceUrl)) {
+      throw new Error(
+        `projects[${index}] previewAlt and previewSourceUrl require previewImage`,
+      );
     }
     return {
       slug: text(project.slug, `projects[${index}].slug`),
@@ -343,6 +371,9 @@ export function validateSiteContent(value: unknown): SiteContent {
         `projects[${index}].linkLabel`,
       ),
       artifact,
+      previewImage,
+      previewAlt,
+      previewSourceUrl,
       ...starPlacement(project, `projects[${index}]`),
     };
   });

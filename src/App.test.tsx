@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
+import { siteContent } from "./content/site-content";
 
 afterEach(() => {
   cleanup();
@@ -422,7 +423,7 @@ describe("personal universe", () => {
     ).toBeVisible();
     expect(
       screen.getAllByRole("button", { name: /^Read quote:/i }),
-    ).toHaveLength(7);
+    ).toHaveLength(siteContent.quotes.length);
 
     await user.click(
       screen.getByRole("button", {

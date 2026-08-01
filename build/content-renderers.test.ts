@@ -53,6 +53,10 @@ describe("content renderers", () => {
       "https://www.linkedin.com/in/mattliuhew/",
     ]);
     expect(structuredData.hasPart).toHaveLength(5);
+    expect(structuredData.hasPart[0]).toMatchObject({
+      name: "Monopole",
+      image: "https://mattliu-home.vercel.app/project-previews/monopole.png",
+    });
   });
 
   it("escapes fallback HTML and inline JSON for their output contexts", () => {
@@ -106,10 +110,18 @@ describe("content renderers", () => {
       expect.objectContaining({ slug: "wandb-weave" }),
     ]);
     expect(portfolio.path[0]).not.toHaveProperty("position");
-    expect(portfolio.quotes).toHaveLength(7);
+    expect(portfolio.quotes).toHaveLength(4);
     expect(portfolio.projects[0]).not.toHaveProperty("position");
     expect(portfolio.projects[0]).not.toHaveProperty("artifact");
     expect(portfolio.projects[0]).not.toHaveProperty("linkLabel");
+    expect(portfolio.projects[0]).toMatchObject({
+      slug: "monopole",
+      preview: {
+        image: "https://mattliu-home.vercel.app/project-previews/monopole.png",
+        alt: "Monopole evaluation dashboard showing real aggregate run metrics.",
+        sourceUrl: "https://github.com/mattliu-mygit/Monopole",
+      },
+    });
     expect(
       portfolio.quotes.find(
         (quote: { slug: string }) => quote.slug === "failure-to-failure",

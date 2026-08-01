@@ -68,7 +68,7 @@ describe("RouteRail", () => {
     expect(
       screen.getByRole("navigation", { name: "Story scrollbar" }),
     ).toHaveStyle({
-      "--route-progress": "26.190476190476193%",
+      "--route-progress": `${routeMarkerPosition(0.25, beats.length)}%`,
     });
   });
 
@@ -89,7 +89,7 @@ describe("RouteRail", () => {
     expect(
       screen.getByRole("navigation", { name: "Story scrollbar" }),
     ).toHaveStyle({
-      "--route-progress": "73.80952380952381%",
+      "--route-progress": `${routeMarkerPosition(0.75, beats.length)}%`,
     });
   });
 
@@ -119,21 +119,22 @@ describe("RouteRail", () => {
         `${chapters[index].position}%`,
       );
     });
-    expect(chapters).toEqual([
-      { label: "Intro", position: routeMarkerPosition(0, beats.length) },
-      { label: "Path", position: routeMarkerPosition(3 / 20, beats.length) },
-      {
-        label: "Projects",
-        position: routeMarkerPosition(7 / 20, beats.length),
-      },
-      {
-        label: "Quotes",
-        position: routeMarkerPosition(13 / 20, beats.length),
-      },
-      { label: "Fin", position: routeMarkerPosition(1, beats.length) },
+    const openingIndices = [
+      0,
+      beats.findIndex(({ id }) => id === "path"),
+      beats.findIndex(({ id }) => id === "projects"),
+      beats.findIndex(({ id }) => id === "quotes"),
+      beats.length - 1,
+    ];
+    expect(chapters.map(({ label }) => label)).toEqual([
+      "Intro",
+      "Path",
+      "Projects",
+      "Quotes",
+      "Fin",
     ]);
     chapters.forEach((chapter, index) => {
-      const openingIndex = [0, 3, 7, 13, 20][index];
+      const openingIndex = openingIndices[index];
       if (chapter.label !== "Fin") {
         expect(marks[openingIndex]?.major).toBe(true);
       }

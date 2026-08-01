@@ -40,13 +40,31 @@ describe("site content", () => {
 
   it("contains the selected projects and quotes in narrative order", () => {
     expect(siteContent.projects.map((project) => project.title)).toEqual([
-      "UCredit",
-      "Model Customization Assistant",
-      "LLM-as-a-Judge",
-      "Weave Agent Adapter",
       "Monopole",
+      "Weave Agent Adapter",
+      "LLM-as-a-Judge",
+      "Model Customization Assistant",
+      "UCredit",
     ]);
-    expect(siteContent.quotes).toHaveLength(7);
+    expect(siteContent.quotes.map((quote) => quote.slug)).toEqual([
+      "less-is-more",
+      "failure-to-failure",
+      "strong-opinions",
+      "simplicity-follows",
+    ]);
+    expect(siteContent.projects.filter(({ artifact }) => artifact)).toEqual([
+      expect.objectContaining({ slug: "llm-as-a-judge", artifact: "judge" }),
+    ]);
+    expect(
+      siteContent.projects
+        .filter(({ previewImage }) => previewImage)
+        .map(({ slug }) => slug),
+    ).toEqual([
+      "monopole",
+      "weave-agent-adapter",
+      "model-customization-assistant",
+      "ucredit",
+    ]);
     expect(projectBySlug("llm-as-a-judge")?.repositoryUrl).toBeUndefined();
     const perseverance = siteContent.quotes.find(
       (quote) => quote.slug === "failure-to-failure",
@@ -124,7 +142,7 @@ describe("site content", () => {
     projects.push(structuredClone(projects[0]));
 
     expect(() => validateSiteContent(duplicateProject)).toThrow(
-      /duplicate project slug "ucredit"/i,
+      /duplicate project slug "monopole"/i,
     );
 
     const duplicateQuote = cloneContent();
@@ -201,10 +219,10 @@ describe("site content", () => {
       siteContent.destinations.find(({ slug }) => slug === "projects")
         ?.connections,
     ).toEqual([
-      ["ucredit", "model-customization-assistant"],
-      ["model-customization-assistant", "llm-as-a-judge"],
-      ["llm-as-a-judge", "weave-agent-adapter"],
-      ["weave-agent-adapter", "monopole"],
+      ["monopole", "weave-agent-adapter"],
+      ["weave-agent-adapter", "llm-as-a-judge"],
+      ["llm-as-a-judge", "model-customization-assistant"],
+      ["model-customization-assistant", "ucredit"],
     ]);
 
     const invalid = cloneContent();
@@ -225,6 +243,28 @@ describe("site content", () => {
 
     expect(() => validateSiteContent(invalid)).toThrow(
       /projects\[0\]\.artifact is not supported/i,
+    );
+  });
+
+  it("requires exactly one project preview mode", () => {
+    const neither = cloneContent();
+    const projectsWithoutPreview = neither.projects as Array<
+      Record<string, unknown>
+    >;
+    delete projectsWithoutPreview[2].artifact;
+
+    expect(() => validateSiteContent(neither)).toThrow(
+      /projects\[2\] must define exactly one of artifact or previewImage/i,
+    );
+
+    const both = cloneContent();
+    const projectsWithBoth = both.projects as Array<Record<string, unknown>>;
+    projectsWithBoth[2].previewImage = "/project-previews/judge.png";
+    projectsWithBoth[2].previewAlt = "Judge preview";
+    projectsWithBoth[2].previewSourceUrl = "https://example.com/judge";
+
+    expect(() => validateSiteContent(both)).toThrow(
+      /projects\[2\] must define exactly one of artifact or previewImage/i,
     );
   });
 

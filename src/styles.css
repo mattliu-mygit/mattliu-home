@@ -479,11 +479,7 @@ a:focus-visible {
   font-size: 0.4rem;
 }
 
-.narrative-card .evaluation-window,
-.narrative-card .degree-plan,
-.narrative-card .customization-flow,
-.narrative-card .judge-context,
-.narrative-card .trace-tree {
+.narrative-card .judge-context {
   transform: scale(0.72);
 }
 
@@ -849,8 +845,8 @@ a:focus-visible {
   stroke: #8f9abe;
   stroke-width: 0.18;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 2px rgb(143 154 190 / 0.22));
-  opacity: 0.14;
+  filter: drop-shadow(0 0 2px rgb(143 154 190 / 0.28));
+  opacity: 0.18;
   pointer-events: none;
   stroke-dasharray: none;
   transition:
@@ -860,22 +856,22 @@ a:focus-visible {
 
 .constellation-map--detail .constellation-connection__line {
   stroke-width: 0.8;
-  opacity: 0.2;
+  opacity: 0.26;
 }
 
 .constellation-map--quotes .constellation-connection__line {
   stroke: #7e88aa;
-  opacity: 0.1;
+  opacity: 0.14;
 }
 
 .constellation-map--detail.constellation-map--quotes
   .constellation-connection__line {
-  opacity: 0.16;
+  opacity: 0.21;
 }
 
 .constellation-map--overview .constellation-connection__line {
   stroke-width: 0.65;
-  opacity: 0.12;
+  opacity: 0.18;
 }
 
 .constellation-connection__hit:hover + .constellation-connection__line {
@@ -944,19 +940,19 @@ a:focus-visible {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: calc(0.34rem * var(--star-prominence));
-  height: calc(0.34rem * var(--star-prominence));
+  width: calc(0.3rem * var(--star-prominence));
+  height: calc(0.3rem * var(--star-prominence));
   border: 0;
   border-radius: 50%;
   color: rgb(var(--star-color));
   background: rgb(var(--star-color));
   box-shadow:
-    0 0 calc(0.12rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.72),
-    0 0 calc(0.38rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.18),
-    0 0 calc(0.7rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.045);
+    0 0 calc(0.13rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.75),
+    0 0 calc(0.48rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.24),
+    0 0 calc(0.92rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.09);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
   transition:
     filter 220ms ease,
@@ -1011,13 +1007,10 @@ a:focus-visible {
 }
 
 .constellation-map--detail.constellation-map--projects
-  .constellation-star:is([data-index="3"], [data-index="4"])
+  .constellation-star:is([data-index="0"], [data-index="1"])
   .constellation-star__copy,
 .constellation-map--detail.constellation-map--path
   .constellation-star[data-index="2"]
-  .constellation-star__copy,
-.constellation-map--detail.constellation-map--quotes
-  .constellation-star:is([data-index="5"], [data-index="6"])
   .constellation-star__copy {
   right: calc(50% + 0.8rem);
   left: auto;
@@ -1042,24 +1035,24 @@ a:focus-visible {
 .constellation-star:is(:hover, :focus-visible) .constellation-star__point {
   filter: brightness(1.18);
   box-shadow:
-    0 0 calc(0.16rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.82),
-    0 0 calc(0.42rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.2),
-    0 0 calc(0.72rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.08);
+    0 0 calc(0.17rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.86),
+    0 0 calc(0.58rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.34),
+    0 0 calc(1.08rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.16);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
 }
 
 .constellation-star[data-active="true"] .constellation-star__point {
   filter: brightness(1.22);
   box-shadow:
-    0 0 calc(0.17rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.9),
-    0 0 calc(0.5rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.32),
-    0 0 calc(1.1rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.18);
+    0 0 calc(0.19rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.95),
+    0 0 calc(0.72rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.48),
+    0 0 calc(1.45rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.28);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
 }
 
@@ -1272,190 +1265,19 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.evaluation-window {
-  width: 78%;
-  border: 1px solid rgba(164, 177, 218, 0.24);
-  background: rgba(8, 10, 16, 0.72);
+.artifact--image {
+  display: block;
+  margin: 0;
 }
 
-.evaluation-window__bar {
-  display: flex;
-  align-items: center;
-  gap: 0.32rem;
-  padding: 0.7rem 0.8rem;
-  border-bottom: 1px solid rgba(164, 177, 218, 0.18);
-}
-
-.evaluation-window__bar i {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #697184;
-}
-
-.evaluation-window__bar span {
-  margin-left: auto;
-  color: #7e8596;
-  font-size: 0.48rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.evaluation-row {
-  display: grid;
-  grid-template-columns: 1fr 5rem 2rem;
-  gap: 0.8rem;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid rgba(164, 177, 218, 0.12);
-  color: #bac0cf;
-  font-size: 0.65rem;
-}
-
-.evaluation-row:last-child {
-  border-bottom: 0;
-}
-
-.evaluation-row b {
+.artifact--image img {
   display: block;
   width: 100%;
-  height: 3px;
-  background:
-    linear-gradient(90deg, var(--gold) var(--score), rgba(181, 190, 218, 0.12) var(--score));
-}
-
-.evaluation-row small {
-  color: #7e8596;
-  text-align: right;
-}
-
-.trace-tree {
-  display: grid;
-  width: 70%;
-  gap: 0;
-  border: 1px solid rgba(164, 177, 218, 0.2);
-}
-
-.trace-tree span {
-  padding: 0.78rem 1rem;
-  border-bottom: 1px solid rgba(164, 177, 218, 0.11);
-  color: #a8afbf;
-  font-family: ui-monospace, monospace;
-  font-size: 0.64rem;
-}
-
-.trace-tree span:not(:first-child) {
-  padding-left: 2.2rem;
-}
-
-.trace-tree span:last-child {
-  border-bottom: 0;
-}
-
-.trace-tree .trace-tree__accent {
-  color: var(--gold);
-  background: rgba(240, 213, 138, 0.04);
-}
-
-.degree-plan {
-  display: grid;
-  width: 78%;
-  border: 1px solid rgba(164, 177, 218, 0.18);
-  background: rgba(8, 10, 16, 0.54);
-}
-
-.degree-plan__progress {
-  display: flex;
-  min-height: 7rem;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 1px solid rgba(164, 177, 218, 0.14);
-}
-
-.degree-plan__progress strong {
-  color: var(--gold);
-  font-family: "Instrument Serif", Georgia, serif;
-  font-size: 2.7rem;
-  font-weight: 400;
-}
-
-.degree-plan__progress span,
-.degree-plan li {
-  color: #858d9f;
-  font-size: 0.55rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.degree-plan ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.degree-plan li {
-  display: flex;
-  gap: 0.8rem;
-  align-items: center;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid rgba(164, 177, 218, 0.1);
-}
-
-.degree-plan li:last-child {
-  border-bottom: 0;
-}
-
-.degree-plan li i {
-  width: 0.45rem;
-  height: 0.45rem;
-  border: 1px solid #5e6679;
-  border-radius: 50%;
-}
-
-.degree-plan li i[data-state="complete"] {
-  border-color: var(--green);
-  background: var(--green);
-}
-
-.degree-plan li i[data-state="active"] {
-  border-color: var(--gold);
-  box-shadow: 0 0 0.7rem rgba(240, 213, 138, 0.4);
-}
-
-.customization-flow {
-  display: grid;
-  width: 78%;
-  border: 1px solid rgba(164, 177, 218, 0.18);
-}
-
-.customization-flow > div {
-  display: grid;
-  grid-template-columns: 2rem 1fr;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid rgba(164, 177, 218, 0.11);
-  color: #9aa2b4;
-}
-
-.customization-flow > div:last-child {
-  border-bottom: 0;
-}
-
-.customization-flow > div[data-active="true"] {
-  color: var(--gold);
-  background: rgba(240, 213, 138, 0.04);
-}
-
-.customization-flow small {
-  color: #555e70;
-  font-size: 0.5rem;
-}
-
-.customization-flow span {
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
+  height: 100%;
+  min-height: inherit;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.82) contrast(1.04) brightness(0.9);
 }
 
 .judge-context {

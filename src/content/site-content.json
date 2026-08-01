@@ -41,10 +41,10 @@
       "label": "Projects",
       "position": [77, 48],
       "connections": [
-        ["ucredit", "model-customization-assistant"],
-        ["model-customization-assistant", "llm-as-a-judge"],
-        ["llm-as-a-judge", "weave-agent-adapter"],
-        ["weave-agent-adapter", "monopole"]
+        ["monopole", "weave-agent-adapter"],
+        ["weave-agent-adapter", "llm-as-a-judge"],
+        ["llm-as-a-judge", "model-customization-assistant"],
+        ["model-customization-assistant", "ucredit"]
       ]
     },
     {
@@ -54,12 +54,7 @@
       "connections": [
         ["less-is-more", "failure-to-failure"],
         ["failure-to-failure", "strong-opinions"],
-        ["strong-opinions", "simplicity-follows"],
-        ["simplicity-follows", "create-understand"],
-        ["create-understand", "computing-is-insight"],
-        ["computing-is-insight", "reality-precedes"],
-        ["failure-to-failure", "simplicity-follows"],
-        ["simplicity-follows", "computing-is-insight"]
+        ["strong-opinions", "simplicity-follows"]
       ]
     }
   ],
@@ -100,38 +95,42 @@
   ],
   "projects": [
     {
-      "slug": "ucredit",
-      "title": "UCredit",
-      "year": 2021,
-      "displayYear": "2021",
-      "question": "Can degree planning feel less uncertain?",
-      "description": "A collaborative advising dashboard built on uCredit to help students and advisors reason about academic plans.",
-      "contribution": "Frontend engineering and product development",
-      "technologies": ["React", "TypeScript", "Product engineering"],
-      "repositoryUrl": "https://github.com/uCredit-Dev/ucredit_frontend_typescript",
-      "linkLabel": "View project",
-      "artifact": "ucredit",
-      "position": [13, 72],
-      "depth": 1.06,
-      "tone": "warm",
-      "prominence": 1
+      "slug": "monopole",
+      "title": "Monopole",
+      "year": 2026,
+      "displayYear": "Now",
+      "question": "Can agents learn from completed work?",
+      "description": "A local evaluation workspace for reviewing completed agent runs and turning evidence into better future behavior.",
+      "contribution": "Product direction, evaluation design, and implementation",
+      "technologies": ["Python", "Agent evaluation", "Weave"],
+      "repositoryUrl": "https://github.com/mattliu-mygit/Monopole",
+      "linkLabel": "View source",
+      "previewImage": "/project-previews/monopole.png",
+      "previewAlt": "Monopole evaluation dashboard showing real aggregate run metrics.",
+      "previewSourceUrl": "https://github.com/mattliu-mygit/Monopole",
+      "position": [89, 16],
+      "depth": 1.08,
+      "tone": "violet",
+      "prominence": 3
     },
     {
-      "slug": "model-customization-assistant",
-      "title": "Model Customization Assistant",
-      "year": 2025,
-      "displayYear": "2025–26",
-      "question": "Can model training begin with intent, not infrastructure?",
-      "description": "An agent-guided SageMaker workflow that turns a use case into data preparation, fine-tuning, evaluation, and deployment steps.",
-      "contribution": "Agent workflow and product engineering",
-      "technologies": ["SageMaker AI", "Agent skills", "Model evaluation"],
-      "repositoryUrl": "https://aws.amazon.com/blogs/machine-learning/agent-guided-workflows-to-accelerate-model-customization-in-amazon-sagemaker-ai/",
-      "linkLabel": "Read the launch",
-      "artifact": "customization",
-      "position": [31, 43],
-      "depth": 0.97,
+      "slug": "weave-agent-adapter",
+      "title": "Weave Agent Adapter",
+      "year": 2026,
+      "displayYear": "2026",
+      "question": "What did the agent actually do?",
+      "description": "An adapter that turns agent activity into inspectable traces across multiple coding environments.",
+      "contribution": "Architecture, integrations, and observability",
+      "technologies": ["Python", "OpenTelemetry", "Weave"],
+      "repositoryUrl": "https://github.com/mattliu-mygit/Weave-Agent-Adapter",
+      "linkLabel": "View source",
+      "previewImage": "/project-previews/weave-agent-adapter.jpg",
+      "previewAlt": "A real Weave trace tree showing model and tool spans captured from an agent session.",
+      "previewSourceUrl": "https://github.com/mattliu-mygit/Weave-Agent-Adapter",
+      "position": [71, 34],
+      "depth": 0.92,
       "tone": "cool",
-      "prominence": 2
+      "prominence": 3
     },
     {
       "slug": "llm-as-a-judge",
@@ -149,38 +148,42 @@
       "prominence": 2
     },
     {
-      "slug": "weave-agent-adapter",
-      "title": "Weave Agent Adapter",
-      "year": 2026,
-      "displayYear": "2026",
-      "question": "What did the agent actually do?",
-      "description": "An adapter that turns agent activity into inspectable traces across multiple coding environments.",
-      "contribution": "Architecture, integrations, and observability",
-      "technologies": ["Python", "OpenTelemetry", "Weave"],
-      "repositoryUrl": "https://github.com/mattliu-mygit/Weave-Agent-Adapter",
-      "linkLabel": "View source",
-      "artifact": "trace",
-      "position": [71, 34],
-      "depth": 0.92,
+      "slug": "model-customization-assistant",
+      "title": "Model Customization Assistant",
+      "year": 2025,
+      "displayYear": "2025–26",
+      "question": "Can model training begin with intent, not infrastructure?",
+      "description": "An agent-guided SageMaker workflow that turns a use case into data preparation, fine-tuning, evaluation, and deployment steps.",
+      "contribution": "Agent workflow and product engineering",
+      "technologies": ["SageMaker AI", "Agent skills", "Model evaluation"],
+      "repositoryUrl": "https://aws.amazon.com/blogs/machine-learning/agent-guided-workflows-to-accelerate-model-customization-in-amazon-sagemaker-ai/",
+      "linkLabel": "Read the launch",
+      "previewImage": "/project-previews/model-customization-assistant.png",
+      "previewAlt": "Official AWS launch screenshot of the SageMaker Model Customization Assistant in Kiro.",
+      "previewSourceUrl": "https://aws.amazon.com/blogs/machine-learning/agent-guided-workflows-to-accelerate-model-customization-in-amazon-sagemaker-ai/",
+      "position": [31, 43],
+      "depth": 0.97,
       "tone": "cool",
-      "prominence": 3
+      "prominence": 2
     },
     {
-      "slug": "monopole",
-      "title": "Monopole",
-      "year": 2026,
-      "displayYear": "Now",
-      "question": "Can agents learn from completed work?",
-      "description": "A local evaluation workspace for reviewing completed agent runs and turning evidence into better future behavior.",
-      "contribution": "Product direction, evaluation design, and implementation",
-      "technologies": ["Python", "Agent evaluation", "Weave"],
-      "repositoryUrl": "https://github.com/mattliu-mygit/Monopole",
-      "linkLabel": "View source",
-      "artifact": "interface",
-      "position": [89, 16],
-      "depth": 1.08,
-      "tone": "violet",
-      "prominence": 3
+      "slug": "ucredit",
+      "title": "UCredit",
+      "year": 2021,
+      "displayYear": "2021",
+      "question": "Can degree planning feel less uncertain?",
+      "description": "A collaborative advising dashboard built on uCredit to help students and advisors reason about academic plans.",
+      "contribution": "Frontend engineering and product development",
+      "technologies": ["React", "TypeScript", "Product engineering"],
+      "repositoryUrl": "https://github.com/uCredit-Dev/ucredit_frontend_typescript",
+      "linkLabel": "View project",
+      "previewImage": "/project-previews/ucredit.png",
+      "previewAlt": "UCredit landing page showing a real multi-year academic planning interface.",
+      "previewSourceUrl": "https://github.com/uCredit-Dev/ucredit_frontend_typescript",
+      "position": [13, 72],
+      "depth": 1.06,
+      "tone": "warm",
+      "prominence": 1
     }
   ],
   "quotes": [
@@ -224,36 +227,6 @@
       "depth": 0.98,
       "tone": "cool",
       "prominence": 2
-    },
-    {
-      "slug": "create-understand",
-      "text": "What I cannot create, I do not understand.",
-      "author": "Richard Feynman",
-      "sourceUrl": "https://magazine.caltech.edu/post/biology-through-the-eyes-of-a-physicist",
-      "position": [69, 73],
-      "depth": 1.02,
-      "tone": "warm",
-      "prominence": 2
-    },
-    {
-      "slug": "computing-is-insight",
-      "text": "The purpose of computing is insight, not numbers.",
-      "author": "Richard Hamming",
-      "sourceUrl": "https://old.maa.org/node/111904",
-      "position": [80, 42],
-      "depth": 0.92,
-      "tone": "cool",
-      "prominence": 3
-    },
-    {
-      "slug": "reality-precedes",
-      "text": "Reality must take precedence over public relations, for nature cannot be fooled.",
-      "author": "Richard Feynman",
-      "sourceUrl": "https://shepherd.caltech.edu/html/quotes.html",
-      "position": [91, 17],
-      "depth": 1.08,
-      "tone": "neutral",
-      "prominence": 3
     }
   ]
 }

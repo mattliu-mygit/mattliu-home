@@ -58,6 +58,9 @@ const structuredData = (content: SiteContent) => {
       dateCreated: String(project.year),
       creator: { "@id": personId },
       ...(project.repositoryUrl ? { url: project.repositoryUrl } : {}),
+      ...(project.previewImage
+        ? { image: siteUrl(content, project.previewImage) }
+        : {}),
       keywords: project.technologies.join(", "),
     })),
   };
@@ -213,6 +216,17 @@ export function renderPortfolioJson(content: SiteContent): string {
         contribution: project.contribution,
         technologies: project.technologies,
         ...(project.repositoryUrl ? { url: project.repositoryUrl } : {}),
+        ...(project.previewImage &&
+        project.previewAlt &&
+        project.previewSourceUrl
+          ? {
+              preview: {
+                image: siteUrl(content, project.previewImage),
+                alt: project.previewAlt,
+                sourceUrl: project.previewSourceUrl,
+              },
+            }
+          : {}),
       })),
       quotes: content.quotes.map((quote) => ({
         slug: quote.slug,

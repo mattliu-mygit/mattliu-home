@@ -206,7 +206,10 @@ describe("NarrativeWheel", () => {
 
     fireEvent.scroll(scroll);
 
-    expect(onProgressChange).toHaveBeenLastCalledWith(0.025, null);
+    expect(onProgressChange).toHaveBeenLastCalledWith(
+      0.5 / (beats.length - 1),
+      null,
+    );
   });
 
   it("reports star-to-star travel before the active card changes", () => {
@@ -238,7 +241,7 @@ describe("NarrativeWheel", () => {
     fireEvent.scroll(scroll);
 
     expect(onProgressChange).toHaveBeenLastCalledWith(
-      0.225,
+      4.5 / (beats.length - 1),
       expect.objectContaining({
         view: "path",
         fromSlug: "johns-hopkins",
