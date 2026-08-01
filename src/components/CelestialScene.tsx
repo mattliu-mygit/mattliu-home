@@ -19,6 +19,7 @@ import {
   dampPoint,
   directionalConstellationDrift,
   galacticBandDisplacement,
+  galacticPlaneY,
   meteorSegment,
   parallaxDisplacement,
   type CelestialMotion,
@@ -295,10 +296,47 @@ export function CelestialScene({
       }
     };
 
+    const drawGalacticLight = () => {
+      if (!immersiveRef.current) {
+        return;
+      }
+
+      const pointOnPlane = (position: number) => ({
+        x: position * width + renderedBandPull.x,
+        y: galacticPlaneY(position) * height + renderedBandPull.y,
+      });
+      const start = pointOnPlane(-0.08);
+      const end = pointOnPlane(1.08);
+      const outerLight = context.createLinearGradient(
+        start.x,
+        start.y,
+        end.x,
+        end.y,
+      );
+      outerLight.addColorStop(0, "rgba(116,130,174,0)");
+      outerLight.addColorStop(0.2, "rgba(126,143,188,0.012)");
+      outerLight.addColorStop(0.5, "rgba(183,190,218,0.028)");
+      outerLight.addColorStop(0.64, "rgba(203,199,211,0.038)");
+      outerLight.addColorStop(0.82, "rgba(126,143,188,0.014)");
+      outerLight.addColorStop(1, "rgba(116,130,174,0)");
+
+      context.save();
+      context.lineCap = "butt";
+      context.lineWidth = Math.min(width, height) * 0.11;
+      context.strokeStyle = outerLight;
+      context.filter = `blur(${Math.min(width, height) * 0.045}px)`;
+      context.beginPath();
+      context.moveTo(start.x, start.y);
+      context.lineTo(end.x, end.y);
+      context.stroke();
+      context.restore();
+    };
+
     if (reducedMotion) {
       const drawStaticField = () => {
         resize();
         context.clearRect(0, 0, width, height);
+        drawGalacticLight();
         drawGalacticBand();
         drawStars(0);
       };
@@ -383,6 +421,7 @@ export function CelestialScene({
         650,
       );
       context.clearRect(0, 0, width, height);
+      drawGalacticLight();
       drawGalacticBand();
       drawStars(now);
       drawMeteor(now);

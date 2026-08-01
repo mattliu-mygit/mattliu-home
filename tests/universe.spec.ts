@@ -350,7 +350,7 @@ test("universe navigation labels remain legible at overview scale", async ({
   });
 });
 
-test("constellation stars render as view-scaled point sources", async ({
+test("constellation luminance stays consistent while point size scales", async ({
   page,
 }) => {
   await page.goto("/");
@@ -369,14 +369,21 @@ test("constellation stars render as view-scaled point sources", async ({
   const overviewShadow = await overviewPoint.evaluate(
     (element) => getComputedStyle(element).boxShadow,
   );
+  const overviewNucleus = await overviewButton.evaluate((element) => {
+    const styles = getComputedStyle(element, "::before");
+    return {
+      backgroundColor: styles.backgroundColor,
+      boxShadow: styles.boxShadow,
+    };
+  });
   const overviewBlurRadii = Array.from(
     overviewShadow.matchAll(/0px 0px ([\d.]+)px/g),
     (match) => Number(match[1]),
   );
   expect(overviewBox).not.toBeNull();
   expect(buttonBox).not.toBeNull();
-  expect(overviewBox!.width).toBeGreaterThanOrEqual(3.4);
-  expect(overviewBox!.width).toBeLessThanOrEqual(4);
+  expect(overviewBox!.width).toBeGreaterThanOrEqual(4.4);
+  expect(overviewBox!.width).toBeLessThanOrEqual(4.9);
   expect(buttonBox!.width).toBeGreaterThanOrEqual(44);
   expect(Math.max(...overviewBlurRadii)).toBeGreaterThan(18);
 
@@ -388,11 +395,22 @@ test("constellation stars render as view-scaled point sources", async ({
     .locator(".constellation-map--projects.constellation-map--detail")
     .getByRole("button", { name: "Explore Monopole" })
     .locator(".constellation-star__point");
+  const detailButton = detailPoint.locator("..");
   const detailBox = await detailPoint.boundingBox();
+  const detailNucleus = await detailButton.evaluate((element) => {
+    const styles = getComputedStyle(element, "::before");
+    return {
+      backgroundColor: styles.backgroundColor,
+      boxShadow: styles.boxShadow,
+    };
+  });
   expect(detailBox).not.toBeNull();
   expect(detailBox!.width).toBeGreaterThanOrEqual(5.8);
   expect(detailBox!.width).toBeLessThanOrEqual(6.8);
-  expect(detailBox!.width).toBeGreaterThan(overviewBox!.width * 1.5);
+  expect(overviewBox!.width).toBeGreaterThanOrEqual(detailBox!.width * 0.68);
+  expect(detailBox!.width).toBeGreaterThan(overviewBox!.width);
+  expect(overviewNucleus.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+  expect(overviewNucleus).toEqual(detailNucleus);
 });
 
 test("header identity follows the story and external links open separately", async ({

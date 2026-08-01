@@ -118,10 +118,12 @@ describe("CelestialScene motion ownership", () => {
 
   it("draws the immersive stellar band in the same reduced-motion canvas", () => {
     const arc = vi.fn();
+    const createLinearGradient = vi.fn(() => ({ addColorStop: vi.fn() }));
     const context = {
       arc,
       beginPath: vi.fn(),
       clearRect: vi.fn(),
+      createLinearGradient,
       createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
       fill: vi.fn(),
       lineTo: vi.fn(),
@@ -149,10 +151,12 @@ describe("CelestialScene motion ownership", () => {
     );
     const { rerender } = render(scene(false));
     const universeArcCount = arc.mock.calls.length;
+    expect(createLinearGradient).not.toHaveBeenCalled();
 
     rerender(scene(true));
 
     expect(arc.mock.calls.length).toBeGreaterThan(universeArcCount + 200);
+    expect(createLinearGradient).toHaveBeenCalled();
   });
 
   it("uses immersive wheel input for sky motion without navigating the story", () => {

@@ -818,7 +818,7 @@ a:focus-visible {
 }
 
 .constellation-map--overview {
-  --star-view-scale: 0.58;
+  --star-view-scale: 0.72;
   transform:
     translate(-50%, -50%)
     translate3d(
@@ -1039,13 +1039,14 @@ a:focus-visible {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 1px;
-  height: 1px;
+  width: 0.12rem;
+  height: 0.12rem;
   border-radius: 50%;
+  background: rgb(var(--star-color));
   content: "";
   box-shadow:
-    0 0 1rem 0.06rem rgb(var(--star-color) / 0.4),
-    0 0 1.85rem 0.22rem rgb(var(--star-color) / 0.16);
+    0 0 1rem 0.06rem rgb(var(--star-color) / 0.56),
+    0 0 1.85rem 0.22rem rgb(var(--star-color) / 0.22);
   pointer-events: none;
   transform: translate(-50%, -50%);
   transition:
@@ -1067,9 +1068,9 @@ a:focus-visible {
     0 0 calc(0.14rem * var(--star-prominence))
       rgb(var(--star-color) / 0.95),
     0 0 calc(0.62rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.64),
+      rgb(var(--star-color) / 0.72),
     0 0 calc(1.2rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.27);
+      rgb(var(--star-color) / 0.31);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
   transition:
     filter 220ms ease,
@@ -1155,9 +1156,9 @@ a:focus-visible {
     0 0 calc(0.18rem * var(--star-prominence))
       rgb(var(--star-color) / 1),
     0 0 calc(0.68rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.72),
+      rgb(var(--star-color) / 0.8),
     0 0 calc(1.35rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.32);
+      rgb(var(--star-color) / 0.38);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
 }
 
@@ -1167,9 +1168,9 @@ a:focus-visible {
     0 0 calc(0.2rem * var(--star-prominence))
       rgb(var(--star-color) / 1),
     0 0 calc(0.82rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.84),
+      rgb(var(--star-color) / 0.9),
     0 0 calc(1.55rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.44);
+      rgb(var(--star-color) / 0.5);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
 }
 

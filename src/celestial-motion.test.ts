@@ -15,6 +15,8 @@ import {
   dampPoint,
   directionalConstellationDrift,
   galacticBandDisplacement,
+  galacticDustAttenuation,
+  galacticPlaneY,
   meteorSegment,
   parallaxDisplacement,
   projectConstellationPoint,
@@ -289,24 +291,37 @@ describe("celestial motion", () => {
     );
     expect(new Set(first.map(({ temperature }) => temperature)).size).toBe(3);
     expect(Math.max(...first.map(({ alpha }) => alpha))).toBeLessThanOrEqual(
-      0.3,
+      0.42,
     );
+    expect(Math.max(...first.map(({ alpha }) => alpha))).toBeGreaterThan(0.34);
     expect(Math.max(...first.map(({ size }) => size))).toBeGreaterThan(
       Math.min(...first.map(({ size }) => size)) * 2,
     );
 
     const meanDistanceFromPlane =
       first.reduce(
-        (sum, star) => sum + Math.abs(star.y - (0.73 - star.x * 0.42)),
+        (sum, star) => sum + Math.abs(star.y - galacticPlaneY(star.x)),
         0,
       ) / first.length;
     expect(meanDistanceFromPlane).toBeLessThan(0.12);
+
+    const leftMeanY =
+      first
+        .filter(({ x }) => x < 0.25)
+        .reduce((sum, star) => sum + star.y, 0) /
+      first.filter(({ x }) => x < 0.25).length;
+    const rightMeanY =
+      first
+        .filter(({ x }) => x > 0.75)
+        .reduce((sum, star) => sum + star.y, 0) /
+      first.filter(({ x }) => x > 0.75).length;
+    expect(rightMeanY).toBeGreaterThan(leftMeanY + 0.2);
 
     const dustLane = first.filter(
       ({ x, y }) =>
         x >= 0.34 &&
         x <= 0.47 &&
-        Math.abs(y - (0.73 - x * 0.42)) < 0.045,
+        Math.abs(y - galacticPlaneY(x)) < 0.045,
     );
     expect(dustLane.length).toBeGreaterThan(0);
     expect(
@@ -314,6 +329,8 @@ describe("celestial motion", () => {
     ).toBeLessThan(
       first.reduce((sum, star) => sum + star.alpha, 0) / first.length,
     );
+    expect(galacticDustAttenuation(0.4, 0.02)).toBeLessThan(0.3);
+    expect(galacticDustAttenuation(0.55, 0.02)).toBe(1);
   });
 
   it("keeps galactic drift sub-pixel and tied to scroll acceleration", () => {
@@ -321,6 +338,8 @@ describe("celestial motion", () => {
     const reverse = galacticBandDisplacement(-20);
 
     expect(Math.hypot(forward.x, forward.y)).toBeLessThan(1);
+    expect(forward.x).toBeGreaterThan(0);
+    expect(forward.y).toBeGreaterThan(0);
     expect(reverse).toEqual({ x: -forward.x, y: -forward.y });
     expect(galacticBandDisplacement(0)).toEqual({ x: 0, y: 0 });
   });

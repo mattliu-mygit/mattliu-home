@@ -1,7 +1,7 @@
 import type { UniverseView } from "./navigation";
 
 export const BACKGROUND_STAR_COUNT = 330;
-export const GALACTIC_BAND_STAR_COUNT = 620;
+export const GALACTIC_BAND_STAR_COUNT = 820;
 
 export type CelestialMotion = {
   travel: number;
@@ -219,6 +219,20 @@ export function galacticBandDisplacement(travelVelocity: number): Point2d {
   };
 }
 
+export function galacticPlaneY(x: number): number {
+  return 0.22 + x * 0.58;
+}
+
+export function galacticDustAttenuation(
+  x: number,
+  distanceFromPlane: number,
+): number {
+  const crossesDustLane =
+    ((x >= 0.34 && x <= 0.47) || (x >= 0.69 && x <= 0.77)) &&
+    distanceFromPlane < 0.055;
+  return crossesDustLane ? 0.22 : 1;
+}
+
 export function createSeededRandom(seed: number) {
   let state = seed >>> 0;
   return () => {
@@ -278,20 +292,22 @@ export function createGalacticBand(
   nextRandom: () => number,
 ): GalacticBandStar[] {
   return Array.from({ length: count }, (_, index) => {
-    const x = nextRandom();
-    const centerY = 0.73 - x * 0.42;
+    const baseX = nextRandom();
+    const x =
+      nextRandom() < 0.28
+        ? clamp(0.58 + (nextRandom() - 0.5) * 0.36, 0, 1)
+        : baseX;
+    const centerY = galacticPlaneY(x);
     const planeOffset =
       ((nextRandom() + nextRandom() + nextRandom()) / 3 - 0.5) * 0.24;
     const y = clamp(centerY + planeOffset, 0, 1);
     const distanceFromPlane = Math.abs(planeOffset);
-    const inDustLane =
-      ((x >= 0.34 && x <= 0.47) || (x >= 0.69 && x <= 0.77)) &&
-      distanceFromPlane < 0.045;
+    const bulgeLift = Math.exp(-Math.pow((x - 0.58) / 0.17, 2));
     const clusterLift =
       0.82 +
       Math.max(0, Math.sin(x * Math.PI * 7.2 + 0.8)) * 0.28;
     const planeLift = 1 - Math.min(0.58, distanceFromPlane * 2.6);
-    const dustAttenuation = inDustLane ? 0.24 : 1;
+    const dustAttenuation = galacticDustAttenuation(x, distanceFromPlane);
     const temperature: BackgroundStarTemperature =
       index % 11 === 0 ? "warm" : index % 5 === 0 ? "cool" : "neutral";
 
@@ -299,14 +315,15 @@ export function createGalacticBand(
       x,
       y,
       alpha: clamp(
-        (0.08 + nextRandom() * 0.21) *
+        (0.1 + nextRandom() * 0.24) *
           clusterLift *
           planeLift *
+          (1 + bulgeLift * 0.34) *
           dustAttenuation,
         0.018,
-        0.3,
+        0.42,
       ),
-      size: 0.32 + nextRandom() * 0.64,
+      size: (0.32 + nextRandom() * 0.68) * (1 + bulgeLift * 0.1),
       temperature,
     };
   });
