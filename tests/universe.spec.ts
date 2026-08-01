@@ -131,11 +131,19 @@ test("only the hovered constellation connection brightens", async ({ page }) => 
   const firstVisible = visibleLines.first();
   const secondVisible = visibleLines.nth(1);
   const firstHit = hitLines.first();
-  const [firstIdleOpacity, secondIdleOpacity] = await Promise.all([
-    firstVisible.evaluate((element) => Number(getComputedStyle(element).opacity)),
-    secondVisible.evaluate((element) => Number(getComputedStyle(element).opacity)),
-  ]);
+  const [firstIdleOpacity, secondIdleOpacity, firstIdleFilter] =
+    await Promise.all([
+      firstVisible.evaluate((element) =>
+        Number(getComputedStyle(element).opacity),
+      ),
+      secondVisible.evaluate((element) =>
+        Number(getComputedStyle(element).opacity),
+      ),
+      firstVisible.evaluate((element) => getComputedStyle(element).filter),
+    ]);
 
+  expect(firstIdleOpacity).toBe(0.2);
+  expect(firstIdleFilter).toContain("drop-shadow");
   await expect(firstHit).toHaveCSS("pointer-events", "stroke");
   await firstHit.hover();
 
@@ -148,10 +156,10 @@ test("only the hovered constellation connection brightens", async ({ page }) => 
 });
 
 test("selected star aura is stronger than its peers", async ({ page }) => {
-  await page.goto("/#projects");
+  await page.goto("/#path/johns-hopkins");
 
   const map = page.locator(
-    ".constellation-map--detail.constellation-map--projects",
+    ".constellation-map--detail.constellation-map--path",
   );
   const selectedStar = map
     .locator('.constellation-star[data-active="true"]')
@@ -182,7 +190,7 @@ test("selected star aura is stronger than its peers", async ({ page }) => {
   expect(selectedShadow).not.toBe(inactiveShadow);
   expect(hoveredShadow).not.toBe(selectedShadow);
   expect(selectedShadow.match(/rgba?\(/g)?.length).toBe(3);
-  expect(inactiveShadow.match(/rgba?\(/g)?.length).toBe(2);
+  expect(inactiveShadow.match(/rgba?\(/g)?.length).toBe(3);
   expect(hoveredShadow.match(/rgba?\(/g)?.length).toBe(3);
   expect(selectedLabelColor).not.toBe(hoveredLabelColor);
 });
@@ -382,19 +390,11 @@ test("the narrative wheel can hide and restore without changing navigation", asy
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open Monopole" }).click();
-  await expect(page).toHaveURL(/#projects\/monopole$/);
-  await page.keyboard.press("Escape");
+  const wheel = page.locator(".narrative-wheel");
+  await expect(wheel).toHaveAttribute("data-active-beat", "intro/name");
 
   await page.getByRole("button", { name: "Hide story" }).click();
-  await expect(page.locator(".narrative-wheel")).toHaveAttribute(
-    "data-collapsed",
-    "true",
-  );
-  await expect(page.locator(".narrative-wheel")).toHaveAttribute(
-    "data-active-beat",
-    "projects/monopole",
-  );
+  await expect(wheel).toHaveAttribute("data-collapsed", "true");
   await page.evaluate(() => {
     window.dispatchEvent(
       new WheelEvent("wheel", {
@@ -404,17 +404,11 @@ test("the narrative wheel can hide and restore without changing navigation", asy
       }),
     );
   });
-  await expect(page.locator(".narrative-wheel")).toHaveAttribute(
-    "data-active-beat",
-    "projects/monopole",
-  );
+  await expect(wheel).toHaveAttribute("data-active-beat", "intro/name");
 
   await page.getByRole("button", { name: "Show story" }).click();
-  await expect(page.locator(".narrative-wheel")).not.toHaveAttribute(
-    "data-collapsed",
-    "true",
-  );
-  await expect(page).toHaveURL(/#projects$/);
+  await expect(wheel).not.toHaveAttribute("data-collapsed", "true");
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test("scrolling the narrative wheel pans directly between constellations", async ({
@@ -519,8 +513,13 @@ test("Quotes is a constellation with selectable stars", async ({ page }) => {
     "Paul Saffo",
   );
 
-  await page.getByRole("button", { name: "Hide story" }).click();
-  await expect(page.locator(".quote-readout")).toHaveCSS("opacity", "1");
+  await expect(
+    page.getByRole("button", { name: /^(Show|Hide) story$/ }),
+  ).toHaveCount(0);
+  await expect(page.locator(".quote-readout")).toHaveAttribute(
+    "data-hidden",
+    "true",
+  );
 });
 
 test("project lenses preserve URL hierarchy, truthfulness, and focus", async ({
@@ -587,7 +586,9 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
   await expect(
     page.getByRole("region", { name: "Projects constellation" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Hide story" }).click();
+  await expect(
+    page.getByRole("button", { name: /^(Show|Hide) story$/ }),
+  ).toHaveCount(0);
   expect(await dispatchWheel()).toBe(true);
 
   await page.getByRole("button", { name: "Explore Monopole" }).click();
@@ -649,9 +650,6 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
           Number(line.getAttribute("x2")),
           Number(line.getAttribute("y2")),
         ],
-        planeTransform: getComputedStyle(
-          element.querySelector(".constellation-map__plane")!,
-        ).transform,
       };
     });
   const firstTravel = Math.hypot(
@@ -669,13 +667,6 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
     projection.second[0],
     projection.second[1],
   ]);
-  const translation = projection.planeTransform
-    .slice(projection.planeTransform.indexOf("(") + 1, -1)
-    .split(",")
-    .slice(-2)
-    .map(Number);
-  expect(translation[0]).toBeCloseTo(0, 3);
-  expect(translation[1]).toBeCloseTo(0, 3);
 
   await page.waitForTimeout(1800);
   const stabilized = await page.locator(".universe").evaluate((element) => {

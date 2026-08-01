@@ -849,6 +849,7 @@ a:focus-visible {
   stroke: #8f9abe;
   stroke-width: 0.18;
   vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 2px rgb(143 154 190 / 0.22));
   opacity: 0.14;
   pointer-events: none;
   stroke-dasharray: none;
@@ -952,8 +953,10 @@ a:focus-visible {
   box-shadow:
     0 0 calc(0.12rem * var(--star-prominence))
       rgb(var(--star-color) / 0.72),
-    0 0 calc(0.32rem * var(--star-prominence))
-      rgb(var(--star-color) / 0.14);
+    0 0 calc(0.38rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.18),
+    0 0 calc(0.7rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.045);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
   transition:
     filter 220ms ease,
