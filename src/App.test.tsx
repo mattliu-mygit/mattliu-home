@@ -69,7 +69,7 @@ describe("personal universe", () => {
     expect(identity).toHaveAttribute("aria-hidden", "true");
     await user.click(screen.getByRole("button", { name: "Go to Path" }));
     expect(identity).not.toHaveAttribute("aria-hidden");
-    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
+    await user.click(screen.getByRole("button", { name: "Go to Intro" }));
     expect(identity).toHaveAttribute("aria-hidden", "true");
   });
 
@@ -89,21 +89,23 @@ describe("personal universe", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("collapses the story without changing its active item", async () => {
+  it("reveals and locks the story open after entering a constellation", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Open Monopole" }));
     await user.click(screen.getByRole("button", { name: "Hide story" }));
+    await user.click(screen.getByRole("button", { name: "Explore Projects" }));
 
-    expect(screen.getByRole("button", { name: "Show story" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    expect(
+      screen.queryByRole("button", { name: /^(Show|Hide) story$/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("region", { name: "Portfolio story" }),
-    ).toHaveAttribute("data-active-beat", "projects/monopole");
+    ).not.toHaveAttribute("data-collapsed");
     expect(window.location.hash).toBe("#projects");
+    expect(window.sessionStorage.getItem("narrative-wheel-collapsed")).toBe(
+      "false",
+    );
   });
 
   it("carries a universe star selection into its constellation", async () => {
@@ -152,7 +154,7 @@ describe("personal universe", () => {
       ),
     ).toBe(star);
 
-    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
+    await user.click(screen.getByRole("button", { name: "Go to Intro" }));
     expect(
       screen.getByRole("button", {
         name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
@@ -250,7 +252,7 @@ describe("personal universe", () => {
 
     await user.click(screen.getByRole("button", { name: "Explore Path" }));
     await user.click(screen.getByRole("button", { name: "Go to Projects" }));
-    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
+    await user.click(screen.getByRole("button", { name: "Go to Intro" }));
 
     expect(startViewTransition).not.toHaveBeenCalled();
   });
@@ -349,7 +351,7 @@ describe("personal universe", () => {
       name: "Open Projects with Monopole selected",
     });
     await user.click(origin);
-    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
+    await user.click(screen.getByRole("button", { name: "Go to Intro" }));
 
     expect(
       screen.getByRole("button", {
@@ -384,7 +386,7 @@ describe("personal universe", () => {
       name: "Explore Projects",
     });
     await user.click(trigger);
-    await user.click(screen.getByRole("button", { name: "Go to Origin" }));
+    await user.click(screen.getByRole("button", { name: "Go to Intro" }));
 
     expect(window.location.hash).toBe("");
     expect(

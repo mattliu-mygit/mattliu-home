@@ -29,6 +29,7 @@ describe("NarrativeWheel", () => {
         activeId="intro/name"
         beats={beats}
         collapsed={false}
+        collapsible={true}
         onActivate={() => undefined}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
@@ -42,6 +43,25 @@ describe("NarrativeWheel", () => {
     expect(screen.getByText("AWS SageMaker")).toBeVisible();
   });
 
+  it("omits the drawer visibility control when collapsing is unavailable", () => {
+    render(
+      <NarrativeWheel
+        activeId="projects"
+        beats={beats}
+        collapsed={false}
+        collapsible={false}
+        onActivate={() => undefined}
+        onActiveBeat={() => undefined}
+        onCollapsedChange={() => undefined}
+        onProgressChange={() => undefined}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /^(Show|Hide) story$/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("activates a project card explicitly", async () => {
     const user = userEvent.setup();
     const onActivate = vi.fn();
@@ -50,6 +70,7 @@ describe("NarrativeWheel", () => {
         activeId="projects/ucredit"
         beats={beats}
         collapsed={false}
+        collapsible={true}
         onActivate={onActivate}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
@@ -75,6 +96,7 @@ describe("NarrativeWheel", () => {
         activeId="intro/name"
         beats={beats}
         collapsed={false}
+        collapsible={true}
         onActivate={() => undefined}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
@@ -105,6 +127,7 @@ describe("NarrativeWheel", () => {
         activeId="intro/name"
         beats={beats}
         collapsed={false}
+        collapsible={true}
         onActivate={() => undefined}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
@@ -138,6 +161,7 @@ describe("NarrativeWheel", () => {
         activeId="intro/name"
         beats={beats}
         collapsed={false}
+        collapsible={true}
         onActivate={() => undefined}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
@@ -162,6 +186,7 @@ describe("NarrativeWheel", () => {
         activeId="intro/name"
         beats={beats}
         collapsed={false}
+        collapsible={true}
         onActivate={() => undefined}
         onActiveBeat={() => undefined}
         onCollapsedChange={() => undefined}
@@ -192,6 +217,7 @@ describe("NarrativeWheel", () => {
         activeId="path/johns-hopkins"
         beats={beats}
         collapsed={false}
+        collapsible={true}
         onActivate={() => undefined}
         onActiveBeat={onActiveBeat}
         onCollapsedChange={() => undefined}

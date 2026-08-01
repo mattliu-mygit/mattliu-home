@@ -28,7 +28,7 @@ describe("RouteRail", () => {
     );
 
     expect(screen.getAllByRole("button")).toHaveLength(beats.length);
-    expect(screen.getByRole("button", { name: "Go to Origin" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Go to Intro" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Go to Path" })).toHaveAttribute(
       "aria-current",
       "step",

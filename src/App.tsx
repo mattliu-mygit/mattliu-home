@@ -190,6 +190,8 @@ export default function App() {
   const camera = worldCameraFor(location.view, cameraDestination);
   const showHeaderIdentity =
     location.view !== "universe" || !activeStoryId.startsWith("intro/");
+  const effectiveWheelCollapsed =
+    location.view === "universe" && wheelCollapsed;
 
   const aimConstellation = useCallback(
     (view: DestinationSlug, toSlug?: string) => {
@@ -445,6 +447,12 @@ export default function App() {
     window.sessionStorage.setItem("narrative-wheel-collapsed", String(collapsed));
   }, []);
 
+  useEffect(() => {
+    if (location.view !== "universe" && wheelCollapsed) {
+      changeWheelVisibility(false);
+    }
+  }, [changeWheelVisibility, location.view, wheelCollapsed]);
+
   const updateRouteProgress = useCallback(
     (progress: number, travel: ConstellationTravel | null) => {
       routeRailRef.current?.setProgress(progress);
@@ -551,7 +559,7 @@ export default function App() {
       constellationDirection={constellationDirection}
       interactive={!selectedProject}
       onOpenSkyWheel={(input) => {
-        if (!wheelCollapsed) {
+        if (!effectiveWheelCollapsed) {
           wheelRef.current?.scrollBy(input);
         }
       }}
@@ -576,13 +584,14 @@ export default function App() {
 
       <div
         className="universe-stage"
-        data-wheel-collapsed={wheelCollapsed ? "true" : undefined}
+        data-wheel-collapsed={effectiveWheelCollapsed ? "true" : undefined}
         data-view={location.view}
       >
         <NarrativeWheel
           activeId={activeStoryId}
           beats={storyBeats}
-          collapsed={wheelCollapsed}
+          collapsed={effectiveWheelCollapsed}
+          collapsible={location.view === "universe"}
           onActivate={activateStoryBeat}
           onActiveBeat={handleStoryBeat}
           onCollapsedChange={changeWheelVisibility}
@@ -614,7 +623,10 @@ export default function App() {
               </h2>
 
               {constellationView === "quotes" ? (
-                <QuoteReadout hidden={!wheelCollapsed} quote={selectedQuote} />
+                <QuoteReadout
+                  hidden={!effectiveWheelCollapsed}
+                  quote={selectedQuote}
+                />
               ) : null}
             </>
           ) : null}

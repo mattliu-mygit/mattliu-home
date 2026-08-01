@@ -32,7 +32,17 @@ test("universe overview enters and leaves the Projects constellation", async ({
   ).toBeVisible();
 
   const narrativeWheel = await page.locator(".narrative-wheel").boundingBox();
+  const nextBeat = page.locator('[data-story-beat="intro/headline"]');
+  const nextBeatBox = await nextBeat.boundingBox();
   expect(narrativeWheel).not.toBeNull();
+  expect(nextBeatBox).not.toBeNull();
+  await expect(nextBeat).toHaveCSS("opacity", "0.34");
+  expect(nextBeatBox!.y).toBeLessThan(
+    narrativeWheel!.y + narrativeWheel!.height,
+  );
+  expect(nextBeatBox!.y + nextBeatBox!.height).toBeGreaterThan(
+    narrativeWheel!.y,
+  );
   for (const destination of await page.locator(".universe-constellation").all()) {
     const box = await destination.boundingBox();
     expect(box).not.toBeNull();
@@ -64,7 +74,7 @@ test("universe overview enters and leaves the Projects constellation", async ({
     expandedWheel!.x + expandedWheel!.width,
   );
 
-  await page.getByRole("button", { name: "Go to Origin" }).click();
+  await page.getByRole("button", { name: "Go to Intro" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(
     page.getByRole("button", { name: "Explore Projects" }),
@@ -86,19 +96,47 @@ test("a universe star zooms with its selection before opening a lens", async ({
   await expect(page.getByRole("dialog", { name: "Monopole" })).toBeVisible();
 });
 
-test("overview connections stay continuous at large map sizes", async ({
+test("constellation connections stay solid across camera levels", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 650, height: 650 });
   await page.goto("/");
 
+  for (const line of await page
+    .locator(".constellation-map--overview .constellation-map__connections line")
+    .all()) {
+    await expect(line).toHaveCSS("stroke-dasharray", "none");
+  }
+
+  await page.getByRole("button", { name: "Explore Projects" }).click();
   await expect(
     page
       .locator(
-        ".constellation-map--overview.constellation-map--path .constellation-map__connections line",
+        ".constellation-map--detail.constellation-map--projects .constellation-map__connections line",
       )
       .first(),
   ).toHaveCSS("stroke-dasharray", "none");
+});
+
+test("selected star aura is stronger than its peers", async ({ page }) => {
+  await page.goto("/#projects");
+
+  const selectedPoint = page
+    .locator('.constellation-star[data-active="true"]')
+    .first()
+    .locator(".constellation-star__point");
+  const inactivePoint = page
+    .locator('.constellation-star:not([data-active="true"])')
+    .first()
+    .locator(".constellation-star__point");
+  const [selectedShadow, inactiveShadow] = await Promise.all([
+    selectedPoint.evaluate((element) => getComputedStyle(element).boxShadow),
+    inactivePoint.evaluate((element) => getComputedStyle(element).boxShadow),
+  ]);
+
+  expect(selectedShadow).not.toBe(inactiveShadow);
+  expect(selectedShadow.match(/rgba?\(/g)?.length).toBe(3);
+  expect(inactiveShadow.match(/rgba?\(/g)?.length).toBe(2);
 });
 
 test("constellation stars render as view-scaled point sources", async ({
@@ -164,7 +202,7 @@ test("header identity follows the story and external links open separately", asy
     "noopener noreferrer",
   );
 
-  await page.getByRole("button", { name: "Go to Origin" }).click();
+  await page.getByRole("button", { name: "Go to Intro" }).click();
   await expect(identity).toHaveAttribute("aria-hidden", "true");
   await expect(identity).toHaveCSS("opacity", "0");
 });
@@ -183,20 +221,20 @@ test("route chapter labels align above their opening ticks at desktop and mobile
 
     const rail = page.getByRole("navigation", { name: "Story scrollbar" });
     const chapters = rail.locator(".route-rail__chapter");
-    const originLabel = page
-      .getByRole("button", { name: "Go to Origin" })
+    const introLabel = page
+      .getByRole("button", { name: "Go to Intro" })
       .locator(".route-rail__label");
 
     await expect(chapters).toHaveCount(chapterOpeningIndices.length);
 
-    const [chapterBoxes, originBox] = await Promise.all([
+    const [chapterBoxes, introHoverLabelBox] = await Promise.all([
       chapters.evaluateAll((elements) =>
         elements.map((element) => element.getBoundingClientRect().toJSON()),
       ),
-      originLabel.boundingBox(),
+      introLabel.boundingBox(),
     ]);
 
-    expect(originBox).not.toBeNull();
+    expect(introHoverLabelBox).not.toBeNull();
     for (const [chapterIndex, openingIndex] of chapterOpeningIndices.entries()) {
       const chapterBox = chapterBoxes[chapterIndex]!;
       const tickBox = await rail
@@ -215,8 +253,8 @@ test("route chapter labels align above their opening ticks at desktop and mobile
       expect(chapterBox.y + chapterBox.height).toBeLessThanOrEqual(tickBox!.y);
     }
 
-    const introBox = chapterBoxes[0]!;
-    expect(overlaps(originBox!, introBox)).toBe(false);
+    const introChapterBox = chapterBoxes[0]!;
+    expect(overlaps(introHoverLabelBox!, introChapterBox)).toBe(false);
   }
 });
 
@@ -243,7 +281,7 @@ test("a Path star zooms to its matching professional card", async ({ page }) => 
     page.locator(
       ".constellation-view--path .constellation-map__connections line",
     ).first(),
-  ).toHaveCSS("stroke-dasharray", "2.5px, 4px");
+  ).toHaveCSS("stroke-dasharray", "none");
 });
 
 test("the narrative wheel can hide and restore without changing navigation", async ({
@@ -334,7 +372,7 @@ test("constellations keep one visible identity through camera travel", async ({
     page.locator('[data-testid="projects-constellation"]'),
   ).not.toHaveCSS("display", "none");
 
-  await page.getByRole("button", { name: "Go to Origin" }).click();
+  await page.getByRole("button", { name: "Go to Intro" }).click();
   await expect(pathStar).toHaveAttribute("data-identity-probe", "persistent");
 });
 
@@ -459,7 +497,7 @@ test("wheel input drifts every sky view but yields to a project lens", async ({
   expect(await dispatchWheel()).toBe(false);
 
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Go to Origin" }).click();
+  await page.getByRole("button", { name: "Go to Intro" }).click();
   await page.getByRole("button", { name: "Explore Quotes" }).click();
   expect(await dispatchWheel()).toBe(true);
 

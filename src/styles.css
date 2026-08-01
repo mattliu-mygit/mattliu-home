@@ -312,6 +312,11 @@ a:focus-visible {
   transform: perspective(42rem) rotateX(0) scale(1);
 }
 
+.narrative-wheel[data-active-beat="intro/name"]
+  .narrative-wheel__beat[data-story-beat="intro/headline"] {
+  opacity: 0.34;
+}
+
 .narrative-card {
   position: relative;
   width: 100%;
@@ -838,16 +843,13 @@ a:focus-visible {
   stroke-width: 0.18;
   vector-effect: non-scaling-stroke;
   opacity: 0.34;
-  stroke-dasharray: 140;
-  animation: draw-constellation 1.1s ease-out both;
+  stroke-dasharray: none;
   transition: stroke 240ms ease;
 }
 
 .constellation-map--detail .constellation-map__connections line {
   stroke-width: 0.8;
   opacity: 0.52;
-  stroke-dasharray: 2.5 4;
-  animation: none;
 }
 
 .constellation-map--quotes .constellation-map__connections line {
@@ -863,13 +865,6 @@ a:focus-visible {
 .constellation-map--overview .constellation-map__connections line {
   stroke-width: 0.65;
   opacity: 0.32;
-  animation: none;
-}
-
-.constellation-map--overview.constellation-map--path
-  .constellation-map__connections
-  line {
-  stroke-dasharray: none;
 }
 
 .constellation-star {
@@ -1016,14 +1011,25 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.constellation-star:is(:hover, :focus-visible) .constellation-star__point,
-.constellation-star[data-active="true"] .constellation-star__point {
+.constellation-star:is(:hover, :focus-visible) .constellation-star__point {
   filter: brightness(1.16);
   box-shadow:
     0 0 calc(0.16rem * var(--star-prominence))
       rgb(var(--star-color) / 0.82),
     0 0 calc(0.42rem * var(--star-prominence))
       rgb(var(--star-color) / 0.2);
+  transform: translate(-50%, -50%) scale(var(--star-view-scale));
+}
+
+.constellation-star[data-active="true"] .constellation-star__point {
+  filter: brightness(1.2);
+  box-shadow:
+    0 0 calc(0.17rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.9),
+    0 0 calc(0.5rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.32),
+    0 0 calc(1rem * var(--star-prominence))
+      rgb(var(--star-color) / 0.13);
   transform: translate(-50%, -50%) scale(var(--star-view-scale));
 }
 
@@ -1449,13 +1455,6 @@ a:focus-visible {
   color: var(--gold);
   font-family: "Instrument Serif", Georgia, serif;
   font-size: 1rem;
-}
-
-@keyframes draw-constellation {
-  from {
-    stroke-dashoffset: 130;
-    opacity: 0;
-  }
 }
 
 @media (max-width: 900px) and (min-width: 761px) {

@@ -30,6 +30,7 @@ type NarrativeWheelProps = {
   beats: readonly StoryBeat[];
   activeId: string;
   collapsed: boolean;
+  collapsible: boolean;
   onActiveBeat: (beat: StoryBeat) => void;
   onActivate: (beat: StoryBeat) => void;
   onCollapsedChange: (collapsed: boolean) => void;
@@ -47,6 +48,7 @@ export const NarrativeWheel = forwardRef<
     beats,
     activeId,
     collapsed,
+    collapsible,
     onActiveBeat,
     onActivate,
     onCollapsedChange,
@@ -167,15 +169,17 @@ export const NarrativeWheel = forwardRef<
       data-collapsed={collapsed ? "true" : undefined}
       role="region"
     >
-      <button
-        aria-expanded={!collapsed}
-        aria-label={collapsed ? "Show story" : "Hide story"}
-        className="narrative-wheel__toggle"
-        onClick={() => onCollapsedChange(!collapsed)}
-        type="button"
-      >
-        <span aria-hidden="true">{collapsed ? "→" : "←"}</span>
-      </button>
+      {collapsible ? (
+        <button
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? "Show story" : "Hide story"}
+          className="narrative-wheel__toggle"
+          onClick={() => onCollapsedChange(!collapsed)}
+          type="button"
+        >
+          <span aria-hidden="true">{collapsed ? "→" : "←"}</span>
+        </button>
+      ) : null}
 
       <div
         aria-hidden={collapsed ? "true" : undefined}

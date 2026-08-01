@@ -135,7 +135,7 @@ export type RouteMark = {
 const routeLabel = (beat: StoryBeat) => {
   if (beat.kind === "intro") {
     return beat.line === "name"
-      ? "Origin"
+      ? "Intro"
       : beat.line === "headline"
         ? "Principle"
         : "Context";

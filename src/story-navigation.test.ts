@@ -64,7 +64,7 @@ describe("story navigation", () => {
 
     expect(marks).toHaveLength(beats.length);
     expect(marks.find(({ id }) => id === "intro/name")).toMatchObject({
-      label: "Origin",
+      label: "Intro",
       major: true,
     });
     expect(marks.find(({ id }) => id === "path")).toMatchObject({
