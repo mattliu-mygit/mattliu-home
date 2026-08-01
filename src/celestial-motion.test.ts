@@ -215,7 +215,7 @@ describe("celestial motion", () => {
   it("builds a restrained field of faint, medium, and anchor stars", () => {
     const stars = createStarField(500, createSeededRandom(270731));
 
-    expect(BACKGROUND_STAR_COUNT).toBe(365);
+    expect(BACKGROUND_STAR_COUNT).toBe(330);
     expect(stars.filter(({ tier }) => tier === "anchor")).toHaveLength(20);
     expect(stars.filter(({ tier }) => tier === "medium")).toHaveLength(80);
     expect(stars.filter(({ tier }) => tier === "faint")).toHaveLength(400);
@@ -250,10 +250,12 @@ describe("celestial motion", () => {
     expect(mediumBounds.minimum).toBeLessThanOrEqual(0.662);
     expect(mediumBounds.maximum).toBeGreaterThanOrEqual(0.984);
     expect(mediumBounds.maximum).toBeLessThanOrEqual(0.989);
-    expect(anchorBounds.minimum).toBeGreaterThanOrEqual(1.118);
-    expect(anchorBounds.minimum).toBeLessThanOrEqual(1.145);
-    expect(anchorBounds.maximum).toBeGreaterThanOrEqual(1.605);
-    expect(anchorBounds.maximum).toBeLessThanOrEqual(1.613);
+    expect(anchorBounds.minimum).toBeGreaterThanOrEqual(1.02);
+    expect(anchorBounds.minimum).toBeLessThanOrEqual(1.05);
+    expect(anchorBounds.maximum).toBeLessThanOrEqual(1.45);
+    expect(Math.max(...anchors.map(({ light }) => light))).toBeLessThanOrEqual(
+      220,
+    );
     expect(faintBounds.maximum).toBeLessThan(mediumBounds.minimum);
     expect(mediumBounds.maximum).toBeLessThan(anchorBounds.minimum);
   });

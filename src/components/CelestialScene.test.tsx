@@ -17,23 +17,36 @@ describe("CelestialScene motion ownership", () => {
     const arc = vi.fn();
     const addColorStop = vi.fn();
     const createRadialGradient = vi.fn(() => ({ addColorStop }));
+    const fillStyles: string[] = [];
+    const shadowBlurs: number[] = [];
     const requestFrame = vi.spyOn(window, "requestAnimationFrame");
     vi.spyOn(window, "matchMedia").mockReturnValue({
       matches: true,
     } as MediaQueryList);
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+    const context = {
       arc,
       beginPath: vi.fn(),
       clearRect: vi.fn(),
       createRadialGradient,
       fill: vi.fn(),
+      set fillStyle(value: string | CanvasGradient | CanvasPattern) {
+        if (typeof value === "string") {
+          fillStyles.push(value);
+        }
+      },
       lineTo: vi.fn(),
       moveTo: vi.fn(),
       restore: vi.fn(),
       save: vi.fn(),
       setTransform: vi.fn(),
+      set shadowBlur(value: number) {
+        shadowBlurs.push(value);
+      },
       stroke: vi.fn(),
-    } as unknown as CanvasRenderingContext2D);
+    } as unknown as CanvasRenderingContext2D;
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+      context,
+    );
 
     render(
       <CelestialScene
@@ -47,6 +60,12 @@ describe("CelestialScene motion ownership", () => {
     expect(arc).toHaveBeenCalled();
     expect(createRadialGradient).toHaveBeenCalled();
     expect(addColorStop).toHaveBeenCalled();
+    expect(Math.max(...shadowBlurs)).toBeLessThanOrEqual(6);
+    const renderedAlphas = fillStyles.flatMap((style) => {
+      const match = style.match(/rgba\([^,]+,[^,]+,[^,]+,([\d.]+)\)/);
+      return match ? [Number(match[1])] : [];
+    });
+    expect(Math.max(...renderedAlphas)).toBeLessThanOrEqual(0.72);
     expect(requestFrame).not.toHaveBeenCalled();
   });
 

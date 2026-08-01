@@ -177,7 +177,7 @@ export function CelestialScene({
         const twinkle =
           0.94 + Math.sin(now * 0.00055 + star.phase) * star.twinkle;
         const alpha = Math.min(
-          star.tier === "anchor" ? 0.92 : 0.78,
+          star.tier === "anchor" ? 0.68 : 0.72,
           (0.24 + 0.4 * parallax) * twinkle,
         );
         const radius =
@@ -191,9 +191,9 @@ export function CelestialScene({
         context.save();
         if (star.tier !== "faint") {
           context.shadowColor = `rgba(${red},${green},${blue},${alpha * 0.65})`;
-          context.shadowBlur = star.tier === "anchor" ? 9 : 4;
+          context.shadowBlur = star.tier === "anchor" ? 6 : 3.5;
         }
-        const haloRadius = radius * (star.tier === "anchor" ? 3.1 : 2.35);
+        const haloRadius = radius * (star.tier === "anchor" ? 2.6 : 2.2);
         const halo = context.createRadialGradient(
           x,
           y,
@@ -231,9 +231,9 @@ export function CelestialScene({
         }
 
         if (star.tier === "anchor") {
-          const ray = radius * 4.2;
+          const ray = radius * 3.6;
           context.shadowBlur = 0;
-          context.strokeStyle = `rgba(${red},${green},${blue},${alpha * 0.2})`;
+          context.strokeStyle = `rgba(${red},${green},${blue},${alpha * 0.12})`;
           context.lineWidth = 0.45;
           context.beginPath();
           context.moveTo(x - ray, y);

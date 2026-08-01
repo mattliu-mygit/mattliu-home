@@ -1,6 +1,6 @@
 import type { UniverseView } from "./navigation";
 
-export const BACKGROUND_STAR_COUNT = 365;
+export const BACKGROUND_STAR_COUNT = 330;
 
 export type CelestialMotion = {
   travel: number;
@@ -49,6 +49,35 @@ export type Meteor = {
   life: number;
   trail: number;
 };
+
+const backgroundStarProfiles = {
+  anchor: {
+    minimumSize: 0.96,
+    sizeRange: 0.35,
+    minimumLight: 190,
+    lightRange: 30,
+  },
+  medium: {
+    minimumSize: 0.616,
+    sizeRange: 0.308,
+    minimumLight: 175,
+    lightRange: 35,
+  },
+  faint: {
+    minimumSize: 0.264,
+    sizeRange: 0.308,
+    minimumLight: 125,
+    lightRange: 35,
+  },
+} as const satisfies Record<
+  BackgroundStarTier,
+  {
+    minimumSize: number;
+    sizeRange: number;
+    minimumLight: number;
+    lightRange: number;
+  }
+>;
 
 const frameDuration = 1000 / 60;
 
@@ -206,12 +235,7 @@ export function createStarField(
         : temperatureRoll < 0.48
           ? "cool"
           : "neutral";
-    const profile =
-      tier === "anchor"
-        ? { minimumSize: 1.045, sizeRange: 0.462, minimumLight: 215 }
-        : tier === "medium"
-          ? { minimumSize: 0.616, sizeRange: 0.308, minimumLight: 175 }
-          : { minimumSize: 0.264, sizeRange: 0.308, minimumLight: 125 };
+    const profile = backgroundStarProfiles[tier];
     return {
       x: inDensePocket
         ? 0.48 + (nextRandom() - 0.5) * 0.7
@@ -221,7 +245,8 @@ export function createStarField(
         : nextRandom(),
       depth,
       size: (profile.minimumSize + nextRandom() * profile.sizeRange) * 1.07,
-      light: profile.minimumLight + Math.round(nextRandom() * 35),
+      light:
+        profile.minimumLight + Math.round(nextRandom() * profile.lightRange),
       phase: nextRandom() * Math.PI * 2,
       tier,
       temperature,

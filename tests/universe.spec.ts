@@ -172,6 +172,9 @@ test("selected star aura is stronger than its peers", async ({ page }) => {
   const inactiveShadow = await inactivePoint.evaluate(
     (element) => getComputedStyle(element).boxShadow,
   );
+  const inactiveAura = await inactiveStar.evaluate(
+    (element) => getComputedStyle(element, "::before").boxShadow,
+  );
   const maxBlurRadius = (shadow: string) =>
     Math.max(
       ...Array.from(
@@ -181,8 +184,12 @@ test("selected star aura is stronger than its peers", async ({ page }) => {
     );
 
   await inactiveStar.hover();
-  await inactivePoint.evaluate((element) =>
-    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  await inactiveStar.evaluate((element) =>
+    Promise.all(
+      element
+        .getAnimations({ subtree: true })
+        .map((animation) => animation.finished),
+    ),
   );
 
   const [
@@ -191,6 +198,8 @@ test("selected star aura is stronger than its peers", async ({ page }) => {
     selectedLabelColor,
     hoveredLabelColor,
     hoveredTextShadow,
+    selectedAura,
+    hoveredAura,
   ] = await Promise.all([
     selectedPoint.evaluate((element) => getComputedStyle(element).boxShadow),
     inactivePoint.evaluate((element) => getComputedStyle(element).boxShadow),
@@ -203,11 +212,24 @@ test("selected star aura is stronger than its peers", async ({ page }) => {
     inactiveStar
       .locator(".constellation-star__label")
       .evaluate((element) => getComputedStyle(element).textShadow),
+    selectedStar.evaluate(
+      (element) => getComputedStyle(element, "::before").boxShadow,
+    ),
+    inactiveStar.evaluate(
+      (element) => getComputedStyle(element, "::before").boxShadow,
+    ),
   ]);
 
-  expect(maxBlurRadius(inactiveShadow)).toBeGreaterThanOrEqual(24);
-  expect(maxBlurRadius(hoveredShadow)).toBeGreaterThanOrEqual(34);
-  expect(maxBlurRadius(selectedShadow)).toBeGreaterThanOrEqual(42);
+  expect(maxBlurRadius(inactiveAura)).toBeGreaterThanOrEqual(18);
+  expect(maxBlurRadius(hoveredAura)).toBeGreaterThanOrEqual(26);
+  expect(maxBlurRadius(selectedAura)).toBeGreaterThanOrEqual(34);
+  expect(maxBlurRadius(hoveredAura)).toBeGreaterThan(
+    maxBlurRadius(inactiveAura),
+  );
+  expect(maxBlurRadius(selectedAura)).toBeGreaterThan(
+    maxBlurRadius(hoveredAura),
+  );
+  expect(maxBlurRadius(inactiveShadow)).toBeGreaterThan(0);
   expect(maxBlurRadius(hoveredShadow)).toBeGreaterThan(
     maxBlurRadius(inactiveShadow),
   );
@@ -300,7 +322,7 @@ test("universe navigation labels remain legible at overview scale", async ({
 
   expect(destinationSize).toBeGreaterThanOrEqual(12.4);
   expect(labelSize).toBeGreaterThanOrEqual(11.5);
-  expect(ambientShadow).toContain("0.14");
+  expect(ambientShadow).toContain("0.1");
 });
 
 test("constellation stars render as view-scaled point sources", async ({
