@@ -41,26 +41,58 @@ function LinkedInIcon() {
 const iconFor = (label: string) =>
   label === "GitHub" ? <GitHubIcon /> : <LinkedInIcon />;
 
-function ImmersiveIcon({ active }: { active: boolean }) {
+const galaxyArms = Array.from({ length: 4 }, (_, arm) => {
+  const phase = (arm * Math.PI) / 2;
+
+  return Array.from({ length: 25 }, (_, index) => {
+    const progress = index / 24;
+    const theta = index * 0.26;
+    const radius = 0.42 + 8.15 * progress ** 1.16;
+    const angle = phase - theta;
+
+    return {
+      opacity: 0.68 + progress * 0.2,
+      radius: 0.16 + progress * 0.25,
+      x: 12 + Math.cos(angle) * radius,
+      y: 12 + Math.sin(angle) * radius,
+    };
+  });
+});
+
+function ImmersiveIcon() {
   return (
     <span aria-hidden="true" className="site-nav__immersive-glyph">
-      <svg className="site-nav__immersive-frame" viewBox="0 0 24 24">
-        <path
-          d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeWidth="1.5"
-        />
-      </svg>
-      {active ? (
-        <svg className="site-nav__immersive-star" viewBox="0 0 24 24">
-          <path
-            d="M12 3.5c.45 5.63 2.87 8.05 8.5 8.5-5.63.45-8.05 2.87-8.5 8.5-.45-5.63-2.87-8.05-8.5-8.5 5.63-.45 8.05-2.87 8.5-8.5Z"
-            fill="currentColor"
-          />
+      <span className="site-nav__immersive-tilt">
+        <svg
+          className="site-nav__immersive-galaxy"
+          data-testid="immersive-galaxy-icon"
+          viewBox="0 0 24 24"
+        >
+          <g className="site-nav__immersive-disk">
+            <circle
+              className="site-nav__immersive-core"
+              cx="12"
+              cy="12"
+              fill="currentColor"
+              r="0.58"
+            />
+            {galaxyArms.map((arm, armIndex) => (
+              <g data-galaxy-arm key={armIndex}>
+                {arm.map((dot, dotIndex) => (
+                  <circle
+                    cx={dot.x}
+                    cy={dot.y}
+                    fill="currentColor"
+                    key={dotIndex}
+                    opacity={dot.opacity}
+                    r={dot.radius}
+                  />
+                ))}
+              </g>
+            ))}
+          </g>
         </svg>
-      ) : null}
+      </span>
     </span>
   );
 }
@@ -93,7 +125,7 @@ export function SiteNav({
           ref={immersiveButtonRef}
           type="button"
         >
-          <ImmersiveIcon active={immersive} />
+          <ImmersiveIcon />
         </button>
         {links.map((link) => (
           <ExternalLink

@@ -112,6 +112,8 @@ export function CelestialScene({
   ]);
 
   useEffect(() => {
+    let lastTouchY: number | null = null;
+
     const handleWheel = (event: WheelEvent) => {
       if (event.ctrlKey) {
         return;
@@ -147,8 +149,47 @@ export function CelestialScene({
       event.preventDefault();
     };
 
+    const handleTouchStart = (event: TouchEvent) => {
+      if (!immersiveRef.current || event.touches.length !== 1) {
+        lastTouchY = null;
+        return;
+      }
+      lastTouchY = event.touches[0].clientY;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (
+        !immersiveRef.current ||
+        event.touches.length !== 1 ||
+        lastTouchY === null
+      ) {
+        return;
+      }
+      const nextTouchY = event.touches[0].clientY;
+      backgroundMotionRef.current = applyWheelImpulse(
+        backgroundMotionRef.current,
+        lastTouchY - nextTouchY,
+      );
+      lastTouchY = nextTouchY;
+      event.preventDefault();
+    };
+
+    const handleTouchEnd = () => {
+      lastTouchY = null;
+    };
+
     window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => window.removeEventListener("wheel", handleWheel);
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
+    };
   }, []);
 
   useEffect(() => {

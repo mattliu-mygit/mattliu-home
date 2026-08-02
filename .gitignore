@@ -1,5 +1,6 @@
 .worktrees/
 .playwright-cli/
+.superpowers/
 node_modules/
 dist/
 playwright-report/

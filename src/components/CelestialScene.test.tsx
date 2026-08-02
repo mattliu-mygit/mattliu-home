@@ -215,4 +215,33 @@ describe("CelestialScene motion ownership", () => {
     expect(wheel.defaultPrevented).toBe(true);
     expect(onOpenSkyWheel).not.toHaveBeenCalled();
   });
+
+  it("uses immersive touch drags for sky motion without navigating the story", () => {
+    const onOpenSkyWheel = vi.fn();
+    render(
+      <CelestialScene
+        camera={{ focused: false, origin: { x: 50, y: 50 }, scale: 1 }}
+        constellationDirection={{ x: 1, y: 1 }}
+        immersive
+        interactive={false}
+        onOpenSkyWheel={onOpenSkyWheel}
+        view="universe"
+      />,
+    );
+    const touchEvent = (type: string, clientY: number) => {
+      const event = new Event(type, { cancelable: true });
+      Object.defineProperty(event, "touches", {
+        value: [{ clientY }],
+      });
+      return event;
+    };
+    const start = touchEvent("touchstart", 300);
+    const move = touchEvent("touchmove", 220);
+
+    window.dispatchEvent(start);
+    window.dispatchEvent(move);
+
+    expect(move.defaultPrevented).toBe(true);
+    expect(onOpenSkyWheel).not.toHaveBeenCalled();
+  });
 });

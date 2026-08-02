@@ -125,6 +125,11 @@ describe("personal universe", () => {
     expect(
       screen.getByRole("button", { name: "Exit immersive view" }),
     ).toBeVisible();
+    const immersiveIcon = screen.getByTestId("immersive-galaxy-icon");
+    expect(immersiveIcon).toBeInTheDocument();
+    expect(
+      immersiveIcon.querySelectorAll("[data-galaxy-arm]"),
+    ).toHaveLength(4);
     expect(
       screen
         .getByRole("button", { name: "Exit immersive view" })

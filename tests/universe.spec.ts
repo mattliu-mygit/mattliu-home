@@ -61,6 +61,30 @@ test("the intro opens with a raised 4:5 portrait and a measured name gap", async
   expect(radius / box!.width).toBeLessThan(0.15);
 });
 
+test("the mobile story surface rises enough to preview its next beat", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const wheel = await page.locator(".narrative-wheel").boundingBox();
+  const introLocation = await page
+    .locator(".narrative-card--name p")
+    .boundingBox();
+  const quotesLabel = await page
+    .locator(
+      ".constellation-map--overview.constellation-map--quotes .constellation-map__name",
+    )
+    .boundingBox();
+
+  expect(wheel).not.toBeNull();
+  expect(introLocation).not.toBeNull();
+  expect(quotesLabel).not.toBeNull();
+  expect(wheel!.height / 844).toBeGreaterThanOrEqual(0.47);
+  expect(wheel!.y).toBeLessThanOrEqual(445);
+  expect(overlaps(introLocation!, quotesLabel!)).toBe(false);
+});
+
 test("universe overview enters and leaves the Projects constellation", async ({
   page,
 }) => {
