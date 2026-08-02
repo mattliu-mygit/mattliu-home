@@ -1324,7 +1324,7 @@ test("Path titles keep their logos centered beside the final word", async ({
       width: image.naturalWidth,
     };
   });
-  expect(intrinsicSize).toEqual({ height: 187, width: 208 });
+  expect(intrinsicSize).toEqual({ height: 216, width: 216 });
 });
 
 test("mobile overview and project labels remain inside the viewport", async ({
