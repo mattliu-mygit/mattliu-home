@@ -574,20 +574,23 @@ html[data-js="true"] .seo-fallback {
 }
 
 .narrative-card__heading {
-  display: flex;
-  align-items: center;
+  display: block;
 }
 
 .narrative-card__heading-text {
   min-width: 0;
 }
 
+.narrative-card__heading-tail {
+  white-space: nowrap;
+}
+
 .narrative-card__brand-marks {
   display: inline-flex;
-  flex: none;
   align-items: center;
   gap: 0.14em;
   margin-left: 0.3em;
+  vertical-align: -0.15em;
 }
 
 .narrative-card__brand-marks img {
@@ -599,10 +602,22 @@ html[data-js="true"] .seo-fallback {
 
 .narrative-card--path h2 {
   font-family: "Instrument Serif", Georgia, serif;
-  font-size: clamp(1.7rem, 2.4vw, 2.5rem);
+  font-size: clamp(2rem, 3vw, 3.1rem);
   font-weight: 400;
   line-height: 0.98;
   letter-spacing: -0.025em;
+}
+
+.narrative-card--path .narrative-card__eyebrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.narrative-card--path .narrative-card__eyebrow time {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .narrative-card--path p {

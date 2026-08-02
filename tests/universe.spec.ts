@@ -329,7 +329,7 @@ test("a visible star label activates its owning star", async ({ page }) => {
   const star = page
     .locator(".constellation-map--overview.constellation-map--path")
     .getByRole("button", {
-      name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+      name: "Open Path with Johns Hopkins University selected",
     });
   const copy = star.locator(".constellation-star__copy");
   const label = star.locator(".constellation-star__label");
@@ -343,7 +343,7 @@ test("a visible star label activates its owning star", async ({ page }) => {
     page
       .locator(".constellation-map--detail.constellation-map--path")
       .getByRole("button", {
-        name: "Focus Johns Hopkins Whiting School of Engineering",
+        name: "Focus Johns Hopkins University",
       }),
   ).toHaveAttribute("aria-pressed", "true");
 });
@@ -359,7 +359,7 @@ test("universe navigation labels remain legible at overview scale", async ({
   );
   const star = map
     .getByRole("button", {
-      name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+      name: "Open Path with Johns Hopkins University selected",
     });
   const label = star.locator(".constellation-star__label");
   const destinationBeat = page.locator(
@@ -545,7 +545,7 @@ test("immersive view becomes a centered observational sky and restores context",
   await expect(world).toHaveCSS("transition-duration", "0s");
   await expect(
     page.getByRole("button", {
-      name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+      name: "Open Path with Johns Hopkins University selected",
     }),
   ).toHaveCount(0);
   await expect(star).toHaveAttribute("aria-disabled", "true");
@@ -1146,21 +1146,21 @@ test("corrected story composition keeps cards measured and copy full width", asy
   await expect(pathSummary).toHaveCSS("max-width", "none");
 });
 
-test("Path titles keep their logos centered beside the name", async ({
+test("Path titles keep their logos centered beside the final word", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1_440, height: 900 });
   await page.goto("/");
 
   for (const name of [
-    "Johns Hopkins Whiting School of Engineering",
+    "Johns Hopkins University",
     "Weights & Biases · Weave",
   ]) {
     const heading = page.getByRole("heading", { name });
-    const title = heading.locator(".narrative-card__heading-text");
+    const titleTail = heading.locator(".narrative-card__heading-tail-word");
     const marks = heading.locator(".narrative-card__brand-marks");
     const logo = marks.locator("img").first();
-    const titleBox = await title.boundingBox();
+    const titleTailBox = await titleTail.boundingBox();
     const marksBox = await marks.boundingBox();
     const fontSize = await heading.evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).fontSize),
@@ -1173,18 +1173,18 @@ test("Path titles keep their logos centered beside the name", async ({
       };
     });
 
-    expect(titleBox).not.toBeNull();
+    expect(titleTailBox).not.toBeNull();
     expect(marksBox).not.toBeNull();
     expect(
       Math.abs(
-        titleBox!.y +
-          titleBox!.height / 2 -
+        titleTailBox!.y +
+          titleTailBox!.height / 2 -
           (marksBox!.y + marksBox!.height / 2),
       ),
     ).toBeLessThanOrEqual(1);
-    expect(marksBox!.x - (titleBox!.x + titleBox!.width)).toBeGreaterThanOrEqual(
-      fontSize * 0.25,
-    );
+    expect(
+      marksBox!.x - (titleTailBox!.x + titleTailBox!.width),
+    ).toBeGreaterThanOrEqual(fontSize * 0.25);
     expect(Math.abs(logoSize.width - fontSize)).toBeLessThanOrEqual(0.05);
     expect(Math.abs(logoSize.height - fontSize)).toBeLessThanOrEqual(0.05);
   }

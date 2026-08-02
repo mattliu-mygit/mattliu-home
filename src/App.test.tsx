@@ -99,7 +99,7 @@ describe("personal universe", () => {
     );
     expect(
       screen.queryByRole("button", {
-        name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+        name: "Open Path with Johns Hopkins University selected",
       }),
     ).not.toBeInTheDocument();
     expect(
@@ -228,7 +228,7 @@ describe("personal universe", () => {
     render(<App />);
 
     const star = screen.getByRole("button", {
-      name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+      name: "Open Path with Johns Hopkins University selected",
     });
     await user.click(star);
 
@@ -236,7 +236,7 @@ describe("personal universe", () => {
       within(screen.getByRole("region", { name: "Path constellation" })).getByRole(
         "button",
         {
-        name: "Focus Johns Hopkins Whiting School of Engineering",
+        name: "Focus Johns Hopkins University",
         },
       ),
     ).toBe(star);
@@ -244,7 +244,7 @@ describe("personal universe", () => {
     await user.click(screen.getByRole("button", { name: "Go to Intro" }));
     expect(
       screen.getByRole("button", {
-        name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
+        name: "Open Path with Johns Hopkins University selected",
       }),
     ).toBe(star);
   });

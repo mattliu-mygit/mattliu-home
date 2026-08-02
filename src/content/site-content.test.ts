@@ -45,6 +45,32 @@ describe("site content", () => {
       ["/path-logos/weights-and-biases.svg"],
     ]);
     expect(
+      siteContent.path.map(({ organization, period, summary }) => ({
+        organization,
+        period,
+        summary,
+      })),
+    ).toEqual([
+      {
+        organization: "Johns Hopkins University",
+        period: "2019–2023",
+        summary:
+          "B.S. in Computer Science, grounded in systems thinking, research, and building.",
+      },
+      {
+        organization: "AWS SageMaker",
+        period: "2023–2026",
+        summary:
+          "Production model-customization workflows spanning preparation, training, evaluation, and deployment.",
+      },
+      {
+        organization: "Weights & Biases · Weave",
+        period: "2026–Present",
+        summary:
+          "Systems that make agent behavior inspectable and easier to improve.",
+      },
+    ]);
+    expect(
       siteContent.codas.map(({ view, slug, text, shortLabel }) => ({
         view,
         slug,

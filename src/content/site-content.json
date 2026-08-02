@@ -64,10 +64,11 @@
   "path": [
     {
       "slug": "johns-hopkins",
-      "organization": "Johns Hopkins Whiting School of Engineering",
+      "organization": "Johns Hopkins University",
       "shortLabel": "Johns Hopkins",
       "area": "Foundation",
-      "summary": "Learning across systems thinking, research, and building.",
+      "period": "2019–2023",
+      "summary": "B.S. in Computer Science, grounded in systems thinking, research, and building.",
       "brandMarks": ["/path-logos/johns-hopkins-shield.svg"],
       "position": [12, 72],
       "depth": 1.04,
@@ -79,6 +80,7 @@
       "organization": "AWS SageMaker",
       "shortLabel": "AWS SageMaker",
       "area": "AI Platforms",
+      "period": "2023–2026",
       "summary": "Production model-customization workflows spanning preparation, training, evaluation, and deployment.",
       "brandMarks": [
         "/path-logos/aws-cloud.svg",
@@ -94,6 +96,7 @@
       "organization": "Weights & Biases · Weave",
       "shortLabel": "W&B · Weave",
       "area": "Evaluation and observability",
+      "period": "2026–Present",
       "summary": "Systems that make agent behavior inspectable and easier to improve.",
       "brandMarks": ["/path-logos/weights-and-biases.svg"],
       "position": [88, 58],

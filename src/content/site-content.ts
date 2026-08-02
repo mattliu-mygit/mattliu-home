@@ -50,6 +50,7 @@ export type PathEntry = {
   organization: string;
   shortLabel: string;
   area: string;
+  period: string;
   summary: string;
   brandMarks: readonly string[];
   position: Point;
@@ -315,6 +316,7 @@ export function validateSiteContent(value: unknown): SiteContent {
       organization: text(entry.organization, `path[${index}].organization`),
       shortLabel: text(entry.shortLabel, `path[${index}].shortLabel`),
       area: text(entry.area, `path[${index}].area`),
+      period: text(entry.period, `path[${index}].period`),
       summary: text(entry.summary, `path[${index}].summary`),
       brandMarks: array(entry.brandMarks, `path[${index}].brandMarks`).map(
         (value, markIndex) =>

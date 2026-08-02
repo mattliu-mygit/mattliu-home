@@ -104,7 +104,8 @@ describe("content renderers", () => {
     expect(portfolio.path).toEqual([
       expect.objectContaining({
         slug: "johns-hopkins",
-        organization: "Johns Hopkins Whiting School of Engineering",
+        organization: "Johns Hopkins University",
+        period: "2019–2023",
       }),
       expect.objectContaining({ slug: "aws-sagemaker" }),
       expect.objectContaining({ slug: "wandb-weave" }),
@@ -140,10 +141,10 @@ describe("content renderers", () => {
 
     expect(llms).toContain("# Matthew Liu");
     expect(llms).toContain(
-      "## Path\n\n- Johns Hopkins Whiting School of Engineering",
+      "## Path\n\n- Johns Hopkins University",
     );
     expect(renderFallbackHtml(siteContent)).toContain(
-      "Johns Hopkins Whiting School of Engineering",
+      "Johns Hopkins University",
     );
     expect(llms).toContain(
       "[Machine-readable portfolio](https://mattliu-home.vercel.app/portfolio.json)",

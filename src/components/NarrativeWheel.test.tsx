@@ -49,7 +49,7 @@ describe("NarrativeWheel", () => {
     expect(screen.getByRole("heading", { name: "Matthew Liu" })).toBeVisible();
     expect(screen.getByText(/keep intelligent software/i)).toBeVisible();
     expect(screen.getByText(/turn ideas and research/i)).toBeVisible();
-    expect(screen.getByText("AWS SageMaker")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "AWS SageMaker" })).toBeVisible();
   });
 
   it("places ordered decorative brand marks after each Path title", () => {
@@ -63,6 +63,14 @@ describe("NarrativeWheel", () => {
     expect(
       awsHeading.querySelector(".narrative-card__heading-text"),
     ).toHaveTextContent("AWS SageMaker");
+    expect(
+      awsHeading.querySelector(".narrative-card__heading-tail"),
+    ).toHaveTextContent("SageMaker");
+    expect(
+      awsHeading
+        .querySelector(".narrative-card__heading-tail")
+        ?.querySelectorAll("[data-path-brand-mark]"),
+    ).toHaveLength(2);
     expect(
       Array.from(
         container.querySelectorAll<HTMLImageElement>("[data-path-brand-mark]"),
@@ -81,6 +89,18 @@ describe("NarrativeWheel", () => {
     expect(screen.getAllByRole("heading", { name: "AWS SageMaker" })).toHaveLength(
       1,
     );
+  });
+
+  it("shows Path periods in the eyebrow row and keeps degree copy in the description", () => {
+    const { container } = renderWheel();
+
+    expect(screen.getByText("2019–2023").closest("time")).toBeVisible();
+    expect(screen.getByText("2023–2026").closest("time")).toBeVisible();
+    expect(screen.getByText("2026–Present").closest("time")).toBeVisible();
+    expect(screen.getByText(/B\.S\. in Computer Science/i)).toBeVisible();
+    expect(
+      container.querySelector(".narrative-card--path .narrative-card__meta"),
+    ).toBeNull();
   });
 
   it("activates a project card explicitly", async () => {
