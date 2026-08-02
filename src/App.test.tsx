@@ -16,7 +16,6 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   Reflect.deleteProperty(document, "startViewTransition");
-  window.sessionStorage.clear();
   window.history.replaceState(null, "", "/");
   Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
 });

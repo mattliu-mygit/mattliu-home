@@ -1,7 +1,5 @@
 import type { UniverseView } from "./navigation";
 
-export const BACKGROUND_STAR_COUNT = 330;
-
 export type CelestialMotion = {
   travel: number;
   travelVelocity: number;

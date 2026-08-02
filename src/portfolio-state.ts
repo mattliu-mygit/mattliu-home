@@ -57,16 +57,7 @@ const selectionsForBeat = (
   selections: PortfolioState["selections"],
   beat: StoryBeat,
 ): PortfolioState["selections"] => {
-  if (beat.kind === "path") {
-    return { ...selections, path: beat.itemSlug };
-  }
-  if (beat.kind === "project") {
-    return { ...selections, projects: beat.itemSlug };
-  }
-  if (beat.kind === "quote") {
-    return { ...selections, quotes: beat.itemSlug };
-  }
-  if (beat.kind === "coda") {
+  if ("itemSlug" in beat) {
     return { ...selections, [beat.view]: beat.itemSlug };
   }
   return selections;
@@ -122,7 +113,10 @@ export const portfolioReducer = (
           ? `${action.view}/${action.itemSlug}`
           : action.view,
         selections: action.itemSlug
-          ? selectionsForLocation(state.selections, locationFor(action.view, action.itemSlug))
+          ? selectionsForLocation(
+              state.selections,
+              locationFor(action.view, action.itemSlug),
+            )
           : state.selections,
       };
     }

@@ -7,7 +7,6 @@ import {
 } from "react";
 
 import {
-  BACKGROUND_STAR_COUNT,
   GALAXY_CORE_LINGER_MS,
   advanceGalaxyCorePresence,
   advanceGalaxyPresence,
@@ -52,6 +51,7 @@ const starTemperature = {
   neutral: [225, 232, 245],
   cool: [176, 204, 255],
 } as const;
+const backgroundStarCount = 330;
 
 export function CelestialScene({
   camera,
@@ -168,7 +168,7 @@ export function CelestialScene({
     }
 
     const nextRandom = createSeededRandom(270731);
-    const stars = createStarField(BACKGROUND_STAR_COUNT, nextRandom);
+    const stars = createStarField(backgroundStarCount, nextRandom);
     let width = 0;
     let height = 0;
     let pixelRatio = 1;

@@ -43,14 +43,12 @@ type CreateGalaxyRendererOptions = {
   reducedMotion: boolean;
 };
 
-export const GALAXY_HAZE_LAYERS = [
+const GALAXY_HAZE_LAYERS = [
   { offset: 0, opacity: 0.18, scale: 1, seed: 1618 },
   { offset: 0.28, opacity: 0.12, scale: 1.04, seed: 2441 },
   { offset: -0.26, opacity: 0.08, scale: 0.98, seed: 3733 },
 ] as const;
-export const GALAXY_HAZE_BLENDING = AdditiveBlending;
-export const GALAXY_HAZE_SIDE = DoubleSide;
-export const GALAXY_CORE_RADIUS = 0.45;
+const GALAXY_CORE_RADIUS = 0.45;
 
 const vertexShader = `
   attribute float alpha;
@@ -139,12 +137,12 @@ export function createGalaxyRenderer({
     texture.wrapT = ClampToEdgeWrapping;
     texture.needsUpdate = true;
     const hazeMaterial = new MeshBasicMaterial({
-      blending: GALAXY_HAZE_BLENDING,
+      blending: AdditiveBlending,
       depthTest: false,
       depthWrite: false,
       map: texture,
       opacity: 0,
-      side: GALAXY_HAZE_SIDE,
+      side: DoubleSide,
       transparent: true,
     });
     const haze = new Mesh(hazeGeometry, hazeMaterial);

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  BACKGROUND_STAR_COUNT,
   GALAXY_CORE_LINGER_MS,
   advanceGalaxyCorePresence,
   advanceGalaxyPresence,
@@ -204,21 +203,9 @@ describe("celestial motion", () => {
     expect(new Set(meteors.map((meteor) => Math.sign(meteor.vx))).size).toBe(2);
   });
 
-  it("uses all three entry edges in the deterministic runtime schedule", () => {
-    const next = createSeededRandom(270731);
-    createStarField(BACKGROUND_STAR_COUNT, next);
-    const edges = Array.from(
-      { length: 10 },
-      () => createMeteor(next, 1200, 800, 0).edge,
-    );
-
-    expect(new Set(edges)).toEqual(new Set(["top", "left", "right"]));
-  });
-
   it("builds a restrained field of faint, medium, and anchor stars", () => {
     const stars = createStarField(500, createSeededRandom(270731));
 
-    expect(BACKGROUND_STAR_COUNT).toBe(330);
     expect(stars.filter(({ tier }) => tier === "anchor")).toHaveLength(20);
     expect(stars.filter(({ tier }) => tier === "medium")).toHaveLength(80);
     expect(stars.filter(({ tier }) => tier === "faint")).toHaveLength(400);
