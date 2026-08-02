@@ -14,7 +14,7 @@ export type ConstellationItem = {
   slug: string;
   label: string;
   overviewLabel?: string;
-  meta: string;
+  meta?: string;
   coda?: boolean;
   position: Point;
   depth: number;
@@ -224,7 +224,9 @@ export function ConstellationMap({
                 <span className="constellation-star__label">
                   {displayLabel}
                 </span>
-                <span className="constellation-star__meta">{item.meta}</span>
+                {item.meta ? (
+                  <span className="constellation-star__meta">{item.meta}</span>
+                ) : null}
               </span>
             </button>
           );

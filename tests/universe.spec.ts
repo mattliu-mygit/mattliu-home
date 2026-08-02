@@ -302,25 +302,31 @@ test("selected star aura is stronger than its peers", async ({ page }) => {
   expect(hoveredTextShadow).not.toBe("none");
 });
 
-test("selected quote metadata identifies its active star", async ({ page }) => {
+test("quote constellations show clipped quote excerpts instead of authors", async ({
+  page,
+}) => {
   await page.goto("/#quotes");
 
   const map = page.locator(
     ".constellation-map--detail.constellation-map--quotes",
   );
-  const [selectedColor, inactiveColor] = await Promise.all([
-    map
-      .locator('.constellation-star[data-active="true"]')
-      .locator(".constellation-star__meta")
-      .evaluate((element) => getComputedStyle(element).color),
-    map
-      .locator('.constellation-star:not([data-active="true"])')
-      .first()
-      .locator(".constellation-star__meta")
-      .evaluate((element) => getComputedStyle(element).color),
-  ]);
+  const selectedStar = map.locator('.constellation-star[data-active="true"]');
+  const label = selectedStar.locator(".constellation-star__label");
+  const meta = selectedStar.locator(".constellation-star__meta");
 
-  expect(selectedColor).not.toBe(inactiveColor);
+  await expect(label).toBeVisible();
+  await expect(label).toHaveText("Less is more.");
+  await expect(meta).toBeHidden();
+
+  const longLabel = map
+    .locator('#constellation-star-quotes-failure-to-failure')
+    .locator(".constellation-star__label");
+  await expect(longLabel).toHaveCSS("overflow", "hidden");
+  expect(
+    await longLabel.evaluate((element) =>
+      getComputedStyle(element).getPropertyValue("-webkit-line-clamp"),
+    ),
+  ).toBe("2");
 });
 
 test("a visible star label activates its owning star", async ({ page }) => {
@@ -1146,6 +1152,125 @@ test("corrected story composition keeps cards measured and copy full width", asy
   await expect(pathSummary).toHaveCSS("max-width", "none");
 });
 
+test("card subtext uses a compact scale without truncating project tags", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1_440, height: 900 });
+  await page.goto("/");
+
+  const subtextSelectors = [
+    ".narrative-card--name > p",
+    ".narrative-card__eyebrow > span",
+    ".narrative-card--path .narrative-card__eyebrow time",
+    ".narrative-card .artifact__label",
+    ".narrative-card--project .narrative-card__meta span",
+    ".narrative-card--quote > a",
+    ".narrative-card__coda-meta",
+  ];
+  const bodySelectors = [
+    ".narrative-card--context p",
+    ".narrative-card--path p",
+    ".narrative-card__question",
+  ];
+
+  for (const selector of subtextSelectors) {
+    const size = await page
+      .locator(selector)
+      .first()
+      .evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
+    expect(size, `${selector} should be 0.75rem`).toBe(12);
+  }
+
+  for (const selector of bodySelectors) {
+    const size = await page
+      .locator(selector)
+      .first()
+      .evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
+    expect(size, `${selector} should be 1rem`).toBe(16);
+  }
+
+  const projectMeta = page
+    .locator(".narrative-card--project")
+    .filter({ hasText: "LLM-as-a-Judge" })
+    .locator(".narrative-card__meta");
+  const projectTag = projectMeta.locator("span");
+  await expect(projectMeta).not.toContainText("2025");
+  await expect(projectTag).toHaveCount(1);
+  await expect(projectTag).toHaveCSS("overflow", "visible");
+  await expect(projectTag).toHaveCSS("text-overflow", "clip");
+  await expect(projectTag).toHaveCSS("white-space", "normal");
+
+  await page.goto("/#path/johns-hopkins");
+  const pathDate = page
+    .locator(
+      ".constellation-map--detail.constellation-map--path .constellation-star__meta",
+    )
+    .first();
+  const pathDateSize = await pathDate.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).fontSize),
+  );
+  expect(pathDateSize).toBe(12);
+  await expect(pathDate).toHaveCSS("white-space", "nowrap");
+
+  await page.goto("/#projects/llm-as-a-judge");
+  await expect(
+    page.locator(
+      "#constellation-star-projects-llm-as-a-judge .constellation-star__meta",
+    ),
+  ).toHaveCount(0);
+});
+
+test("focused mobile layouts hide inactive constellations", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#path/johns-hopkins");
+
+  const activeMap = page.locator(
+    ".constellation-map--detail.constellation-map--path",
+  );
+  const inactiveMaps = page.locator(".constellation-map--inactive");
+
+  await expect(activeMap).toHaveCSS("opacity", "1");
+  await expect(inactiveMaps).toHaveCount(2);
+  for (const map of await inactiveMaps.all()) {
+    await expect(map).toHaveCSS("opacity", "0");
+  }
+
+  await page.goto("/#quotes/less-is-more");
+  const quoteLabels = page.locator(
+    ".constellation-map--detail.constellation-map--quotes .constellation-star__label",
+  );
+  const labelBoxes = await quoteLabels.evaluateAll((elements) =>
+    elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return {
+        bottom: box.bottom,
+        left: box.left,
+        right: box.right,
+        top: box.top,
+      };
+    }),
+  );
+
+  for (let leftIndex = 0; leftIndex < labelBoxes.length; leftIndex += 1) {
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < labelBoxes.length;
+      rightIndex += 1
+    ) {
+      const left = labelBoxes[leftIndex];
+      const right = labelBoxes[rightIndex];
+      const overlaps =
+        left.left < right.right &&
+        left.right > right.left &&
+        left.top < right.bottom &&
+        left.bottom > right.top;
+      expect(overlaps, `quote labels ${leftIndex} and ${rightIndex} overlap`).toBe(
+        false,
+      );
+    }
+  }
+});
+
 test("Path titles keep their logos centered beside the final word", async ({
   page,
 }) => {
@@ -1188,6 +1313,18 @@ test("Path titles keep their logos centered beside the final word", async ({
     expect(Math.abs(logoSize.width - fontSize)).toBeLessThanOrEqual(0.05);
     expect(Math.abs(logoSize.height - fontSize)).toBeLessThanOrEqual(0.05);
   }
+
+  const wandbMark = page.locator(
+    'img[data-path-brand-mark][src$="weights-and-biases.svg"]',
+  );
+  const intrinsicSize = await wandbMark.evaluate((element) => {
+    const image = element as HTMLImageElement;
+    return {
+      height: image.naturalHeight,
+      width: image.naturalWidth,
+    };
+  });
+  expect(intrinsicSize).toEqual({ height: 187, width: 208 });
 });
 
 test("mobile overview and project labels remain inside the viewport", async ({
@@ -1282,6 +1419,6 @@ test("discovery files expose the shared portfolio content", async ({
   expect(llms).toContain("## Path");
   expect(robots).toContain("User-agent: OAI-SearchBot");
   expect(sitemap).toContain(
-    "<loc>https://mattliu-home.vercel.app/</loc>",
+    "<loc>https://mliu.vercel.app/</loc>",
   );
 });

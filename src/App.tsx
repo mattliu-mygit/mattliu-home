@@ -89,7 +89,7 @@ const constellationItems: Record<
       constellationItem(entry, {
         label: entry.organization,
         overviewLabel: entry.shortLabel,
-        meta: entry.area,
+        meta: entry.period,
       }),
     ),
     constellationCodaItem("path"),
@@ -98,7 +98,6 @@ const constellationItems: Record<
     ...projects.map((project) =>
       constellationItem(project, {
         label: project.title,
-        meta: project.displayYear,
       }),
     ),
     constellationCodaItem("projects"),
@@ -107,7 +106,7 @@ const constellationItems: Record<
     ...quotes.map((quote) =>
       constellationItem(quote, {
         label: quote.text,
-        overviewLabel: quote.author,
+        overviewLabel: quote.text,
         meta: quote.author,
       }),
     ),

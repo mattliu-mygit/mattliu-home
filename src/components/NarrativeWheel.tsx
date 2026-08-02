@@ -220,7 +220,6 @@ function NarrativeCard({
     return (
       <div className="narrative-card narrative-card--intro narrative-card--context">
         <p>{beat.content}</p>
-        <span aria-hidden="true">Continue along the route ↓</span>
       </div>
     );
   }
@@ -300,7 +299,6 @@ function NarrativeCard({
         <ArtifactPreview project={beat.project} />
         <span className="narrative-card__copy">
           <span className="narrative-card__meta">
-            <span>{beat.project.displayYear}</span>
             <span>{beat.project.contribution}</span>
           </span>
           <strong>{beat.project.title}</strong>

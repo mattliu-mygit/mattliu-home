@@ -50,6 +50,7 @@ describe("NarrativeWheel", () => {
     expect(screen.getByText(/keep intelligent software/i)).toBeVisible();
     expect(screen.getByText(/turn ideas and research/i)).toBeVisible();
     expect(screen.getByRole("heading", { name: "AWS SageMaker" })).toBeVisible();
+    expect(screen.queryByText(/continue along the route/i)).toBeNull();
   });
 
   it("places ordered decorative brand marks after each Path title", () => {
@@ -112,6 +113,18 @@ describe("NarrativeWheel", () => {
     expect(onActivate).toHaveBeenCalledWith(
       expect.objectContaining({ id: "projects/monopole", kind: "project" }),
     );
+  });
+
+  it("shows project contribution tags without rendering project years", () => {
+    renderWheel();
+    const card = screen
+      .getByRole("button", { name: "Open LLM-as-a-Judge" })
+      .closest("article");
+
+    expect(card).toHaveTextContent(
+      "Evaluation UX, judging architecture, and implementation",
+    );
+    expect(card).not.toHaveTextContent("2025");
   });
 
   it("renders each coda with its constellation's card language", async () => {

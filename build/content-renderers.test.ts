@@ -26,14 +26,14 @@ describe("content renderers", () => {
     );
 
     expect(canonical?.attrs?.href).toBe(
-      "https://mattliu-home.vercel.app/",
+      "https://mliu.vercel.app/",
     );
     expect(tags).toContainEqual(
       expect.objectContaining({
         tag: "meta",
         attrs: {
           property: "og:url",
-          content: "https://mattliu-home.vercel.app/",
+          content: "https://mliu.vercel.app/",
         },
       }),
     );
@@ -42,7 +42,7 @@ describe("content renderers", () => {
     expect(structuredData).toMatchObject({
       "@context": "https://schema.org",
       "@type": "ProfilePage",
-      url: "https://mattliu-home.vercel.app/",
+      url: "https://mliu.vercel.app/",
       mainEntity: {
         "@type": "Person",
         name: "Matthew Liu",
@@ -55,7 +55,7 @@ describe("content renderers", () => {
     expect(structuredData.hasPart).toHaveLength(5);
     expect(structuredData.hasPart[0]).toMatchObject({
       name: "Monopole",
-      image: "https://mattliu-home.vercel.app/project-previews/monopole.png",
+      image: "https://mliu.vercel.app/project-previews/monopole.png",
     });
   });
 
@@ -98,7 +98,7 @@ describe("content renderers", () => {
 
     expect(portfolio.schemaVersion).toBe(1);
     expect(portfolio.canonicalUrl).toBe(
-      "https://mattliu-home.vercel.app/",
+      "https://mliu.vercel.app/",
     );
     expect(portfolio.projects).toHaveLength(5);
     expect(portfolio.path).toEqual([
@@ -118,7 +118,7 @@ describe("content renderers", () => {
     expect(portfolio.projects[0]).toMatchObject({
       slug: "monopole",
       preview: {
-        image: "https://mattliu-home.vercel.app/project-previews/monopole.png",
+        image: "https://mliu.vercel.app/project-previews/monopole.png",
         alt: "Monopole evaluation dashboard showing real aggregate run metrics.",
         sourceUrl: "https://github.com/mattliu-mygit/Monopole",
       },
@@ -147,15 +147,15 @@ describe("content renderers", () => {
       "Johns Hopkins University",
     );
     expect(llms).toContain(
-      "[Machine-readable portfolio](https://mattliu-home.vercel.app/portfolio.json)",
+      "[Machine-readable portfolio](https://mliu.vercel.app/portfolio.json)",
     );
     expect(robots).toContain("User-agent: OAI-SearchBot");
     expect(robots).toContain("Allow: /");
     expect(robots).toContain(
-      "Sitemap: https://mattliu-home.vercel.app/sitemap.xml",
+      "Sitemap: https://mliu.vercel.app/sitemap.xml",
     );
     expect(sitemap).toContain(
-      "<loc>https://mattliu-home.vercel.app/</loc>",
+      "<loc>https://mliu.vercel.app/</loc>",
     );
   });
 });

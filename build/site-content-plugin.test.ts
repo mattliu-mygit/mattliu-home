@@ -22,7 +22,7 @@ describe("site content Vite plugin", () => {
           tag: "link",
           attrs: {
             rel: "canonical",
-            href: "https://mattliu-home.vercel.app/",
+            href: "https://mliu.vercel.app/",
           },
         }),
       ]),

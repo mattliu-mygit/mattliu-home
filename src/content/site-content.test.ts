@@ -16,7 +16,7 @@ describe("site content", () => {
   it("validates the canonical portfolio content", () => {
     expect(validateSiteContent(cloneContent())).toMatchObject({
       site: {
-        canonicalUrl: "https://mattliu-home.vercel.app/",
+        canonicalUrl: "https://mliu.vercel.app/",
       },
       person: {
         name: "Matthew Liu",
@@ -365,7 +365,7 @@ describe("site content", () => {
   it("requires the canonical URL to point at the site root", () => {
     const invalid = cloneContent();
     const site = invalid.site as Record<string, unknown>;
-    site.canonicalUrl = "https://mattliu-home.vercel.app/about";
+    site.canonicalUrl = "https://mliu.vercel.app/about";
 
     expect(() => validateSiteContent(invalid)).toThrow(
       /site\.canonicalUrl must point to the origin root/i,

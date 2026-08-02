@@ -52,9 +52,29 @@ describe("personal universe", () => {
     expect(quoteStar).toBeVisible();
     expect(
       quoteStar.querySelector(".constellation-star__label"),
-    ).toHaveTextContent("Ludwig Mies van der Rohe");
+    ).toHaveTextContent("Less is more.");
     expect(screen.queryByRole("tab")).not.toBeInTheDocument();
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+  });
+
+  it("uses experience periods beneath Path constellation names", () => {
+    render(<App />);
+
+    const expectedPeriods = {
+      "johns-hopkins": "2019–2023",
+      "aws-sagemaker": "2023–2026",
+      "wandb-weave": "2026–Present",
+    };
+
+    for (const [slug, period] of Object.entries(expectedPeriods)) {
+      const star = document.querySelector(
+        `#constellation-star-path-${slug}`,
+      );
+
+      expect(star?.querySelector(".constellation-star__meta")).toHaveTextContent(
+        period,
+      );
+    }
   });
 
   it("moves Matthew Liu into the header only after the intro", async () => {
