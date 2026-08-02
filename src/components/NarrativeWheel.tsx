@@ -249,7 +249,9 @@ function NarrativeCard({
         />
         <span className="narrative-card__eyebrow">{beat.entry.area}</span>
         <h2 className="narrative-card__heading">
-          {beat.entry.organization}
+          <span className="narrative-card__heading-text">
+            {beat.entry.organization}
+          </span>
           <span aria-hidden="true" className="narrative-card__brand-marks">
             {beat.entry.brandMarks.map((src) => (
               <img

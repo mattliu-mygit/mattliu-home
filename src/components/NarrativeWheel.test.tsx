@@ -61,6 +61,9 @@ describe("NarrativeWheel", () => {
     );
 
     expect(
+      awsHeading.querySelector(".narrative-card__heading-text"),
+    ).toHaveTextContent("AWS SageMaker");
+    expect(
       Array.from(
         container.querySelectorAll<HTMLImageElement>("[data-path-brand-mark]"),
       ).map((image) => ({ alt: image.alt, src: image.getAttribute("src") })),

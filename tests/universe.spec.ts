@@ -1146,6 +1146,50 @@ test("corrected story composition keeps cards measured and intro copy full width
   await expect(pathSummary).toHaveCSS("max-width", "368px");
 });
 
+test("Path titles keep their logos centered beside the name", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1_440, height: 900 });
+  await page.goto("/");
+
+  for (const name of [
+    "Johns Hopkins Whiting School of Engineering",
+    "Weights & Biases · Weave",
+  ]) {
+    const heading = page.getByRole("heading", { name });
+    const title = heading.locator(".narrative-card__heading-text");
+    const marks = heading.locator(".narrative-card__brand-marks");
+    const logo = marks.locator("img").first();
+    const titleBox = await title.boundingBox();
+    const marksBox = await marks.boundingBox();
+    const fontSize = await heading.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).fontSize),
+    );
+    const logoSize = await logo.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        height: Number.parseFloat(style.height),
+        width: Number.parseFloat(style.width),
+      };
+    });
+
+    expect(titleBox).not.toBeNull();
+    expect(marksBox).not.toBeNull();
+    expect(
+      Math.abs(
+        titleBox!.y +
+          titleBox!.height / 2 -
+          (marksBox!.y + marksBox!.height / 2),
+      ),
+    ).toBeLessThanOrEqual(1);
+    expect(marksBox!.x - (titleBox!.x + titleBox!.width)).toBeGreaterThanOrEqual(
+      fontSize * 0.25,
+    );
+    expect(Math.abs(logoSize.width - fontSize)).toBeLessThanOrEqual(0.05);
+    expect(Math.abs(logoSize.height - fontSize)).toBeLessThanOrEqual(0.05);
+  }
+});
+
 test("mobile overview and project labels remain inside the viewport", async ({
   page,
 }) => {

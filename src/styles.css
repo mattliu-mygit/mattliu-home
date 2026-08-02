@@ -573,16 +573,25 @@ html[data-js="true"] .seo-fallback {
   margin: 0;
 }
 
+.narrative-card__heading {
+  display: flex;
+  align-items: center;
+}
+
+.narrative-card__heading-text {
+  min-width: 0;
+}
+
 .narrative-card__brand-marks {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 0.14em;
   margin-left: 0.3em;
-  vertical-align: -0.08em;
 }
 
 .narrative-card__brand-marks img {
-  display: inline-block;
+  display: block;
   width: 1em;
   height: 1em;
   object-fit: contain;
