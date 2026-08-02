@@ -1119,6 +1119,33 @@ test("wide overview keeps large constellations inside the composition", async ({
   }
 });
 
+test("corrected story composition keeps cards measured and intro copy full width", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1_440, height: 900 });
+  await page.goto("/");
+
+  const wheel = page.locator(".narrative-wheel");
+  const wheelBox = await wheel.boundingBox();
+  const cameraTarget = await page.locator(".universe").evaluate((element) =>
+    getComputedStyle(element).getPropertyValue("--camera-target-x").trim(),
+  );
+  const contextCard = page.locator(".narrative-card--context");
+  const contextCardBox = await contextCard.boundingBox();
+  const contextCopyBox = await contextCard.locator("p").boundingBox();
+  const pathHeading = page.locator(".narrative-card--path h2").first();
+  const pathSummary = page.locator(".narrative-card--path p").first();
+
+  expect(wheelBox).not.toBeNull();
+  expect(wheelBox!.width / 1_440).toBeCloseTo(0.36, 2);
+  expect(cameraTarget).toBe("68%");
+  expect(contextCardBox).not.toBeNull();
+  expect(contextCopyBox).not.toBeNull();
+  expect(contextCopyBox!.width / contextCardBox!.width).toBeGreaterThan(0.98);
+  await expect(pathHeading).toHaveCSS("max-width", "352px");
+  await expect(pathSummary).toHaveCSS("max-width", "368px");
+});
+
 test("mobile overview and project labels remain inside the viewport", async ({
   page,
 }) => {

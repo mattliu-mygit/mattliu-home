@@ -52,8 +52,13 @@ describe("NarrativeWheel", () => {
     expect(screen.getByText("AWS SageMaker")).toBeVisible();
   });
 
-  it("pairs each Path card with its decorative official brand marks", () => {
+  it("places ordered decorative brand marks after each Path title", () => {
     const { container } = renderWheel();
+
+    const awsHeading = screen.getByRole("heading", { name: "AWS SageMaker" });
+    const awsMarks = Array.from(
+      awsHeading.querySelectorAll<HTMLImageElement>("[data-path-brand-mark]"),
+    );
 
     expect(
       Array.from(
@@ -65,6 +70,11 @@ describe("NarrativeWheel", () => {
       { alt: "", src: "/path-logos/amazon-sagemaker-ai.svg" },
       { alt: "", src: "/path-logos/weights-and-biases.svg" },
     ]);
+    expect(awsMarks.map((image) => image.getAttribute("src"))).toEqual([
+      "/path-logos/aws-cloud.svg",
+      "/path-logos/amazon-sagemaker-ai.svg",
+    ]);
+    expect(container.querySelector(".narrative-card__identity-row")).toBeNull();
     expect(screen.getAllByRole("heading", { name: "AWS SageMaker" })).toHaveLength(
       1,
     );

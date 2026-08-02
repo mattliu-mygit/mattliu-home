@@ -118,8 +118,8 @@ html[data-js="true"] .seo-fallback {
 
 .universe {
   --story-panel-left: clamp(2.5rem, 5.5vw, 6.5rem);
-  --story-panel-width: min(40vw, 42rem);
-  --camera-target-x: 70%;
+  --story-panel-width: min(36vw, 34rem);
+  --camera-target-x: 68%;
   --camera-target-y: 52%;
   --camera-responsive-scale: 1;
   --camera-responsive-inverse: 1;
@@ -505,7 +505,8 @@ html[data-js="true"] .seo-fallback {
 }
 
 .narrative-card--context p {
-  max-width: 30rem;
+  width: 100%;
+  max-width: none;
   color: #b7bcc8;
   font-size: clamp(0.82rem, 1.05vw, 1rem);
   font-weight: 300;
@@ -569,33 +570,26 @@ html[data-js="true"] .seo-fallback {
 
 .narrative-card--path h2,
 .narrative-card--path p {
-  width: 100%;
   margin: 0;
 }
 
-.narrative-card__identity-row {
-  display: flex;
-  min-height: 2.25rem;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
 .narrative-card__brand-marks {
-  display: flex;
-  flex: none;
+  display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.14em;
+  margin-left: 0.3em;
+  vertical-align: -0.08em;
 }
 
 .narrative-card__brand-marks img {
-  display: block;
-  width: 2.15rem;
-  height: 2.15rem;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
   object-fit: contain;
 }
 
 .narrative-card--path h2 {
+  max-width: 22rem;
   font-family: "Instrument Serif", Georgia, serif;
   font-size: clamp(1.7rem, 2.4vw, 2.5rem);
   font-weight: 400;
@@ -604,6 +598,7 @@ html[data-js="true"] .seo-fallback {
 }
 
 .narrative-card--path p {
+  max-width: 23rem;
   color: #9ea5b5;
   font-size: 0.72rem;
   font-weight: 300;
@@ -1501,7 +1496,7 @@ html[data-js="true"] .seo-fallback {
 @media (max-width: 900px) and (min-width: 761px) {
   .universe {
     --story-panel-left: 2rem;
-    --story-panel-width: 40vw;
+    --story-panel-width: 36vw;
   }
 }
 

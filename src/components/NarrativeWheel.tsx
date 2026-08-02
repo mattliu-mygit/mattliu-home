@@ -247,8 +247,9 @@ function NarrativeCard({
           onClick={() => onActivate(beat)}
           type="button"
         />
-        <span className="narrative-card__identity-row">
-          <span className="narrative-card__eyebrow">{beat.entry.area}</span>
+        <span className="narrative-card__eyebrow">{beat.entry.area}</span>
+        <h2 className="narrative-card__heading">
+          {beat.entry.organization}
           <span aria-hidden="true" className="narrative-card__brand-marks">
             {beat.entry.brandMarks.map((src) => (
               <img
@@ -260,8 +261,7 @@ function NarrativeCard({
               />
             ))}
           </span>
-        </span>
-        <h2>{beat.entry.organization}</h2>
+        </h2>
         <p>{beat.entry.summary}</p>
       </article>
     );
