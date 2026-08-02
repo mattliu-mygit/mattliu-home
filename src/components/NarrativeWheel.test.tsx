@@ -63,6 +63,29 @@ describe("NarrativeWheel", () => {
     );
   });
 
+  it("closes each constellation with a lightweight coda card", async () => {
+    const user = userEvent.setup();
+    const onActivate = vi.fn();
+    renderWheel({ onActivate });
+
+    expect(screen.getByText("Wherever the future holds...")).toBeVisible();
+    expect(screen.getByText("Builder tinkering...")).toBeVisible();
+    expect(
+      screen.getByText(
+        "Ever learning and growing, looking more inspiration...",
+      ),
+    ).toBeVisible();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Focus Wherever the future holds...",
+      }),
+    );
+    expect(onActivate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "path/future", kind: "coda" }),
+    );
+  });
+
   it("settles a requested landmark before applying open-sky wheel input", () => {
     const ref = createRef<NarrativeWheelHandle>();
     const scrollIntoView = vi.fn();

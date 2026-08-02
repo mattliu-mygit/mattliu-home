@@ -15,6 +15,7 @@ export type ConstellationItem = {
   label: string;
   overviewLabel?: string;
   meta: string;
+  coda?: boolean;
   position: Point;
   depth: number;
   tone: StarTone;

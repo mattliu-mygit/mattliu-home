@@ -117,7 +117,7 @@ test("universe overview enters and leaves the Projects constellation", async ({
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: /^Explore (?!Projects$)/ }),
-  ).toHaveCount(5);
+  ).toHaveCount(6);
   await page.locator(".constellation-view").evaluate((element) =>
     Promise.all(element.getAnimations().map((animation) => animation.finished)),
   );
@@ -610,8 +610,6 @@ test("immersive view becomes a centered observational sky and restores context",
 test("route chapter labels align above their opening ticks at desktop and mobile widths", async ({
   page,
 }) => {
-  const chapterOpeningIndices = [0, 3, 7, 13, 17];
-
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 390, height: 844 },
@@ -621,11 +619,15 @@ test("route chapter labels align above their opening ticks at desktop and mobile
 
     const rail = page.getByRole("navigation", { name: "Story scrollbar" });
     const chapters = rail.locator(".route-rail__chapter");
+    const majorTicks = rail.locator(
+      'button[data-major="true"] .route-rail__tick',
+    );
+    const allTicks = rail.locator(".route-rail__tick");
     const introLabel = page
       .getByRole("button", { name: "Go to Intro" })
       .locator(".route-rail__label");
 
-    await expect(chapters).toHaveCount(chapterOpeningIndices.length);
+    await expect(chapters).toHaveCount((await majorTicks.count()) + 1);
 
     const [chapterBoxes, introHoverLabelBox] = await Promise.all([
       chapters.evaluateAll((elements) =>
@@ -635,12 +637,16 @@ test("route chapter labels align above their opening ticks at desktop and mobile
     ]);
 
     expect(introHoverLabelBox).not.toBeNull();
-    for (const [chapterIndex, openingIndex] of chapterOpeningIndices.entries()) {
+    for (
+      let chapterIndex = 0;
+      chapterIndex < chapterBoxes.length;
+      chapterIndex += 1
+    ) {
       const chapterBox = chapterBoxes[chapterIndex]!;
-      const tickBox = await rail
-        .locator(".route-rail__tick")
-        .nth(openingIndex)
-        .boundingBox();
+      const tickBox = await (chapterIndex === chapterBoxes.length - 1
+        ? allTicks.last()
+        : majorTicks.nth(chapterIndex)
+      ).boundingBox();
 
       expect(tickBox).not.toBeNull();
       expect(
@@ -1139,7 +1145,7 @@ test("mobile overview and project labels remain inside the viewport", async ({
   const labels = page
     .locator('[data-testid="projects-constellation"]')
     .locator(".constellation-star__copy");
-  await expect(labels).toHaveCount(5);
+  await expect(labels).toHaveCount(6);
   const escaped: number[] = [];
   for (let index = 0; index < (await labels.count()); index += 1) {
     const box = await labels.nth(index).boundingBox();

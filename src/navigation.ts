@@ -1,4 +1,5 @@
 import {
+  codaByViewAndSlug,
   pathBySlug,
   projectBySlug,
   quoteBySlug,
@@ -28,18 +29,29 @@ export function parseUniverseLocation(hash: string): UniverseLocation {
   }
 
   const projectMatch = /^projects\/([a-z0-9-]+)$/.exec(fragment);
-  if (projectMatch && projectBySlug(projectMatch[1])) {
+  if (
+    projectMatch &&
+    (projectBySlug(projectMatch[1]) ||
+      codaByViewAndSlug("projects", projectMatch[1]))
+  ) {
     return {
       view: "projects",
       projectSlug: projectMatch[1],
     };
   }
   const pathMatch = /^path\/([a-z0-9-]+)$/.exec(fragment);
-  if (pathMatch && pathBySlug(pathMatch[1])) {
+  if (
+    pathMatch &&
+    (pathBySlug(pathMatch[1]) || codaByViewAndSlug("path", pathMatch[1]))
+  ) {
     return { view: "path", pathSlug: pathMatch[1] };
   }
   const quoteMatch = /^quotes\/([a-z0-9-]+)$/.exec(fragment);
-  if (quoteMatch && quoteBySlug(quoteMatch[1])) {
+  if (
+    quoteMatch &&
+    (quoteBySlug(quoteMatch[1]) ||
+      codaByViewAndSlug("quotes", quoteMatch[1]))
+  ) {
     return { view: "quotes", quoteSlug: quoteMatch[1] };
   }
   return { view: "universe" };

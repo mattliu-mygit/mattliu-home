@@ -22,10 +22,13 @@ describe("story navigation", () => {
       "intro/context",
       "path",
       ...siteContent.path.map(({ slug }) => `path/${slug}`),
+      "path/future",
       "projects",
       ...siteContent.projects.map(({ slug }) => `projects/${slug}`),
+      "projects/builder",
       "quotes",
       ...siteContent.quotes.map(({ slug }) => `quotes/${slug}`),
+      "quotes/inspiration",
     ]);
     expect(beats[0]).toMatchObject({
       kind: "intro",
@@ -75,6 +78,18 @@ describe("story navigation", () => {
       label: "AWS SageMaker",
       major: false,
     });
+    expect(marks.find(({ id }) => id === "path/future")).toMatchObject({
+      label: "Future",
+      major: false,
+    });
+    expect(marks.find(({ id }) => id === "projects/builder")).toMatchObject({
+      label: "Builder",
+      major: false,
+    });
+    expect(marks.find(({ id }) => id === "quotes/inspiration")).toMatchObject({
+      label: "Inspiration",
+      major: false,
+    });
   });
 
   it("positions permanent labels at each story chapter opening and ends on Fin", () => {
@@ -95,11 +110,11 @@ describe("story navigation", () => {
       { label: "Path", position: markPosition(3) },
       {
         label: "Projects",
-        position: markPosition(7),
+        position: markPosition(8),
       },
       {
         label: "Quotes",
-        position: markPosition(13),
+        position: markPosition(15),
       },
       { label: "Fin", position: markPosition(20) },
     ]);
@@ -133,8 +148,8 @@ describe("story navigation", () => {
     expect(constellationTravelAtProgress(beats, 6.25 / denominator)).toEqual({
       view: "path",
       fromSlug: "wandb-weave",
-      toSlug: undefined,
-      progress: 0.5,
+      toSlug: "future",
+      progress: 0.25,
     });
   });
 

@@ -57,6 +57,17 @@ export type PathEntry = {
   prominence: StarProminence;
 };
 
+export type ConstellationCoda = {
+  view: DestinationSlug;
+  slug: string;
+  text: string;
+  shortLabel: string;
+  position: Point;
+  depth: number;
+  tone: StarTone;
+  prominence: StarProminence;
+};
+
 export type SiteContent = {
   site: {
     canonicalUrl: string;
@@ -85,6 +96,7 @@ export type SiteContent = {
   path: readonly PathEntry[];
   projects: readonly Project[];
   quotes: readonly Quote[];
+  codas: readonly ConstellationCoda[];
 };
 
 const artifactTypes = new Set<ArtifactType>(["judge"]);
@@ -395,10 +407,46 @@ export function validateSiteContent(value: unknown): SiteContent {
   });
   assertUniqueSlugs(quotes, "quote");
 
+  const codas = array(root.codas, "codas").map((value, index) => {
+    const coda = record(value, `codas[${index}]`);
+    const view = text(coda.view, `codas[${index}].view`) as DestinationSlug;
+    if (view !== "path" && view !== "projects" && view !== "quotes") {
+      throw new Error(`codas[${index}].view is not supported`);
+    }
+    return {
+      view,
+      slug: text(coda.slug, `codas[${index}].slug`),
+      text: text(coda.text, `codas[${index}].text`),
+      shortLabel: text(coda.shortLabel, `codas[${index}].shortLabel`),
+      ...starPlacement(coda, `codas[${index}]`),
+    };
+  });
+  assertUniqueSlugs(codas, "coda");
+  if (
+    codas.length !== 3 ||
+    codas.filter(({ view }) => view === "path").length !== 1 ||
+    codas.filter(({ view }) => view === "projects").length !== 1 ||
+    codas.filter(({ view }) => view === "quotes").length !== 1
+  ) {
+    throw new Error(
+      "codas must contain exactly one path, projects, and quotes coda",
+    );
+  }
+
   const itemsByDestination: Record<
     DestinationSlug,
     readonly { slug: string }[]
-  > = { path, projects, quotes };
+  > = {
+    path: [...path, ...codas.filter(({ view }) => view === "path")],
+    projects: [
+      ...projects,
+      ...codas.filter(({ view }) => view === "projects"),
+    ],
+    quotes: [...quotes, ...codas.filter(({ view }) => view === "quotes")],
+  };
+  for (const [view, items] of Object.entries(itemsByDestination)) {
+    assertUniqueSlugs(items, `${view} constellation item`);
+  }
 
   destinations.forEach((destination, destinationIndex) => {
     const itemSlugs = new Set(
@@ -439,6 +487,7 @@ export function validateSiteContent(value: unknown): SiteContent {
     path,
     projects,
     quotes,
+    codas,
   };
 }
 
@@ -452,3 +501,6 @@ export const pathBySlug = (slug: string) =>
 
 export const quoteBySlug = (slug: string) =>
   siteContent.quotes.find((quote) => quote.slug === slug);
+
+export const codaByViewAndSlug = (view: DestinationSlug, slug: string) =>
+  siteContent.codas.find((coda) => coda.view === view && coda.slug === slug);

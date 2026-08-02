@@ -541,6 +541,35 @@ html[data-js="true"] .seo-fallback {
   content: none;
 }
 
+.narrative-card--coda {
+  display: grid;
+  min-height: 8rem;
+  place-items: center;
+  overflow: visible;
+  border-color: transparent;
+  color: #c9ccd5;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(1.55rem, 2.5vw, 2.6rem);
+  font-style: italic;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.narrative-card--coda:hover,
+.narrative-card--coda:focus-visible {
+  color: #f0ede5;
+  text-shadow: 0 0 1.8rem rgba(177, 190, 228, 0.28);
+}
+
+.narrative-card--coda:focus-visible {
+  outline: 1px solid rgba(229, 201, 127, 0.65);
+  outline-offset: 0.35rem;
+}
+
 .narrative-card--path {
   display: grid;
   min-height: 12rem;

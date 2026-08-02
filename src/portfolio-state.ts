@@ -66,6 +66,9 @@ const selectionsForBeat = (
   if (beat.kind === "quote") {
     return { ...selections, quotes: beat.itemSlug };
   }
+  if (beat.kind === "coda") {
+    return { ...selections, [beat.view]: beat.itemSlug };
+  }
   return selections;
 };
 

@@ -254,6 +254,19 @@ function NarrativeCard({
     );
   }
 
+  if (beat.kind === "coda") {
+    return (
+      <button
+        aria-label={`Focus ${beat.coda.text}`}
+        className="narrative-card narrative-card--coda"
+        onClick={() => onActivate(beat)}
+        type="button"
+      >
+        <span>{beat.coda.text}</span>
+      </button>
+    );
+  }
+
   if (beat.kind === "project") {
     return (
       <article className="narrative-card narrative-card--project">

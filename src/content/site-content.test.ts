@@ -36,6 +36,33 @@ describe("site content", () => {
       "aws-sagemaker",
       "wandb-weave",
     ]);
+    expect(
+      siteContent.codas.map(({ view, slug, text, shortLabel }) => ({
+        view,
+        slug,
+        text,
+        shortLabel,
+      })),
+    ).toEqual([
+      {
+        view: "path",
+        slug: "future",
+        text: "Wherever the future holds...",
+        shortLabel: "Future",
+      },
+      {
+        view: "projects",
+        slug: "builder",
+        text: "Builder tinkering...",
+        shortLabel: "Builder",
+      },
+      {
+        view: "quotes",
+        slug: "inspiration",
+        text: "Ever learning and growing, looking more inspiration...",
+        shortLabel: "Inspiration",
+      },
+    ]);
   });
 
   it("contains the selected projects and quotes in narrative order", () => {
@@ -82,6 +109,7 @@ describe("site content", () => {
       siteContent.path,
       siteContent.projects,
       siteContent.quotes,
+      siteContent.codas,
     ]) {
       const depths = entries.map((entry) => entry.depth);
       expect(depths.every((depth) => depth >= 0.9 && depth <= 1.1)).toBe(true);
@@ -94,6 +122,7 @@ describe("site content", () => {
       siteContent.path,
       siteContent.projects,
       siteContent.quotes,
+      siteContent.codas,
     ]) {
       expect(
         entries.every((entry) =>
@@ -151,6 +180,16 @@ describe("site content", () => {
 
     expect(() => validateSiteContent(duplicateQuote)).toThrow(
       /duplicate quote slug "less-is-more"/i,
+    );
+  });
+
+  it("rejects a coda that collides with an existing constellation star", () => {
+    const invalid = cloneContent();
+    const codas = invalid.codas as Array<Record<string, unknown>>;
+    codas[0].slug = "wandb-weave";
+
+    expect(() => validateSiteContent(invalid)).toThrow(
+      /duplicate path constellation item slug "wandb-weave"/i,
     );
   });
 
@@ -214,6 +253,7 @@ describe("site content", () => {
     ).toEqual([
       ["johns-hopkins", "aws-sagemaker"],
       ["aws-sagemaker", "wandb-weave"],
+      ["wandb-weave", "future"],
     ]);
     expect(
       siteContent.destinations.find(({ slug }) => slug === "projects")
@@ -223,6 +263,16 @@ describe("site content", () => {
       ["weave-agent-adapter", "llm-as-a-judge"],
       ["llm-as-a-judge", "model-customization-assistant"],
       ["model-customization-assistant", "ucredit"],
+      ["ucredit", "builder"],
+    ]);
+    expect(
+      siteContent.destinations.find(({ slug }) => slug === "quotes")
+        ?.connections,
+    ).toEqual([
+      ["less-is-more", "failure-to-failure"],
+      ["failure-to-failure", "strong-opinions"],
+      ["strong-opinions", "simplicity-follows"],
+      ["simplicity-follows", "inspiration"],
     ]);
 
     const invalid = cloneContent();

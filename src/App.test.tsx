@@ -204,6 +204,26 @@ describe("personal universe", () => {
     expect(screen.getByRole("dialog", { name: "Monopole" })).toBeVisible();
   });
 
+  it("opens a constellation coda as its selected story card", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Projects with Builder tinkering... selected",
+      }),
+    );
+
+    expect(window.location.hash).toBe("#projects/builder");
+    expect(
+      screen.getByRole("region", { name: "Portfolio story" }),
+    ).toHaveAttribute("data-active-beat", "projects/builder");
+    expect(
+      screen.getByRole("button", { name: "Explore Builder tinkering..." }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("keeps the same constellation star mounted across zoom levels", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -410,7 +430,7 @@ describe("personal universe", () => {
     expect(heading).toHaveFocus();
     expect(
       screen.getAllByRole("button", { name: /^Explore (?!Projects$)/ }),
-    ).toHaveLength(5);
+    ).toHaveLength(6);
   });
 
   it("returns to the universe and restores constellation focus", async () => {

@@ -1,5 +1,6 @@
 import type {
   DestinationSlug,
+  ConstellationCoda,
   PathEntry,
   Project,
   Quote,
@@ -41,6 +42,13 @@ export type StoryBeat =
       view: "quotes";
       itemSlug: string;
       quote: Quote;
+    }
+  | {
+      id: `${DestinationSlug}/${string}`;
+      kind: "coda";
+      view: DestinationSlug;
+      itemSlug: string;
+      coda: ConstellationCoda;
     };
 
 export type ConstellationTravel = {
@@ -52,8 +60,28 @@ export type ConstellationTravel = {
 
 const itemBeat = (
   beat: StoryBeat,
-): beat is Extract<StoryBeat, { kind: "path" | "project" | "quote" }> =>
-  beat.kind === "path" || beat.kind === "project" || beat.kind === "quote";
+): beat is Extract<
+  StoryBeat,
+  { kind: "path" | "project" | "quote" | "coda" }
+> =>
+  beat.kind === "path" ||
+  beat.kind === "project" ||
+  beat.kind === "quote" ||
+  beat.kind === "coda";
+
+const codaBeat = (content: SiteContent, view: DestinationSlug): StoryBeat => {
+  const coda = content.codas.find((candidate) => candidate.view === view);
+  if (!coda) {
+    throw new Error(`Missing ${view} coda`);
+  }
+  return {
+    id: `${view}/${coda.slug}`,
+    kind: "coda",
+    view,
+    itemSlug: coda.slug,
+    coda,
+  };
+};
 
 export const createStoryBeats = (
   content: SiteContent,
@@ -88,6 +116,7 @@ export const createStoryBeats = (
     itemSlug: entry.slug,
     entry,
   })),
+  codaBeat(content, "path"),
   { id: "projects", kind: "destination", view: "projects" },
   ...content.projects.map((project) => ({
     id: `projects/${project.slug}` as const,
@@ -96,6 +125,7 @@ export const createStoryBeats = (
     itemSlug: project.slug,
     project,
   })),
+  codaBeat(content, "projects"),
   { id: "quotes", kind: "destination", view: "quotes" },
   ...content.quotes.map((quote) => ({
     id: `quotes/${quote.slug}` as const,
@@ -104,6 +134,7 @@ export const createStoryBeats = (
     itemSlug: quote.slug,
     quote,
   })),
+  codaBeat(content, "quotes"),
 ];
 
 export const storyBeatForLocation = (
@@ -148,6 +179,9 @@ const routeLabel = (beat: StoryBeat) => {
   }
   if (beat.kind === "project") {
     return beat.project.title;
+  }
+  if (beat.kind === "coda") {
+    return beat.coda.shortLabel;
   }
   return beat.quote.author;
 };

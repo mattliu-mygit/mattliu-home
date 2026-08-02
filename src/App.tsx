@@ -41,7 +41,26 @@ import {
   type StoryBeat,
 } from "./story-navigation";
 
-const { person, path, projects, quotes, destinations } = siteContent;
+const { person, path, projects, quotes, codas, destinations } = siteContent;
+const codaByView = Object.fromEntries(
+  codas.map((coda) => [coda.view, coda]),
+) as Record<DestinationSlug, (typeof codas)[number]>;
+const constellationCodaItem = (
+  view: DestinationSlug,
+): ConstellationItem => {
+  const coda = codaByView[view];
+  return {
+    slug: coda.slug,
+    label: coda.text,
+    overviewLabel: coda.shortLabel,
+    meta: coda.shortLabel,
+    coda: true,
+    position: coda.position,
+    depth: coda.depth,
+    tone: coda.tone,
+    prominence: coda.prominence,
+  };
+};
 const destinationBySlug = Object.fromEntries(
   destinations.map((destination) => [destination.slug, destination]),
 ) as Record<DestinationSlug, (typeof destinations)[number]>;
@@ -50,35 +69,44 @@ const constellationItems: Record<
   DestinationSlug,
   readonly ConstellationItem[]
 > = {
-  path: path.map((entry) => ({
-    slug: entry.slug,
-    label: entry.organization,
-    overviewLabel: entry.shortLabel,
-    meta: entry.area,
-    position: entry.position,
-    depth: entry.depth,
-    tone: entry.tone,
-    prominence: entry.prominence,
-  })),
-  projects: projects.map((project) => ({
-    slug: project.slug,
-    label: project.title,
-    meta: project.displayYear,
-    position: project.position,
-    depth: project.depth,
-    tone: project.tone,
-    prominence: project.prominence,
-  })),
-  quotes: quotes.map((quote) => ({
-    slug: quote.slug,
-    label: quote.text,
-    overviewLabel: quote.author,
-    meta: quote.author,
-    position: quote.position,
-    depth: quote.depth,
-    tone: quote.tone,
-    prominence: quote.prominence,
-  })),
+  path: [
+    ...path.map((entry) => ({
+      slug: entry.slug,
+      label: entry.organization,
+      overviewLabel: entry.shortLabel,
+      meta: entry.area,
+      position: entry.position,
+      depth: entry.depth,
+      tone: entry.tone,
+      prominence: entry.prominence,
+    })),
+    constellationCodaItem("path"),
+  ],
+  projects: [
+    ...projects.map((project) => ({
+      slug: project.slug,
+      label: project.title,
+      meta: project.displayYear,
+      position: project.position,
+      depth: project.depth,
+      tone: project.tone,
+      prominence: project.prominence,
+    })),
+    constellationCodaItem("projects"),
+  ],
+  quotes: [
+    ...quotes.map((quote) => ({
+      slug: quote.slug,
+      label: quote.text,
+      overviewLabel: quote.author,
+      meta: quote.author,
+      position: quote.position,
+      depth: quote.depth,
+      tone: quote.tone,
+      prominence: quote.prominence,
+    })),
+    constellationCodaItem("quotes"),
+  ],
 };
 
 type PendingFocus =
@@ -104,6 +132,16 @@ const locationFor = (
     return { view };
   }
   return { view, quoteSlug: itemSlug };
+};
+
+const itemLocationFor = (
+  view: DestinationSlug,
+  itemSlug: string,
+): UniverseLocation => {
+  if (view === "projects") {
+    return { view, projectSlug: itemSlug };
+  }
+  return locationFor(view, itemSlug);
 };
 
 const directionForSelection = (
@@ -176,8 +214,6 @@ export default function App() {
     location.view === "projects" && location.projectSlug
       ? projectBySlug(location.projectSlug)
       : undefined;
-  const selectedQuote =
-    quotes.find((quote) => quote.slug === selectedQuoteSlug) ?? quotes[0];
   const cameraDestination =
     location.view === "universe"
       ? { x: 50, y: 50 }
@@ -249,9 +285,10 @@ export default function App() {
     (view: DestinationSlug, itemSlug?: string) => {
       lastUniverseTarget.current = { slug: view, itemSlug };
       pendingProjectOpen.current = null;
+      const isCoda = codaByView[view].slug === itemSlug;
       if (view === "path" && itemSlug) {
         aimConstellation(view, itemSlug);
-      } else if (view === "projects" && itemSlug) {
+      } else if (view === "projects" && itemSlug && !isCoda) {
         aimConstellation(view, itemSlug);
         pendingProjectOpen.current = itemSlug;
       } else if (view === "quotes" && itemSlug) {
@@ -263,7 +300,9 @@ export default function App() {
       dispatchPortfolio({ type: "enter-constellation", view, itemSlug });
       requestStoryScroll(storyId, "auto");
       commitLocation(
-        locationFor(view, view === "projects" ? undefined : itemSlug),
+        isCoda && itemSlug
+          ? itemLocationFor(view, itemSlug)
+          : locationFor(view, view === "projects" ? undefined : itemSlug),
         { focus: { type: "heading" } },
       );
     },
@@ -366,17 +405,21 @@ export default function App() {
         aimConstellation(beat.view, beat.itemSlug);
       } else if (beat.kind === "quote") {
         aimConstellation(beat.view, beat.itemSlug);
+      } else if (beat.kind === "coda") {
+        aimConstellation(beat.view, beat.itemSlug);
       } else {
         aimConstellation(beat.view);
       }
       dispatchPortfolio({ type: "focus-beat", beat });
       commitLocation(
-        locationFor(
-          beat.view,
-          beat.kind === "project" || beat.kind === "destination"
-            ? undefined
-            : beat.itemSlug,
-        ),
+        beat.kind === "coda"
+          ? itemLocationFor(beat.view, beat.itemSlug)
+          : locationFor(
+              beat.view,
+              beat.kind === "project" || beat.kind === "destination"
+                ? undefined
+                : beat.itemSlug,
+            ),
         {
           replace: true,
           focus: focusLeavesConstellation ? { type: "heading" } : undefined,
@@ -404,6 +447,17 @@ export default function App() {
         } else {
           enterConstellation("projects", beat.itemSlug);
         }
+      } else if (beat.kind === "coda") {
+        if (location.view === beat.view) {
+          aimConstellation(beat.view, beat.itemSlug);
+          dispatchPortfolio({ type: "focus-beat", beat });
+          requestStoryScroll(beat.id);
+          commitLocation(itemLocationFor(beat.view, beat.itemSlug), {
+            replace: true,
+          });
+        } else {
+          enterConstellation(beat.view, beat.itemSlug);
+        }
       } else if (location.view === "quotes") {
         selectQuote(beat.itemSlug);
       } else {
@@ -417,6 +471,9 @@ export default function App() {
       returnToUniverse,
       selectPath,
       selectQuote,
+      aimConstellation,
+      commitLocation,
+      requestStoryScroll,
     ],
   );
 
@@ -611,7 +668,7 @@ export default function App() {
             activeSlugs={{
               path: selectedPathSlug,
               projects: selectedProjectSlug,
-              quotes: selectedQuote.slug,
+              quotes: selectedQuoteSlug,
             }}
             destinations={destinations}
             interactive={!immersive}
@@ -619,6 +676,15 @@ export default function App() {
             onEnter={enterConstellation}
             onCameraSettled={finishCameraArrival}
             onSelect={(view, slug) => {
+              if (codaByView[view].slug === slug) {
+                const beat = storyBeats.find(
+                  (candidate) => candidate.id === `${view}/${slug}`,
+                );
+                if (beat) {
+                  activateStoryBeat(beat);
+                }
+                return;
+              }
               if (view === "path") {
                 selectPath(slug);
               } else if (view === "projects") {

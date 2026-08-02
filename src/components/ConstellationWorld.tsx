@@ -94,6 +94,8 @@ export const ConstellationWorld = forwardRef<
             getAccessibleName={(item) =>
               mode === "overview"
                 ? `Open ${destination.label} with ${item.label} selected`
+                : item.coda
+                  ? `Explore ${item.label}`
                 : destination.slug === "quotes"
                   ? `Read quote: ${item.label}`
                   : destination.slug === "path"

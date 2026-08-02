@@ -12,9 +12,13 @@ const projectBeat = storyBeats.find(
   (beat): beat is Extract<StoryBeat, { kind: "project" }> =>
     beat.kind === "project" && beat.itemSlug === "monopole",
 );
+const builderBeat = storyBeats.find(
+  (beat): beat is Extract<StoryBeat, { kind: "coda" }> =>
+    beat.kind === "coda" && beat.itemSlug === "builder",
+);
 
-if (!projectBeat) {
-  throw new Error("Expected the Monopole project story beat");
+if (!projectBeat || !builderBeat) {
+  throw new Error("Expected project and coda story beats");
 }
 
 describe("portfolio state", () => {
@@ -102,6 +106,18 @@ describe("portfolio state", () => {
       location: { view: "projects" },
       activeStoryId: projectBeat.id,
       selections: { projects: projectBeat.itemSlug },
+    });
+  });
+
+  it("focuses a coda as a selected constellation endpoint", () => {
+    const initial = createPortfolioState({ view: "universe" });
+
+    expect(
+      portfolioReducer(initial, { type: "focus-beat", beat: builderBeat }),
+    ).toMatchObject({
+      location: { view: "projects", projectSlug: "builder" },
+      activeStoryId: "projects/builder",
+      selections: { projects: "builder" },
     });
   });
 

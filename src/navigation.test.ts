@@ -24,6 +24,15 @@ describe("universe location", () => {
       "#quotes/less-is-more",
       { view: "quotes", quoteSlug: "less-is-more" },
     ],
+    ["#path/future", { view: "path", pathSlug: "future" }],
+    [
+      "#projects/builder",
+      { view: "projects", projectSlug: "builder" },
+    ],
+    [
+      "#quotes/inspiration",
+      { view: "quotes", quoteSlug: "inspiration" },
+    ],
   ] as const)("parses %s", (hash, expected) => {
     expect(parseUniverseLocation(hash)).toEqual(expected);
   });
