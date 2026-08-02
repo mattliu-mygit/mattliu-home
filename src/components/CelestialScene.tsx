@@ -8,23 +8,17 @@ import {
 
 import {
   BACKGROUND_STAR_COUNT,
-  GALACTIC_BAND_STAR_COUNT,
+  GALAXY_CORE_LINGER_MS,
+  advanceGalaxyCorePresence,
   advanceGalaxyPresence,
   advanceCelestialMotion,
   applyWheelImpulse,
   constellationDrift,
-  createGalacticBand,
-  createGalacticClouds,
-  createGalacticDustPatches,
   createMeteor,
   createSeededRandom,
   createStarField,
   dampPoint,
   directionalConstellationDrift,
-  galacticBandHalfWidth,
-  galacticBandDisplacement,
-  galacticBandRotation,
-  galacticPlaneY,
   meteorSegment,
   parallaxDisplacement,
   type CelestialMotion,
@@ -39,6 +33,7 @@ import {
 } from "../celestial-motion-channel";
 import type { UniverseView } from "../navigation";
 import type { NarrativeWheelInput } from "../wheel-input";
+import { GalaxyField, type GalaxyFieldHandle } from "./GalaxyField";
 
 type CelestialSceneProps = PropsWithChildren<{
   camera: WorldCamera;
@@ -69,6 +64,7 @@ export function CelestialScene({
 }: CelestialSceneProps) {
   const rootRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const galaxyFieldRef = useRef<GalaxyFieldHandle>(null);
   const interactiveRef = useRef(interactive);
   const immersiveRef = useRef(immersive);
   const openSkyWheelRef = useRef(onOpenSkyWheel);
@@ -173,18 +169,6 @@ export function CelestialScene({
 
     const nextRandom = createSeededRandom(270731);
     const stars = createStarField(BACKGROUND_STAR_COUNT, nextRandom);
-    const galacticBand = createGalacticBand(
-      GALACTIC_BAND_STAR_COUNT,
-      createSeededRandom(80317),
-    );
-    const galacticClouds = createGalacticClouds(
-      31,
-      createSeededRandom(1193),
-    );
-    const galacticDust = createGalacticDustPatches(
-      44,
-      createSeededRandom(491),
-    );
     let width = 0;
     let height = 0;
     let pixelRatio = 1;
@@ -193,9 +177,11 @@ export function CelestialScene({
     let meteor: Meteor | null = null;
     let nextMeteorAt = lastTime + 1_000;
     let renderedPull = { x: 0, y: 0 };
-    let renderedBandPull = { x: 0, y: 0 };
-    let renderedBandRotation = 0;
     let renderedGalaxyPresence = immersiveRef.current ? 1 : 0;
+    let renderedGalaxyCore = {
+      presence: renderedGalaxyPresence,
+      remainingMs: immersiveRef.current ? GALAXY_CORE_LINGER_MS : 0,
+    };
 
     const resize = () => {
       pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
@@ -204,6 +190,7 @@ export function CelestialScene({
       canvas.width = width * pixelRatio;
       canvas.height = height * pixelRatio;
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      galaxyFieldRef.current?.resize();
     };
 
     const drawStars = (now: number) => {
@@ -288,162 +275,22 @@ export function CelestialScene({
       }
     };
 
-    const drawGalacticBand = () => {
-      for (const star of galacticBand) {
-        const x = star.x * width + renderedBandPull.x;
-        const y = star.y * height + renderedBandPull.y;
-        const temperature = starTemperature[star.temperature];
-
-        if (star.alpha > 0.34) {
-          context.shadowColor = `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${star.alpha * 0.45})`;
-          context.shadowBlur = 2.8;
-        } else {
-          context.shadowBlur = 0;
-        }
-        context.beginPath();
-        context.fillStyle = `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${star.alpha})`;
-        context.arc(x, y, star.size, 0, Math.PI * 2);
-        context.fill();
-      }
-      context.shadowBlur = 0;
-    };
-
-    const drawGalacticClouds = () => {
-      for (const cloud of galacticClouds) {
-        const x = cloud.x * width + renderedBandPull.x;
-        const y = cloud.y * height + renderedBandPull.y;
-        const radiusX = cloud.radiusX * width;
-        const radiusY = cloud.radiusY * height;
-        const temperature = starTemperature[cloud.temperature];
-
-        context.save();
-        context.translate(x, y);
-        context.scale(1, radiusY / radiusX);
-        const gradient = context.createRadialGradient(
-          0,
-          0,
-          0,
-          0,
-          0,
-          radiusX,
-        );
-        gradient.addColorStop(
-          0,
-          `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${cloud.alpha})`,
-        );
-        gradient.addColorStop(
-          0.45,
-          `rgba(${temperature[0]},${temperature[1]},${temperature[2]},${cloud.alpha * 0.54})`,
-        );
-        gradient.addColorStop(
-          1,
-          `rgba(${temperature[0]},${temperature[1]},${temperature[2]},0)`,
-        );
-        context.fillStyle = gradient;
-        context.beginPath();
-        context.arc(0, 0, radiusX, 0, Math.PI * 2);
-        context.fill();
-        context.restore();
-      }
-    };
-
-    const drawGalacticDust = () => {
-      context.save();
-      context.globalCompositeOperation = "destination-out";
-      context.filter = `blur(${Math.max(3, Math.min(width, height) * 0.008)}px)`;
-      for (const patch of galacticDust) {
-        context.fillStyle = `rgba(0,0,0,${patch.alpha})`;
-        context.beginPath();
-        context.ellipse(
-          patch.x * width + renderedBandPull.x,
-          patch.y * height + renderedBandPull.y,
-          patch.radiusX * width,
-          patch.radiusY * height,
-          patch.rotation,
-          0,
-          Math.PI * 2,
-        );
-        context.fill();
-      }
-      context.restore();
-    };
-
-    const drawGalacticLight = () => {
-      const pointOnPlane = (position: number) => ({
-        x: position * width + renderedBandPull.x,
-        y: galacticPlaneY(position) * height + renderedBandPull.y,
-      });
-      const start = pointOnPlane(-0.08);
-      const end = pointOnPlane(1.08);
-      const outerLight = context.createLinearGradient(
-        start.x,
-        start.y,
-        end.x,
-        end.y,
-      );
-      outerLight.addColorStop(0, "rgba(116,130,174,0)");
-      outerLight.addColorStop(0.14, "rgba(98,129,184,0.026)");
-      outerLight.addColorStop(0.34, "rgba(126,161,216,0.078)");
-      outerLight.addColorStop(0.49, "rgba(229,209,174,0.16)");
-      outerLight.addColorStop(0.62, "rgba(174,186,218,0.108)");
-      outerLight.addColorStop(0.84, "rgba(101,132,186,0.032)");
-      outerLight.addColorStop(1, "rgba(116,130,174,0)");
-
-      const positions = Array.from(
-        { length: 17 },
-        (_, index) => -0.08 + (index / 16) * 1.16,
-      );
-      const envelope = positions.map((position) => {
-        const center = pointOnPlane(position);
-        const halfWidth = galacticBandHalfWidth(position) * height;
-        return {
-          top: { x: center.x, y: center.y - halfWidth },
-          bottom: { x: center.x, y: center.y + halfWidth },
-        };
-      });
-
-      context.save();
-      context.fillStyle = outerLight;
-      context.filter = `blur(${Math.min(width, height) * 0.055}px)`;
-      context.beginPath();
-      context.moveTo(envelope[0].top.x, envelope[0].top.y);
-      for (const point of envelope.slice(1)) {
-        context.lineTo(point.top.x, point.top.y);
-      }
-      for (const point of [...envelope].reverse()) {
-        context.lineTo(point.bottom.x, point.bottom.y);
-      }
-      context.closePath();
-      context.fill();
-      context.restore();
-    };
-
-    const drawGalaxy = () => {
-      if (renderedGalaxyPresence <= 0) {
-        return;
-      }
-
-      context.save();
-      context.globalAlpha = renderedGalaxyPresence;
-      context.translate(width / 2, height / 2);
-      context.rotate(renderedBandRotation);
-      const transitionScale = 1 + (1 - renderedGalaxyPresence) * 0.12;
-      context.scale(transitionScale, transitionScale);
-      context.translate(-width / 2, -height / 2);
-      drawGalacticLight();
-      drawGalacticClouds();
-      drawGalacticBand();
-      drawGalacticDust();
-      context.restore();
-    };
-
     if (reducedMotion) {
       const drawStaticField = () => {
         renderedGalaxyPresence = immersiveRef.current ? 1 : 0;
+        renderedGalaxyCore = {
+          presence: renderedGalaxyPresence,
+          remainingMs: 0,
+        };
         resize();
         context.clearRect(0, 0, width, height);
-        drawGalaxy();
         drawStars(0);
+        galaxyFieldRef.current?.render({
+          corePresence: renderedGalaxyCore.presence,
+          presence: renderedGalaxyPresence,
+          travel: 0,
+          velocity: 0,
+        });
       };
       staticDrawRef.current = drawStaticField;
       drawStaticField();
@@ -517,30 +364,25 @@ export function CelestialScene({
               directionRef.current,
             );
       renderedPull = dampPoint(renderedPull, targetPull, elapsed);
-      renderedBandPull = dampPoint(
-        renderedBandPull,
-        galacticBandDisplacement(
-          backgroundMotionRef.current.travelVelocity,
-        ),
-        elapsed,
-        650,
-      );
-      const targetBandRotation = galacticBandRotation(
-        backgroundMotionRef.current.travelVelocity,
-      );
-      const rotationAlpha =
-        1 - Math.exp(-Math.max(0, elapsed) / 900);
-      renderedBandRotation +=
-        (targetBandRotation - renderedBandRotation) * rotationAlpha;
       renderedGalaxyPresence = advanceGalaxyPresence(
         renderedGalaxyPresence,
         immersiveRef.current,
         elapsed,
       );
+      renderedGalaxyCore = advanceGalaxyCorePresence(
+        renderedGalaxyCore,
+        immersiveRef.current,
+        elapsed,
+      );
       context.clearRect(0, 0, width, height);
-      drawGalaxy();
       drawStars(now);
       drawMeteor(now);
+      galaxyFieldRef.current?.render({
+        corePresence: renderedGalaxyCore.presence,
+        presence: renderedGalaxyPresence,
+        travel: backgroundMotionRef.current.travel,
+        velocity: backgroundMotionRef.current.travelVelocity,
+      });
       root.style.setProperty(
         "--constellation-pull-x",
         `${renderedPull.x}px`,
@@ -582,6 +424,14 @@ export function CelestialScene({
         }
         data-camera-focused={camera.focused ? "true" : undefined}
       >
+        <GalaxyField
+          active={immersive}
+          reducedMotion={
+            window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
+            false
+          }
+          ref={galaxyFieldRef}
+        />
         <canvas
           className="celestial-field"
           data-testid="celestial-field"

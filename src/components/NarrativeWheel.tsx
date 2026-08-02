@@ -199,6 +199,13 @@ function NarrativeCard({
       return (
         <div className="narrative-card narrative-card--intro narrative-card--name">
           <p>{beat.kicker}</p>
+          <span className="narrative-card__portrait">
+            <img
+              alt="Matthew Liu"
+              decoding="async"
+              src="/matthew-liu.png"
+            />
+          </span>
           <h1>{beat.content}</h1>
         </div>
       );

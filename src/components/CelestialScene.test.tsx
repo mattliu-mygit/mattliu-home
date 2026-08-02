@@ -116,7 +116,7 @@ describe("CelestialScene motion ownership", () => {
     );
   });
 
-  it("draws the immersive stellar band in the same reduced-motion canvas", () => {
+  it("keeps the 2d sky stable while activating a separate galaxy layer", () => {
     const arc = vi.fn();
     const ellipse = vi.fn();
     const createLinearGradient = vi.fn(() => ({ addColorStop: vi.fn() }));
@@ -147,9 +147,9 @@ describe("CelestialScene motion ownership", () => {
     vi.spyOn(window, "matchMedia").mockReturnValue({
       matches: true,
     } as MediaQueryList);
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
-      context,
-    );
+    const getContext = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockImplementation((type) => (type === "2d" ? context : null));
 
     const scene = (immersive: boolean) => (
       <CelestialScene
@@ -163,6 +163,14 @@ describe("CelestialScene motion ownership", () => {
     const { rerender } = render(scene(false));
     const universeArcCount = arc.mock.calls.length;
     const universeGradientCount = createRadialGradient.mock.calls.length;
+    expect(screen.getByTestId("galaxy-field")).toHaveAttribute(
+      "data-active",
+      "false",
+    );
+    expect(getContext).toHaveBeenCalledWith(
+      "webgl2",
+      expect.objectContaining({ powerPreference: "high-performance" }),
+    );
     expect(createLinearGradient).not.toHaveBeenCalled();
     expect(context.closePath).not.toHaveBeenCalled();
     expect(context.rotate).not.toHaveBeenCalled();
@@ -170,16 +178,19 @@ describe("CelestialScene motion ownership", () => {
 
     rerender(scene(true));
 
-    expect(arc.mock.calls.length).toBeGreaterThan(universeArcCount + 2_800);
-    expect(createRadialGradient.mock.calls.length).toBeGreaterThan(
-      universeGradientCount + 15,
+    expect(screen.getByTestId("galaxy-field")).toHaveAttribute(
+      "data-active",
+      "true",
     );
-    expect(createLinearGradient).toHaveBeenCalled();
-    expect(context.closePath).toHaveBeenCalled();
-    expect(context.rotate).toHaveBeenCalled();
-    expect(context.scale).toHaveBeenCalled();
-    expect(ellipse.mock.calls.length).toBeGreaterThan(40);
-    expect(compositeOperations).toContain("destination-out");
+    expect(arc.mock.calls.length).toBe(universeArcCount * 2);
+    expect(createRadialGradient.mock.calls.length).toBe(
+      universeGradientCount * 2,
+    );
+    expect(createLinearGradient).not.toHaveBeenCalled();
+    expect(context.closePath).not.toHaveBeenCalled();
+    expect(context.rotate).not.toHaveBeenCalled();
+    expect(ellipse).not.toHaveBeenCalled();
+    expect(compositeOperations).not.toContain("destination-out");
   });
 
   it("uses immersive wheel input for sky motion without navigating the story", () => {

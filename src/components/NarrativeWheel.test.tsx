@@ -42,6 +42,10 @@ describe("NarrativeWheel", () => {
   it("introduces Matthew line by line before the Path cards", () => {
     renderWheel();
 
+    expect(screen.getByRole("img", { name: "Matthew Liu" })).toHaveAttribute(
+      "src",
+      "/matthew-liu.png",
+    );
     expect(screen.getByRole("heading", { name: "Matthew Liu" })).toBeVisible();
     expect(screen.getByText(/keep intelligent software/i)).toBeVisible();
     expect(screen.getByText(/turn ideas and research/i)).toBeVisible();

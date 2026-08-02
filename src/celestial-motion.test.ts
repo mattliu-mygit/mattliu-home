@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   BACKGROUND_STAR_COUNT,
-  GALACTIC_BAND_STAR_COUNT,
+  GALAXY_CORE_LINGER_MS,
+  advanceGalaxyCorePresence,
   advanceGalaxyPresence,
   advanceCelestialMotion,
   applyWheelImpulse,
@@ -10,18 +11,10 @@ import {
   constellationFocusPoint,
   constellationDrift,
   createMeteor,
-  createGalacticClouds,
-  createGalacticBand,
-  createGalacticDustPatches,
   createSeededRandom,
   createStarField,
   dampPoint,
   directionalConstellationDrift,
-  galacticBandHalfWidth,
-  galacticBandDisplacement,
-  galacticBandRotation,
-  galacticDustAttenuation,
-  galacticPlaneY,
   meteorSegment,
   parallaxDisplacement,
   projectConstellationPoint,
@@ -278,153 +271,6 @@ describe("celestial motion", () => {
     expect(first.some(({ double }) => double)).toBe(true);
   });
 
-  it("builds a deterministic diagonal galactic band with dark interruptions", () => {
-    const first = createGalacticBand(
-      GALACTIC_BAND_STAR_COUNT,
-      createSeededRandom(80317),
-    );
-    const second = createGalacticBand(
-      GALACTIC_BAND_STAR_COUNT,
-      createSeededRandom(80317),
-    );
-
-    expect(second).toEqual(first);
-    expect(first).toHaveLength(GALACTIC_BAND_STAR_COUNT);
-    expect(GALACTIC_BAND_STAR_COUNT).toBeGreaterThan(5_500);
-    expect(first.every(({ x, y }) => x >= 0 && x <= 1 && y >= 0 && y <= 1)).toBe(
-      true,
-    );
-    expect(new Set(first.map(({ temperature }) => temperature)).size).toBe(3);
-    const temperatures = first.reduce(
-      (counts, star) => ({
-        ...counts,
-        [star.temperature]: counts[star.temperature] + 1,
-      }),
-      { warm: 0, neutral: 0, cool: 0 },
-    );
-    expect(temperatures.cool).toBeGreaterThan(temperatures.warm * 1.6);
-    expect(temperatures.warm).toBeGreaterThan(first.length * 0.17);
-    expect(Math.max(...first.map(({ alpha }) => alpha))).toBeLessThanOrEqual(
-      0.62,
-    );
-    expect(Math.max(...first.map(({ alpha }) => alpha))).toBeGreaterThan(0.56);
-    expect(Math.max(...first.map(({ size }) => size))).toBeGreaterThan(
-      Math.min(...first.map(({ size }) => size)) * 2,
-    );
-
-    const meanDistanceFromPlane =
-      first.reduce(
-        (sum, star) => sum + Math.abs(star.y - galacticPlaneY(star.x)),
-        0,
-      ) / first.length;
-    expect(meanDistanceFromPlane).toBeLessThan(0.16);
-    expect(
-      first.filter(
-        ({ x, y }) => Math.abs(y - galacticPlaneY(x)) > 0.14,
-      ).length,
-    ).toBeGreaterThan(100);
-    expect(
-      Math.max(
-        ...first.map(({ x, y }) => Math.abs(y - galacticPlaneY(x))),
-      ),
-    ).toBeGreaterThan(0.3);
-
-    const leftMeanY =
-      first
-        .filter(({ x }) => x < 0.25)
-        .reduce((sum, star) => sum + star.y, 0) /
-      first.filter(({ x }) => x < 0.25).length;
-    const rightMeanY =
-      first
-        .filter(({ x }) => x > 0.75)
-        .reduce((sum, star) => sum + star.y, 0) /
-      first.filter(({ x }) => x > 0.75).length;
-    expect(rightMeanY).toBeGreaterThan(leftMeanY + 0.2);
-
-    const dustLane = first.filter(
-      ({ x, y }) =>
-        x >= 0.34 &&
-        x <= 0.47 &&
-        Math.abs(y - galacticPlaneY(x)) < 0.045,
-    );
-    expect(dustLane.length).toBeGreaterThan(0);
-    expect(
-      dustLane.reduce((sum, star) => sum + star.alpha, 0) / dustLane.length,
-    ).toBeLessThan(
-      first.reduce((sum, star) => sum + star.alpha, 0) / first.length,
-    );
-    expect(galacticDustAttenuation(0.4, 0.02)).toBeGreaterThanOrEqual(0.5);
-    expect(galacticDustAttenuation(0.4, 0.02)).toBeLessThan(0.7);
-    expect(galacticDustAttenuation(0.55, 0.02)).toBe(1);
-  });
-
-  it("tapers around a central bulge that contains every immersive constellation", () => {
-    const immersedConstellations = [
-      { x: 0.44, y: 0.25, radius: 0.06 },
-      { x: 0.6, y: 0.48, radius: 0.08 },
-      { x: 0.46, y: 0.72, radius: 0.05 },
-    ];
-
-    expect(galacticBandHalfWidth(0.6)).toBeGreaterThan(0.38);
-    expect(galacticBandHalfWidth(0.6)).toBeGreaterThan(
-      galacticBandHalfWidth(0.05) * 2,
-    );
-    for (const constellation of immersedConstellations) {
-      expect(
-        Math.abs(
-          constellation.y - galacticPlaneY(constellation.x),
-        ) + constellation.radius,
-      ).toBeLessThanOrEqual(galacticBandHalfWidth(constellation.x));
-    }
-  });
-
-  it("builds overlapping cool clouds with restrained warm color", () => {
-    const first = createGalacticClouds(31, createSeededRandom(1193));
-    const second = createGalacticClouds(31, createSeededRandom(1193));
-
-    expect(second).toEqual(first);
-    expect(first).toHaveLength(31);
-    expect(first.every(({ x, y }) => x >= 0 && x <= 1 && y >= 0 && y <= 1)).toBe(
-      true,
-    );
-    expect(first.every(({ alpha }) => alpha >= 0.018 && alpha <= 0.16)).toBe(
-      true,
-    );
-    expect(Math.max(...first.map(({ alpha }) => alpha))).toBeGreaterThan(0.13);
-    expect(first.every(({ radiusX }) => radiusX >= 0.05)).toBe(true);
-    expect(first.every(({ radiusY }) => radiusY >= 0.04)).toBe(true);
-    const temperatures = first.map(({ temperature }) => temperature);
-    expect(
-      temperatures.filter((temperature) => temperature === "cool").length,
-    ).toBeGreaterThan(
-      temperatures.filter((temperature) => temperature === "warm").length,
-    );
-    expect(
-      temperatures.filter((temperature) => temperature === "warm").length,
-    ).toBeGreaterThan(5);
-    expect(new Set(temperatures)).toEqual(new Set(["warm", "neutral", "cool"]));
-  });
-
-  it("breaks dust into irregular separated patches", () => {
-    const first = createGalacticDustPatches(44, createSeededRandom(491));
-    const second = createGalacticDustPatches(44, createSeededRandom(491));
-
-    expect(second).toEqual(first);
-    expect(first).toHaveLength(44);
-    const sortedX = first.map(({ x }) => x).sort((a, b) => a - b);
-    const gaps = sortedX.slice(1).map((x, index) => x - sortedX[index]);
-    expect(gaps.filter((gap) => gap > 0.025).length).toBeGreaterThan(4);
-    expect(
-      new Set(first.map(({ rotation }) => rotation.toFixed(2))).size,
-    ).toBeGreaterThan(12);
-    expect(Math.max(...first.map(({ radiusX }) => radiusX))).toBeGreaterThan(
-      Math.min(...first.map(({ radiusX }) => radiusX)) * 1.7,
-    );
-    expect(first.every(({ alpha }) => alpha >= 0.06 && alpha <= 0.24)).toBe(
-      true,
-    );
-  });
-
   it("eases galaxy presence symmetrically without overshooting", () => {
     const entering = advanceGalaxyPresence(0, true, 120);
     const later = advanceGalaxyPresence(entering, true, 240);
@@ -439,20 +285,21 @@ describe("celestial motion", () => {
     expect(advanceGalaxyPresence(0.4, true, 0)).toBe(0.4);
   });
 
-  it("keeps the galaxy at the farthest bounded translation and rotation", () => {
-    const forward = galacticBandDisplacement(20);
-    const reverse = galacticBandDisplacement(-20);
-    const forwardRotation = galacticBandRotation(20);
-    const reverseRotation = galacticBandRotation(-20);
+  it("holds the galaxy core for a quarter second before it fades", () => {
+    const visible = {
+      presence: 1,
+      remainingMs: GALAXY_CORE_LINGER_MS,
+    };
+    const almostReleased = advanceGalaxyCorePresence(visible, false, 200);
+    const released = advanceGalaxyCorePresence(almostReleased, false, 50);
+    const fading = advanceGalaxyCorePresence(released, false, 120);
 
-    expect(Math.hypot(forward.x, forward.y)).toBeLessThan(0.3);
-    expect(forward.x).toBeGreaterThan(0);
-    expect(forward.y).toBeGreaterThan(0);
-    expect(reverse).toEqual({ x: -forward.x, y: -forward.y });
-    expect(galacticBandDisplacement(0)).toEqual({ x: 0, y: 0 });
-    expect(forwardRotation).toBeGreaterThan(0);
-    expect(Math.abs(forwardRotation)).toBeLessThan((0.12 * Math.PI) / 180);
-    expect(reverseRotation).toBe(-forwardRotation);
-    expect(galacticBandRotation(0)).toBe(0);
+    expect(almostReleased).toEqual({ presence: 1, remainingMs: 50 });
+    expect(released).toEqual({ presence: 1, remainingMs: 0 });
+    expect(fading.presence).toBeLessThan(1);
+    expect(fading.remainingMs).toBe(0);
+    expect(
+      advanceGalaxyCorePresence(fading, true, 120).remainingMs,
+    ).toBe(GALAXY_CORE_LINGER_MS);
   });
 });

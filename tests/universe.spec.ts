@@ -9,6 +9,58 @@ const overlaps = (
   first.y + first.height > second.y &&
   first.y < second.y + second.height;
 
+test("the static fallback is styled before application JavaScript runs", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+
+  await page.goto("/");
+
+  await expect(page.locator(".seo-fallback")).toBeVisible();
+  await expect(page.locator("html")).toHaveCSS(
+    "background-color",
+    "rgb(8, 10, 16)",
+  );
+  await expect(page.locator(".seo-fallback")).toHaveCSS(
+    "color",
+    "rgb(244, 241, 232)",
+  );
+
+  await context.close();
+});
+
+test("the static fallback does not paint while the application starts", async ({
+  page,
+}) => {
+  await page.route("**/src/main.tsx", (route) => route.abort());
+
+  await page.goto("/");
+
+  await expect(page.locator(".seo-fallback")).toBeHidden();
+});
+
+test("the intro opens with a raised 4:5 portrait and a measured name gap", async ({ page }) => {
+  await page.setViewportSize({ width: 1_280, height: 900 });
+  await page.goto("/");
+
+  const portrait = page.getByRole("img", { name: "Matthew Liu" });
+  const name = page.getByRole("heading", { name: "Matthew Liu" });
+  const box = await portrait.boundingBox();
+  const nameBox = await name.boundingBox();
+  const radius = await portrait.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element.parentElement!).borderTopLeftRadius),
+  );
+
+  expect(box).not.toBeNull();
+  expect(nameBox).not.toBeNull();
+  expect(box!.width).toBeGreaterThanOrEqual(165);
+  expect(box!.height / box!.width).toBeCloseTo(1.25, 1);
+  expect(box!.y / 900).toBeLessThan(0.34);
+  expect(nameBox!.y - (box!.y + box!.height)).toBeGreaterThanOrEqual(12);
+  expect(radius / box!.width).toBeLessThan(0.15);
+});
+
 test("universe overview enters and leaves the Projects constellation", async ({
   page,
 }) => {
@@ -32,10 +84,15 @@ test("universe overview enters and leaves the Projects constellation", async ({
   ).toBeVisible();
 
   const narrativeWheel = await page.locator(".narrative-wheel").boundingBox();
+  const sequencePaddingTop = await page
+    .locator(".narrative-wheel__sequence")
+    .evaluate((element) => Number.parseFloat(getComputedStyle(element).paddingTop));
+  const viewportHeight = await page.evaluate(() => window.innerHeight);
   const nextBeat = page.locator('[data-story-beat="intro/headline"]');
   const nextBeatBox = await nextBeat.boundingBox();
   expect(narrativeWheel).not.toBeNull();
   expect(nextBeatBox).not.toBeNull();
+  expect(sequencePaddingTop / viewportHeight).toBeLessThan(0.32);
   await expect(nextBeat).toHaveCSS("opacity", "0.34");
   expect(nextBeatBox!.y).toBeLessThan(
     narrativeWheel!.y + narrativeWheel!.height,
@@ -447,7 +504,12 @@ test("header identity follows the story and external links open separately", asy
 test("immersive view becomes a centered observational sky and restores context", async ({
   page,
 }) => {
+  const galaxyModuleLoaded = page.waitForResponse(
+    (response) =>
+      response.url().includes("/src/galaxy-renderer.ts") && response.ok(),
+  );
   await page.goto("/");
+  await galaxyModuleLoaded;
   const universe = page.locator(".universe");
   const story = page.locator(".narrative-wheel");
   const rail = page.locator(".route-rail");
@@ -457,24 +519,18 @@ test("immersive view becomes a centered observational sky and restores context",
   const star = page.locator("#constellation-star-path-johns-hopkins");
   const storyId = await story.getAttribute("data-active-beat");
 
-  const centroid = async () => {
-    const boxes = await page.locator(".universe-constellation").evaluateAll(
-      (elements) =>
-        elements.map((element) => {
-          const box = element.getBoundingClientRect();
-          return box.x + box.width / 2;
-        }),
-    );
-    return boxes.reduce((total, value) => total + value, 0) / boxes.length;
-  };
-  const beforeCentroid = await centroid();
-  const viewportCenter = (page.viewportSize()?.width ?? 0) / 2;
-  const beforeWidths = await maps.evaluateAll((elements) =>
-    elements.map((element) => element.getBoundingClientRect().width),
+  const mapBoxes = () => maps.evaluateAll((elements) =>
+    elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return {
+        height: box.height,
+        width: box.width,
+        x: box.x,
+        y: box.y,
+      };
+    }),
   );
-  const beforeMeanWidth =
-    beforeWidths.reduce((total, width) => total + width, 0) /
-    beforeWidths.length;
+  const beforeBoxes = await mapBoxes();
 
   await page.getByRole("button", { name: "Enter immersive view" }).click();
 
@@ -485,6 +541,8 @@ test("immersive view becomes a centered observational sky and restores context",
   await expect(universe).toHaveCSS("--camera-target-x", "50%");
   await expect(world).toHaveAttribute("inert", "");
   await expect(world).toHaveAttribute("aria-hidden", "true");
+  await expect(world).toHaveCSS("opacity", "0");
+  await expect(world).toHaveCSS("transition-duration", "0s");
   await expect(
     page.getByRole("button", {
       name: "Open Path with Johns Hopkins Whiting School of Engineering selected",
@@ -494,58 +552,24 @@ test("immersive view becomes a centered observational sky and restores context",
   await expect(star).toHaveAttribute("tabindex", "-1");
   await star.click({ force: true });
   await expect(page).toHaveURL(/\/$/);
-  expect(Math.abs((await centroid()) - viewportCenter)).toBeLessThan(
-    Math.abs(beforeCentroid - viewportCenter),
+  await world.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
   );
-  await expect
-    .poll(async () => {
-      const widths = await maps.evaluateAll((elements) =>
-        elements.map((element) => element.getBoundingClientRect().width),
-      );
-      return widths.reduce((total, width) => total + width, 0) / widths.length;
-    })
-    .toBeLessThan(beforeMeanWidth * 0.9);
-  const immersiveCenters = await maps.evaluateAll((elements) =>
-    elements.map((element) => {
-      const box = element.getBoundingClientRect();
-      return {
-        x: box.x + box.width / 2,
-        y: box.y + box.height / 2,
-      };
-    }),
-  );
-  const viewport = page.viewportSize()!;
-  expect(
-    immersiveCenters.every(
-      ({ x, y }) =>
-        x > viewport.width * 0.24 &&
-        x < viewport.width * 0.76 &&
-        y > viewport.height * 0.18 &&
-        y < viewport.height * 0.82,
-    ),
-  ).toBe(true);
-  expect(
-    await maps.first().evaluate((element) => {
-      const style = getComputedStyle(element);
-      return style.transitionProperty.includes("top") &&
-        style.transitionProperty.includes("left");
-    }),
-  ).toBe(true);
-  await expect(world).toBeVisible();
+  const immersedBoxes = await mapBoxes();
+  expect(immersedBoxes).toHaveLength(beforeBoxes.length);
+  for (const [index, box] of immersedBoxes.entries()) {
+    expect(box.x).toBeCloseTo(beforeBoxes[index].x, 0);
+    expect(box.y).toBeCloseTo(beforeBoxes[index].y, 0);
+    expect(box.width).toBeCloseTo(beforeBoxes[index].width, 0);
+    expect(box.height).toBeCloseTo(beforeBoxes[index].height, 0);
+  }
 
   await page.keyboard.press("Escape");
 
   await expect(universe).not.toHaveAttribute("data-immersive");
+  await expect(world).toHaveCSS("opacity", "1");
   await expect(story).toHaveCSS("opacity", "1");
   await expect(story).toHaveAttribute("data-active-beat", storyId!);
-  await expect
-    .poll(async () => {
-      const widths = await maps.evaluateAll((elements) =>
-        elements.map((element) => element.getBoundingClientRect().width),
-      );
-      return widths.reduce((total, width) => total + width, 0) / widths.length;
-    })
-    .toBeGreaterThan(beforeMeanWidth * 0.98);
   await expect(
     page.getByRole("button", { name: "Enter immersive view" }),
   ).toBeFocused();
