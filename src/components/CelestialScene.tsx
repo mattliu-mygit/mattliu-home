@@ -113,6 +113,19 @@ export function CelestialScene({
 
   useEffect(() => {
     let lastTouchY: number | null = null;
+    let touchStartedInStory = false;
+
+    const applyInteractiveMotion = (deltaY: number) => {
+      const inUniverse = viewRef.current === "universe";
+      backgroundMotionRef.current = applyWheelImpulse(
+        backgroundMotionRef.current,
+        inUniverse ? deltaY : deltaY * 0.12,
+      );
+      localMotionRef.current = applyWheelImpulse(
+        localMotionRef.current,
+        deltaY,
+      );
+    };
 
     const handleWheel = (event: WheelEvent) => {
       if (event.ctrlKey) {
@@ -129,15 +142,7 @@ export function CelestialScene({
         event.preventDefault();
         return;
       }
-      const inUniverse = viewRef.current === "universe";
-      backgroundMotionRef.current = applyWheelImpulse(
-        backgroundMotionRef.current,
-        inUniverse ? event.deltaY : event.deltaY * 0.12,
-      );
-      localMotionRef.current = applyWheelImpulse(
-        localMotionRef.current,
-        event.deltaY,
-      );
+      applyInteractiveMotion(event.deltaY);
       const target = event.target;
       if (target instanceof Element && target.closest("[data-story-scroll]")) {
         return;
@@ -150,32 +155,55 @@ export function CelestialScene({
     };
 
     const handleTouchStart = (event: TouchEvent) => {
-      if (!immersiveRef.current || event.touches.length !== 1) {
+      if (
+        event.touches.length !== 1 ||
+        (!interactiveRef.current && !immersiveRef.current)
+      ) {
         lastTouchY = null;
+        touchStartedInStory = false;
         return;
       }
       lastTouchY = event.touches[0].clientY;
+      touchStartedInStory =
+        interactiveRef.current &&
+        event.target instanceof Element &&
+        Boolean(event.target.closest("[data-story-scroll]"));
     };
 
     const handleTouchMove = (event: TouchEvent) => {
       if (
-        !immersiveRef.current ||
         event.touches.length !== 1 ||
         lastTouchY === null
       ) {
         return;
       }
       const nextTouchY = event.touches[0].clientY;
-      backgroundMotionRef.current = applyWheelImpulse(
-        backgroundMotionRef.current,
-        lastTouchY - nextTouchY,
-      );
+      const deltaY = lastTouchY - nextTouchY;
       lastTouchY = nextTouchY;
+
+      if (!interactiveRef.current) {
+        if (!immersiveRef.current) {
+          return;
+        }
+        backgroundMotionRef.current = applyWheelImpulse(
+          backgroundMotionRef.current,
+          deltaY,
+        );
+        event.preventDefault();
+        return;
+      }
+
+      applyInteractiveMotion(deltaY);
+      if (touchStartedInStory) {
+        return;
+      }
+      openSkyWheelRef.current?.({ deltaMode: 0, deltaY });
       event.preventDefault();
     };
 
     const handleTouchEnd = () => {
       lastTouchY = null;
+      touchStartedInStory = false;
     };
 
     window.addEventListener("wheel", handleWheel, { passive: false });
