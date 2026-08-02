@@ -255,16 +255,7 @@ function NarrativeCard({
   }
 
   if (beat.kind === "coda") {
-    return (
-      <button
-        aria-label={`Focus ${beat.coda.text}`}
-        className="narrative-card narrative-card--coda"
-        onClick={() => onActivate(beat)}
-        type="button"
-      >
-        <span>{beat.coda.text}</span>
-      </button>
-    );
+    return <CodaCard beat={beat} onActivate={onActivate} />;
   }
 
   if (beat.kind === "project") {
@@ -304,6 +295,65 @@ function NarrativeCard({
       >
         {beat.quote.author} <span aria-hidden="true">↗</span>
       </ExternalLink>
+    </article>
+  );
+}
+
+function CodaCard({
+  beat,
+  onActivate,
+}: {
+  beat: Extract<StoryBeat, { kind: "coda" }>;
+  onActivate: (beat: StoryBeat) => void;
+}) {
+  const action = (
+    <button
+      aria-label={`Focus ${beat.coda.text}`}
+      className="narrative-card__action"
+      onClick={() => onActivate(beat)}
+      type="button"
+    />
+  );
+
+  if (beat.view === "path") {
+    return (
+      <article className="narrative-card narrative-card--path narrative-card--coda">
+        {action}
+        <span className="narrative-card__eyebrow">
+          {beat.coda.shortLabel}
+        </span>
+        <h2>{beat.coda.text}</h2>
+      </article>
+    );
+  }
+
+  if (beat.view === "projects") {
+    return (
+      <article className="narrative-card narrative-card--project narrative-card--coda narrative-card--coda-project">
+        {action}
+        <span className="narrative-card__copy">
+          <span className="narrative-card__meta">
+            <span>{beat.coda.shortLabel}</span>
+          </span>
+          <strong>{beat.coda.text}</strong>
+        </span>
+      </article>
+    );
+  }
+
+  return (
+    <article className="narrative-card narrative-card--quote narrative-card--coda">
+      <button
+        aria-label={`Focus ${beat.coda.text}`}
+        className="narrative-card__quote-action"
+        onClick={() => onActivate(beat)}
+        type="button"
+      >
+        <blockquote>{beat.coda.text}</blockquote>
+      </button>
+      <span className="narrative-card__coda-meta">
+        {beat.coda.shortLabel}
+      </span>
     </article>
   );
 }

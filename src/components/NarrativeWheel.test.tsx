@@ -63,24 +63,28 @@ describe("NarrativeWheel", () => {
     );
   });
 
-  it("closes each constellation with a lightweight coda card", async () => {
+  it("renders each coda with its constellation's card language", async () => {
     const user = userEvent.setup();
     const onActivate = vi.fn();
     renderWheel({ onActivate });
 
-    expect(screen.getByText("Wherever the future holds...")).toBeVisible();
-    expect(screen.getByText("Builder tinkering...")).toBeVisible();
-    expect(
-      screen.getByText(
-        "Ever learning and growing, looking more inspiration...",
-      ),
-    ).toBeVisible();
+    const pathCoda = screen.getByRole("button", {
+      name: "Focus Wherever the future holds...",
+    });
+    const projectCoda = screen.getByRole("button", {
+      name: "Focus Builder tinkering...",
+    });
+    const quoteCoda = screen.getByRole("button", {
+      name: "Focus Ever learning and growing, looking more inspiration...",
+    });
 
-    await user.click(
-      screen.getByRole("button", {
-        name: "Focus Wherever the future holds...",
-      }),
+    expect(pathCoda.closest("article")).toHaveClass("narrative-card--path");
+    expect(projectCoda.closest("article")).toHaveClass(
+      "narrative-card--project",
     );
+    expect(quoteCoda.closest("article")).toHaveClass("narrative-card--quote");
+
+    await user.click(pathCoda);
     expect(onActivate).toHaveBeenCalledWith(
       expect.objectContaining({ id: "path/future", kind: "coda" }),
     );
