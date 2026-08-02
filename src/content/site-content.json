@@ -68,6 +68,7 @@
       "shortLabel": "Johns Hopkins",
       "area": "Foundation",
       "summary": "Learning across systems thinking, research, and building.",
+      "brandMarks": ["/path-logos/johns-hopkins-shield.svg"],
       "position": [12, 72],
       "depth": 1.04,
       "tone": "warm",
@@ -79,6 +80,10 @@
       "shortLabel": "AWS SageMaker",
       "area": "AI Platforms",
       "summary": "Production model-customization workflows spanning preparation, training, evaluation, and deployment.",
+      "brandMarks": [
+        "/path-logos/aws-cloud.svg",
+        "/path-logos/amazon-sagemaker-ai.svg"
+      ],
       "position": [48, 28],
       "depth": 0.94,
       "tone": "cool",
@@ -90,6 +95,7 @@
       "shortLabel": "W&B · Weave",
       "area": "Evaluation and observability",
       "summary": "Systems that make agent behavior inspectable and easier to improve.",
+      "brandMarks": ["/path-logos/weights-and-biases.svg"],
       "position": [88, 58],
       "depth": 1.08,
       "tone": "violet",

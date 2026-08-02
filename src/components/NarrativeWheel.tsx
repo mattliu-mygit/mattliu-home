@@ -247,7 +247,20 @@ function NarrativeCard({
           onClick={() => onActivate(beat)}
           type="button"
         />
-        <span className="narrative-card__eyebrow">{beat.entry.area}</span>
+        <span className="narrative-card__identity-row">
+          <span className="narrative-card__eyebrow">{beat.entry.area}</span>
+          <span aria-hidden="true" className="narrative-card__brand-marks">
+            {beat.entry.brandMarks.map((src) => (
+              <img
+                alt=""
+                data-path-brand-mark
+                decoding="async"
+                key={src}
+                src={src}
+              />
+            ))}
+          </span>
+        </span>
         <h2>{beat.entry.organization}</h2>
         <p>{beat.entry.summary}</p>
       </article>

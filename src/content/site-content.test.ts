@@ -36,6 +36,14 @@ describe("site content", () => {
       "aws-sagemaker",
       "wandb-weave",
     ]);
+    expect(siteContent.path.map(({ brandMarks }) => brandMarks)).toEqual([
+      ["/path-logos/johns-hopkins-shield.svg"],
+      [
+        "/path-logos/aws-cloud.svg",
+        "/path-logos/amazon-sagemaker-ai.svg",
+      ],
+      ["/path-logos/weights-and-biases.svg"],
+    ]);
     expect(
       siteContent.codas.map(({ view, slug, text, shortLabel }) => ({
         view,
@@ -152,6 +160,16 @@ describe("site content", () => {
 
     expect(() => validateSiteContent(invalidProminence)).toThrow(
       /projects\[0\]\.prominence must be 1, 2, or 3/i,
+    );
+  });
+
+  it("rejects Path brand marks that are not local portfolio assets", () => {
+    const invalid = cloneContent();
+    const path = invalid.path as Array<Record<string, unknown>>;
+    path[0].brandMarks = ["https://brand.jhu.edu/shield.svg"];
+
+    expect(() => validateSiteContent(invalid)).toThrow(
+      /path\[0\]\.brandMarks\[0\] must be a local Path logo/i,
     );
   });
 

@@ -52,6 +52,24 @@ describe("NarrativeWheel", () => {
     expect(screen.getByText("AWS SageMaker")).toBeVisible();
   });
 
+  it("pairs each Path card with its decorative official brand marks", () => {
+    const { container } = renderWheel();
+
+    expect(
+      Array.from(
+        container.querySelectorAll<HTMLImageElement>("[data-path-brand-mark]"),
+      ).map((image) => ({ alt: image.alt, src: image.getAttribute("src") })),
+    ).toEqual([
+      { alt: "", src: "/path-logos/johns-hopkins-shield.svg" },
+      { alt: "", src: "/path-logos/aws-cloud.svg" },
+      { alt: "", src: "/path-logos/amazon-sagemaker-ai.svg" },
+      { alt: "", src: "/path-logos/weights-and-biases.svg" },
+    ]);
+    expect(screen.getAllByRole("heading", { name: "AWS SageMaker" })).toHaveLength(
+      1,
+    );
+  });
+
   it("activates a project card explicitly", async () => {
     const user = userEvent.setup();
     const onActivate = vi.fn();

@@ -51,6 +51,7 @@ export type PathEntry = {
   shortLabel: string;
   area: string;
   summary: string;
+  brandMarks: readonly string[];
   position: Point;
   depth: number;
   tone: StarTone;
@@ -224,6 +225,14 @@ const optionalPreviewImage = (value: unknown, path: string) => {
   return candidate;
 };
 
+const pathLogo = (value: unknown, path: string) => {
+  const candidate = text(value, path);
+  if (!candidate.startsWith("/path-logos/")) {
+    throw new Error(`${path} must be a local Path logo`);
+  }
+  return candidate;
+};
+
 const assertUniqueSlugs = (
   values: readonly { slug: string }[],
   kind: string,
@@ -307,6 +316,10 @@ export function validateSiteContent(value: unknown): SiteContent {
       shortLabel: text(entry.shortLabel, `path[${index}].shortLabel`),
       area: text(entry.area, `path[${index}].area`),
       summary: text(entry.summary, `path[${index}].summary`),
+      brandMarks: array(entry.brandMarks, `path[${index}].brandMarks`).map(
+        (value, markIndex) =>
+          pathLogo(value, `path[${index}].brandMarks[${markIndex}]`),
+      ),
       ...starPlacement(entry, `path[${index}]`),
     };
   });
