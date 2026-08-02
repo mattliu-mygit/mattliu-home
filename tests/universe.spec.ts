@@ -1119,7 +1119,7 @@ test("wide overview keeps large constellations inside the composition", async ({
   }
 });
 
-test("corrected story composition keeps cards measured and intro copy full width", async ({
+test("corrected story composition keeps cards measured and copy full width", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1_440, height: 900 });
@@ -1142,8 +1142,8 @@ test("corrected story composition keeps cards measured and intro copy full width
   expect(contextCardBox).not.toBeNull();
   expect(contextCopyBox).not.toBeNull();
   expect(contextCopyBox!.width / contextCardBox!.width).toBeGreaterThan(0.98);
-  await expect(pathHeading).toHaveCSS("max-width", "352px");
-  await expect(pathSummary).toHaveCSS("max-width", "368px");
+  await expect(pathHeading).toHaveCSS("max-width", "none");
+  await expect(pathSummary).toHaveCSS("max-width", "none");
 });
 
 test("Path titles keep their logos centered beside the name", async ({
