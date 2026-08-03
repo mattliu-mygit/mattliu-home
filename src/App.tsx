@@ -5,8 +5,8 @@ import { SiteNav } from "./components/SiteNav";
 import type { UniverseView } from "./portfolio/navigation";
 import { portfolioModel } from "./portfolio/portfolio-model";
 import { usePortfolioController } from "./portfolio/use-portfolio-controller";
-import { CelestialScene } from "./scene/CelestialScene";
-import { ConstellationWorld } from "./scene/ConstellationWorld";
+import { CelestialScene } from "./universe/CelestialScene";
+import { ConstellationWorld } from "./universe/constellations/ConstellationWorld";
 
 const {
   constellationItems,

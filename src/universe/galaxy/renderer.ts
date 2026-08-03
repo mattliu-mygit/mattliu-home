@@ -19,9 +19,9 @@ import {
   WebGLRenderer,
 } from "three";
 
-import { GALAXY_DISK_RADIUS, type GalaxyField } from "./galaxy-field";
-import { galaxyPoseFor } from "./galaxy-pose";
-import { createGalaxyTexture } from "./galaxy-texture";
+import { GALAXY_DISK_RADIUS, type GalaxyField } from "./field";
+import { galaxyPoseFor } from "./pose";
+import { createGalaxyTexture } from "./texture";
 
 export type GalaxyFrame = {
   corePresence: number;

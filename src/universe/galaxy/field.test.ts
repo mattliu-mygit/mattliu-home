@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createGalaxyField,
   galaxyPointCountFor,
-} from "./galaxy-field";
+} from "./field";
 
 describe("galaxy field", () => {
   it("creates deterministic packed attributes for one seeded disk", () => {

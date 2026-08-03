@@ -5,8 +5,8 @@ import {
   constellationFocusPoint,
   type Point2d,
   worldCameraFor,
-} from "../scene/celestial-motion";
-import type { ConstellationWorldHandle } from "../scene/ConstellationWorld";
+} from "../universe/motion/celestial-motion";
+import type { ConstellationWorldHandle } from "../universe/constellations/ConstellationWorld";
 import type { NarrativeWheelHandle } from "../components/NarrativeWheel";
 import type { RouteRailHandle } from "../components/RouteRail";
 import { projectBySlug, type DestinationSlug } from "../content/site-content";

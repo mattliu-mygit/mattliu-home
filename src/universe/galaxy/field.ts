@@ -1,4 +1,4 @@
-import { createSeededRandom } from "./celestial-motion";
+import { createSeededRandom } from "../motion/celestial-motion";
 
 export type GalaxyField = {
   positions: Float32Array;

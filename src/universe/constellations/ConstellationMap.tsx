@@ -1,14 +1,14 @@
 import { type CSSProperties, useLayoutEffect, useRef } from "react";
 
-import { useCelestialMotionChannel } from "./celestial-motion-channel";
-import { projectConstellationPoint } from "./celestial-motion";
+import { useCelestialMotionChannel } from "../motion/celestial-motion-channel";
+import { projectConstellationPoint } from "../motion/celestial-motion";
 import type {
   Connection,
   DestinationSlug,
   Point,
   StarProminence,
   StarTone,
-} from "../content/site-content";
+} from "../../content/site-content";
 
 export type ConstellationItem = {
   slug: string;

@@ -1,5 +1,5 @@
-import type { Point2d } from "../scene/celestial-motion";
-import type { ConstellationItem } from "../scene/ConstellationMap";
+import type { Point2d } from "../universe/motion/celestial-motion";
+import type { ConstellationItem } from "../universe/constellations/ConstellationMap";
 import {
   siteContent,
   type DestinationSlug,

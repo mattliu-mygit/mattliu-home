@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { galaxyPoseFor } from "./galaxy-pose";
+import { galaxyPoseFor } from "./pose";
 
 describe("galaxy pose", () => {
   it("keeps the viewing plane fixed while scroll spins the disk", () => {

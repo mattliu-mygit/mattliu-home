@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createGalaxyTexture } from "./galaxy-texture";
+import { createGalaxyTexture } from "./texture";
 
 const alphaAt = (
   data: Uint8Array,

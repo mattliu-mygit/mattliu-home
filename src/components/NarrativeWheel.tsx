@@ -17,7 +17,7 @@ import {
   canScrollNarrative,
   normalizeNarrativeWheel,
   type NarrativeWheelInput,
-} from "../scene/wheel-input";
+} from "../universe/motion/wheel-input";
 import { ArtifactPreview } from "./ArtifactPreview";
 import { ExternalLink } from "./ExternalLink";
 

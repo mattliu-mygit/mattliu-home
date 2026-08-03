@@ -1,4 +1,4 @@
-import { createSeededRandom } from "./celestial-motion";
+import { createSeededRandom } from "../motion/celestial-motion";
 
 type GalaxyTextureOptions = {
   height: number;

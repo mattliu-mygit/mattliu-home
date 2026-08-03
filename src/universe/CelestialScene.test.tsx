@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   type CelestialMotionChannel,
   useCelestialMotionChannel,
-} from "./celestial-motion-channel";
+} from "./motion/celestial-motion-channel";
 import { CelestialScene } from "./CelestialScene";
 
 afterEach(() => {
