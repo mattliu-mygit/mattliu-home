@@ -602,6 +602,7 @@ export default function App() {
       view={sceneView}
     >
       <SiteNav
+        email={person.email}
         immersive={immersive}
         immersiveButtonRef={immersiveButtonRef}
         links={person.links}

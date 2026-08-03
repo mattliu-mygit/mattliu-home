@@ -85,6 +85,7 @@ export type SiteContent = {
     alternateName: string;
     role: string;
     location: string;
+    email: string;
     headline: string;
     introduction: string;
     links: readonly PublicLink[];
@@ -141,6 +142,14 @@ const httpsUrl = (value: unknown, path: string): string => {
   }
   if (parsed.protocol !== "https:") {
     throw new Error(`${path} must be an absolute HTTPS URL`);
+  }
+  return candidate;
+};
+
+const emailAddress = (value: unknown, path: string): string => {
+  const candidate = text(value, path);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) {
+    throw new Error(`${path} must be a valid email address`);
   }
   return candidate;
 };
@@ -494,6 +503,7 @@ export function validateSiteContent(value: unknown): SiteContent {
       alternateName: text(rawPerson.alternateName, "person.alternateName"),
       role: text(rawPerson.role, "person.role"),
       location: text(rawPerson.location, "person.location"),
+      email: emailAddress(rawPerson.email, "person.email"),
       headline: text(rawPerson.headline, "person.headline"),
       introduction: text(rawPerson.introduction, "person.introduction"),
       links,

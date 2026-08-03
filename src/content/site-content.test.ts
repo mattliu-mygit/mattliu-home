@@ -20,6 +20,7 @@ describe("site content", () => {
       },
       person: {
         name: "Matthew Liu",
+        email: "mattliujhu@gmail.com",
         headline:
           "I build the systems that keep intelligent software honest.",
         introduction:
@@ -93,7 +94,7 @@ describe("site content", () => {
       {
         view: "quotes",
         slug: "inspiration",
-        text: "Ever learning and growing, looking more inspiration...",
+        text: "Ever learning, ever growing, always looking for inspiration...",
         shortLabel: "Inspiration",
       },
     ]);
@@ -111,8 +112,15 @@ describe("site content", () => {
       "less-is-more",
       "failure-to-failure",
       "strong-opinions",
-      "simplicity-follows",
+      "simplicity-and-clarity",
     ]);
+    expect(siteContent.quotes.at(-1)).toMatchObject({
+      text:
+        "In programming simplicity and clarity … are not a dispensable luxury, but a crucial matter that decides between success and failure.",
+      author: "Edsger W. Dijkstra",
+      sourceUrl:
+        "https://www.cs.utexas.edu/~EWD/transcriptions/EWD06xx/EWD648.html",
+    });
     expect(siteContent.projects.filter(({ artifact }) => artifact)).toEqual([
       expect.objectContaining({ slug: "llm-as-a-judge", artifact: "judge" }),
     ]);
@@ -248,6 +256,16 @@ describe("site content", () => {
     );
   });
 
+  it("rejects an invalid public email address", () => {
+    const invalid = cloneContent();
+    const person = invalid.person as Record<string, unknown>;
+    person.email = "not-an-email";
+
+    expect(() => validateSiteContent(invalid)).toThrow(
+      /person\.email must be a valid email address/i,
+    );
+  });
+
   it("rejects coordinates outside the constellation", () => {
     const invalid = cloneContent();
     const projects = invalid.projects as Array<Record<string, unknown>>;
@@ -315,8 +333,8 @@ describe("site content", () => {
     ).toEqual([
       ["less-is-more", "failure-to-failure"],
       ["failure-to-failure", "strong-opinions"],
-      ["strong-opinions", "simplicity-follows"],
-      ["simplicity-follows", "inspiration"],
+      ["strong-opinions", "simplicity-and-clarity"],
+      ["simplicity-and-clarity", "inspiration"],
     ]);
 
     const invalid = cloneContent();

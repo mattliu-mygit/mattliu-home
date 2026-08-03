@@ -541,11 +541,12 @@ describe("personal universe", () => {
     expect(attribution).toHaveTextContent("Maybe Churchill ↗");
   });
 
-  it("links only to verified public profiles", () => {
+  it("links to verified public profiles and direct email", () => {
     render(<App />);
 
     const github = screen.getByRole("link", { name: "GitHub" });
     const linkedIn = screen.getByRole("link", { name: "LinkedIn" });
+    const email = screen.getByRole("link", { name: "Email Matthew" });
     expect(github).toHaveAttribute(
       "href",
       "https://github.com/mattliu-mygit",
@@ -554,11 +555,14 @@ describe("personal universe", () => {
       "href",
       "https://www.linkedin.com/in/mattliuhew/",
     );
+    expect(email).toHaveAttribute("href", "mailto:mattliujhu@gmail.com");
+    expect(email).toHaveAttribute("title", "Email Matthew");
     expect(github.querySelector("svg")).toBeInTheDocument();
     expect(linkedIn.querySelector("svg")).toBeInTheDocument();
+    expect(email.querySelector("svg")).toBeInTheDocument();
     expect(github).toHaveClass("site-nav__icon-link");
     expect(linkedIn).toHaveClass("site-nav__icon-link");
-    expect(screen.queryByRole("link", { name: "Email" })).not.toBeInTheDocument();
+    expect(email).toHaveClass("site-nav__icon-link");
   });
 
   it("opens and closes a project lens while preserving the hierarchy", async () => {

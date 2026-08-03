@@ -13,6 +13,7 @@
     "alternateName": "mattliu-mygit",
     "role": "Software engineer",
     "location": "Seattle, Washington",
+    "email": "mattliujhu@gmail.com",
     "headline": "I build the systems that keep intelligent software honest.",
     "introduction": "Working across AI evaluation, observability, and infrastructure, I turn ideas and research into production services built to scale, endure, and evolve.",
     "links": [
@@ -56,8 +57,8 @@
       "connections": [
         ["less-is-more", "failure-to-failure"],
         ["failure-to-failure", "strong-opinions"],
-        ["strong-opinions", "simplicity-follows"],
-        ["simplicity-follows", "inspiration"]
+        ["strong-opinions", "simplicity-and-clarity"],
+        ["simplicity-and-clarity", "inspiration"]
       ]
     }
   ],
@@ -231,10 +232,10 @@
       "prominence": 2
     },
     {
-      "slug": "simplicity-follows",
-      "text": "Simplicity does not precede complexity, but follows it.",
-      "author": "Alan Perlis",
-      "sourceUrl": "https://cs.yale.edu/homes/perlis-alan/quotes.html",
+      "slug": "simplicity-and-clarity",
+      "text": "In programming simplicity and clarity … are not a dispensable luxury, but a crucial matter that decides between success and failure.",
+      "author": "Edsger W. Dijkstra",
+      "sourceUrl": "https://www.cs.utexas.edu/~EWD/transcriptions/EWD06xx/EWD648.html",
       "position": [57, 38],
       "depth": 0.98,
       "tone": "cool",
@@ -265,7 +266,7 @@
     {
       "view": "quotes",
       "slug": "inspiration",
-      "text": "Ever learning and growing, looking more inspiration...",
+      "text": "Ever learning, ever growing, always looking for inspiration...",
       "shortLabel": "Inspiration",
       "position": [82, 64],
       "depth": 1.02,

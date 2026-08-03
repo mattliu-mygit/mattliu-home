@@ -8,6 +8,7 @@ type ProfileLink = {
 };
 
 type SiteNavProps = {
+  email: string;
   immersive: boolean;
   immersiveButtonRef?: Ref<HTMLButtonElement>;
   links: readonly ProfileLink[];
@@ -33,6 +34,21 @@ function LinkedInIcon() {
       <path
         d="M6.5 8.25H3.25V21H6.5V8.25Zm.2-4A1.9 1.9 0 1 0 2.9 4.25a1.9 1.9 0 0 0 3.8 0ZM21 13.7c0-3.84-2.05-5.63-4.78-5.63a4.12 4.12 0 0 0-3.72 2.05V8.25H9.25V21h3.25v-6.31c0-1.66.31-3.26 2.37-3.26 2.03 0 2.05 1.9 2.05 3.37V21H21v-7.3Z"
         fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function EmailIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path
+        d="M3.75 5.75h16.5v12.5H3.75zM4.5 6.5 12 13l7.5-6.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
       />
     </svg>
   );
@@ -117,6 +133,7 @@ function ExitImmersiveIcon() {
 }
 
 export function SiteNav({
+  email,
   immersive,
   immersiveButtonRef,
   links,
@@ -156,6 +173,14 @@ export function SiteNav({
             {iconFor(link.label)}
           </ExternalLink>
         ))}
+        <a
+          aria-label="Email Matthew"
+          className="site-nav__icon-link"
+          href={`mailto:${email}`}
+          title="Email Matthew"
+        >
+          <EmailIcon />
+        </a>
       </div>
     </nav>
   );

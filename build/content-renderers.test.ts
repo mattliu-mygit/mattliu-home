@@ -46,6 +46,7 @@ describe("content renderers", () => {
       mainEntity: {
         "@type": "Person",
         name: "Matthew Liu",
+        email: "mailto:mattliujhu@gmail.com",
       },
     });
     expect(structuredData.mainEntity.sameAs).toEqual([
@@ -82,6 +83,7 @@ describe("content renderers", () => {
 
     expect(html).toContain("<h1>Matthew Liu");
     expect(html).toContain(siteContent.person.introduction);
+    expect(html).toContain('href="mailto:mattliujhu@gmail.com"');
     expect(html.match(/target="_blank"/g)).toHaveLength(
       siteContent.person.links.length +
         siteContent.projects.filter(({ repositoryUrl }) => repositoryUrl).length,
@@ -100,6 +102,7 @@ describe("content renderers", () => {
     expect(portfolio.canonicalUrl).toBe(
       "https://mliu.vercel.app/",
     );
+    expect(portfolio.person.email).toBe("mattliujhu@gmail.com");
     expect(portfolio.projects).toHaveLength(5);
     expect(portfolio.path).toEqual([
       expect.objectContaining({

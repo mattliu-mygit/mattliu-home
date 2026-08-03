@@ -42,6 +42,7 @@ const structuredData = (content: SiteContent) => {
       name: content.person.name,
       alternateName: content.person.alternateName,
       jobTitle: content.person.role,
+      email: `mailto:${content.person.email}`,
       description: content.person.introduction,
       homeLocation: {
         "@type": "Place",
@@ -157,6 +158,7 @@ export function renderFallbackHtml(content: SiteContent): string {
         `<li><a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)}</a></li>`,
     )
     .join("");
+  const emailLink = `<li><a href="mailto:${escapeHtml(content.person.email)}">Email</a></li>`;
   const projects = content.projects
     .map((project) => {
       const title = project.repositoryUrl
@@ -182,7 +184,7 @@ export function renderFallbackHtml(content: SiteContent): string {
     '<main class="seo-fallback" data-static-fallback>',
     `<header><h1>${escapeHtml(content.person.name)} — ${escapeHtml(content.person.headline)}</h1>`,
     `<p>${escapeHtml(content.person.introduction)}</p>`,
-    `<ul aria-label="Profiles">${links}</ul></header>`,
+    `<ul aria-label="Profiles">${links}${emailLink}</ul></header>`,
     `<section aria-labelledby="fallback-path"><h2 id="fallback-path">Path</h2><ol>${path}</ol></section>`,
     `<section aria-labelledby="fallback-projects"><h2 id="fallback-projects">Projects</h2><ol>${projects}</ol></section>`,
     "</main>",
@@ -199,6 +201,7 @@ export function renderPortfolioJson(content: SiteContent): string {
         alternateName: content.person.alternateName,
         role: content.person.role,
         location: content.person.location,
+        email: content.person.email,
         headline: content.person.headline,
         introduction: content.person.introduction,
         profiles: content.person.links,

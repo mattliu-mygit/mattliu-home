@@ -139,7 +139,7 @@ describe("NarrativeWheel", () => {
       name: "Focus Builder tinkering...",
     });
     const quoteCoda = screen.getByRole("button", {
-      name: "Focus Ever learning and growing, looking more inspiration...",
+      name: "Focus Ever learning, ever growing, always looking for inspiration...",
     });
 
     expect(pathCoda.closest("article")).toHaveClass("narrative-card--path");
