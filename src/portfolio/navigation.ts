@@ -3,7 +3,7 @@ import {
   pathBySlug,
   projectBySlug,
   quoteBySlug,
-} from "./content/site-content";
+} from "../content/site-content";
 
 export type UniverseView = "universe" | "path" | "projects" | "quotes";
 

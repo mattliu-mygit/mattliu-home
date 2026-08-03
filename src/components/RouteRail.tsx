@@ -10,7 +10,7 @@ import {
   createRouteMarks,
   routeMarkerPosition,
   type StoryBeat,
-} from "../story-navigation";
+} from "../portfolio/story-navigation";
 
 type RouteRailProps = {
   beats: readonly StoryBeat[];

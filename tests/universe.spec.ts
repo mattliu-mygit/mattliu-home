@@ -580,7 +580,7 @@ test("immersive view becomes a centered observational sky and restores context",
 }) => {
   const galaxyModuleLoaded = page.waitForResponse(
     (response) =>
-      response.url().includes("/src/galaxy-renderer.ts") && response.ok(),
+      response.url().includes("/src/scene/galaxy-renderer.ts") && response.ok(),
   );
   await page.goto("/");
   await galaxyModuleLoaded;

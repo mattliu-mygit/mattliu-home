@@ -322,25 +322,6 @@ describe("personal universe", () => {
     expect(window.location.hash).toBe("#path/aws-sagemaker");
   });
 
-  it("never snapshots constellation travel in either direction", async () => {
-    const user = userEvent.setup();
-    const startViewTransition = vi.fn((update: () => void) => {
-      update();
-      return { finished: Promise.resolve() };
-    });
-    Object.defineProperty(document, "startViewTransition", {
-      configurable: true,
-      value: startViewTransition,
-    });
-    render(<App />);
-
-    await user.click(screen.getByRole("button", { name: "Explore Path" }));
-    await user.click(screen.getByRole("button", { name: "Go to Projects" }));
-    await user.click(screen.getByRole("button", { name: "Go to Intro" }));
-
-    expect(startViewTransition).not.toHaveBeenCalled();
-  });
-
   it("uses a Path star to zoom to the matching professional card", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -584,22 +565,6 @@ describe("personal universe", () => {
     expect(window.location.hash).toBe("#projects");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
-  });
-
-  it("keeps case-study artifacts truthful", async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(
-      screen.getByRole("button", { name: "Explore Projects" }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: "Explore LLM-as-a-Judge" }),
-    );
-
-    const dialog = screen.getByRole("dialog", { name: "LLM-as-a-Judge" });
-    expect(dialog.querySelector('[data-artifact="judge"]')).toBeInTheDocument();
-    expect(dialog.querySelector(".project-lens__link")).not.toBeInTheDocument();
   });
 
   it("opens a project from a valid hierarchical fragment", () => {

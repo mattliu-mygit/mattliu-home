@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { siteContent } from "../content/site-content";
-import { createStoryBeats } from "../story-navigation";
+import { createStoryBeats } from "../portfolio/story-navigation";
 import {
   NarrativeWheel,
   type NarrativeWheelHandle,

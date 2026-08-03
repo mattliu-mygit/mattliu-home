@@ -24,14 +24,14 @@ import {
   type Meteor,
   type Point2d,
   type WorldCamera,
-} from "../celestial-motion";
+} from "./celestial-motion";
 import {
   CelestialMotionProvider,
   createCelestialMotionChannel,
   type CelestialMotionChannel,
-} from "../celestial-motion-channel";
-import type { UniverseView } from "../navigation";
-import type { NarrativeWheelInput } from "../wheel-input";
+} from "./celestial-motion-channel";
+import type { UniverseView } from "../portfolio/navigation";
+import type { NarrativeWheelInput } from "./wheel-input";
 import { GalaxyField, type GalaxyFieldHandle } from "./GalaxyField";
 
 type CelestialSceneProps = PropsWithChildren<{

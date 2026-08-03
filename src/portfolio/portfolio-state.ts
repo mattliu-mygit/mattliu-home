@@ -1,4 +1,4 @@
-import { siteContent, type DestinationSlug } from "./content/site-content";
+import { siteContent, type DestinationSlug } from "../content/site-content";
 import type { UniverseLocation } from "./navigation";
 import { storyBeatForLocation, type StoryBeat } from "./story-navigation";
 

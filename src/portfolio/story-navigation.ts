@@ -5,7 +5,7 @@ import type {
   Project,
   Quote,
   SiteContent,
-} from "./content/site-content";
+} from "../content/site-content";
 import type { UniverseLocation } from "./navigation";
 
 export type StoryBeat =

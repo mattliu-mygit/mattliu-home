@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CelestialMotionProvider,
   createCelestialMotionChannel,
-} from "../celestial-motion-channel";
-import { projectConstellationPoint } from "../celestial-motion";
+} from "./celestial-motion-channel";
+import { projectConstellationPoint } from "./celestial-motion";
 import { ConstellationMap } from "./ConstellationMap";
 
 afterEach(() => {

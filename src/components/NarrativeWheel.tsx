@@ -12,12 +12,12 @@ import {
   interpolatedStoryProgress,
   type ConstellationTravel,
   type StoryBeat,
-} from "../story-navigation";
+} from "../portfolio/story-navigation";
 import {
   canScrollNarrative,
   normalizeNarrativeWheel,
   type NarrativeWheelInput,
-} from "../wheel-input";
+} from "../scene/wheel-input";
 import { ArtifactPreview } from "./ArtifactPreview";
 import { ExternalLink } from "./ExternalLink";
 

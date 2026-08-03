@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { siteContent } from "./content/site-content";
+import { siteContent } from "../content/site-content";
 import {
   createPortfolioState,
   portfolioReducer,

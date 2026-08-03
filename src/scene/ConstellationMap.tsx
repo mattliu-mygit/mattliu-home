@@ -1,7 +1,7 @@
 import { type CSSProperties, useLayoutEffect, useRef } from "react";
 
-import { useCelestialMotionChannel } from "../celestial-motion-channel";
-import { projectConstellationPoint } from "../celestial-motion";
+import { useCelestialMotionChannel } from "./celestial-motion-channel";
+import { projectConstellationPoint } from "./celestial-motion";
 import type {
   Connection,
   DestinationSlug,

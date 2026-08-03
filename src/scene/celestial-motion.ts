@@ -1,4 +1,4 @@
-import type { UniverseView } from "./navigation";
+import type { UniverseView } from "../portfolio/navigation";
 
 export type CelestialMotion = {
   travel: number;

@@ -5,11 +5,11 @@ import {
   useRef,
 } from "react";
 
-import { createGalaxyField, galaxyPointCountFor } from "../galaxy-field";
+import { createGalaxyField, galaxyPointCountFor } from "./galaxy-field";
 import type {
   GalaxyFrame,
   GalaxyRenderer,
-} from "../galaxy-renderer";
+} from "./galaxy-renderer";
 
 export type GalaxyFieldHandle = {
   render: (frame: GalaxyFrame) => void;
@@ -69,7 +69,7 @@ export const GalaxyField = forwardRef<GalaxyFieldHandle, GalaxyFieldProps>(
       }
 
       let cancelled = false;
-      void import("../galaxy-renderer").then(({ createGalaxyRenderer }) => {
+      void import("./galaxy-renderer").then(({ createGalaxyRenderer }) => {
         if (cancelled) {
           return;
         }

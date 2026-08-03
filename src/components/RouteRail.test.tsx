@@ -9,7 +9,7 @@ import {
   createRouteMarks,
   createStoryBeats,
   routeMarkerPosition,
-} from "../story-navigation";
+} from "../portfolio/story-navigation";
 import { RouteRail, type RouteRailHandle } from "./RouteRail";
 
 const beats = createStoryBeats(siteContent);

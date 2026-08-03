@@ -623,6 +623,8 @@ html[data-js="true"] .seo-fallback {
 }
 
 .narrative-card--path .narrative-card__eyebrow time {
+  flex: 0 0 auto;
+  font-size: var(--card-supporting-font-size);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -682,11 +684,6 @@ html[data-js="true"] .seo-fallback {
 
 .narrative-card--project .narrative-card__meta span:last-child {
   text-align: left;
-}
-
-.narrative-card--path .narrative-card__eyebrow time {
-  flex: 0 0 auto;
-  font-size: var(--card-supporting-font-size);
 }
 
 .narrative-card__copy strong {

@@ -5,9 +5,9 @@ import {
   useRef,
 } from "react";
 
-import type { Point2d } from "../celestial-motion";
+import type { Point2d } from "./celestial-motion";
 import type { DestinationSlug, SiteContent } from "../content/site-content";
-import type { UniverseView } from "../navigation";
+import type { UniverseView } from "../portfolio/navigation";
 import {
   ConstellationMap,
   type ConstellationItem,
