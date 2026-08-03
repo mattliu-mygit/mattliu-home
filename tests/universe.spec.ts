@@ -85,6 +85,50 @@ test("the mobile story surface rises enough to preview its next beat", async ({
   expect(overlaps(introLocation!, quotesLabel!)).toBe(false);
 });
 
+test("mobile header controls share a generous target and visual scale", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const immersiveButton = page.getByRole("button", {
+    name: "Enter immersive view",
+  });
+  const githubButton = page.locator(
+    '.site-nav__icon-link[aria-label="GitHub"]',
+  );
+  const galaxy = page.locator(".site-nav__immersive-tilt");
+  const githubMark = githubButton.locator("svg");
+
+  const [immersiveBox, githubBox, galaxyBox, githubMarkBox] =
+    await Promise.all([
+      immersiveButton.boundingBox(),
+      githubButton.boundingBox(),
+      galaxy.boundingBox(),
+      githubMark.boundingBox(),
+    ]);
+
+  expect(immersiveBox).not.toBeNull();
+  expect(githubBox).not.toBeNull();
+  expect(galaxyBox).not.toBeNull();
+  expect(githubMarkBox).not.toBeNull();
+  expect(immersiveBox!.width).toBeGreaterThanOrEqual(48);
+  expect(immersiveBox!.height).toBeGreaterThanOrEqual(48);
+  expect(githubBox!.width).toBeGreaterThanOrEqual(48);
+  expect(githubBox!.height).toBeGreaterThanOrEqual(48);
+  expect(githubMarkBox!.width).toBeGreaterThanOrEqual(32);
+  expect(githubMarkBox!.height).toBeGreaterThanOrEqual(32);
+  expect(galaxyBox!.height).toBeGreaterThanOrEqual(githubMarkBox!.height);
+
+  await immersiveButton.click();
+  const exitMarkBox = await page
+    .locator(".site-nav__immersive-exit")
+    .boundingBox();
+  expect(exitMarkBox).not.toBeNull();
+  expect(exitMarkBox!.width).toBeGreaterThanOrEqual(32);
+  expect(exitMarkBox!.height).toBeGreaterThanOrEqual(32);
+});
+
 test("universe overview enters and leaves the Projects constellation", async ({
   page,
 }) => {

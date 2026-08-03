@@ -44,15 +44,15 @@ const iconFor = (label: string) =>
 const galaxyArms = Array.from({ length: 4 }, (_, arm) => {
   const phase = (arm * Math.PI) / 2;
 
-  return Array.from({ length: 25 }, (_, index) => {
-    const progress = index / 24;
-    const theta = index * 0.26;
+  return Array.from({ length: 16 }, (_, index) => {
+    const progress = index / 15;
+    const theta = progress * 6.24;
     const radius = 0.42 + 8.15 * progress ** 1.16;
     const angle = phase - theta;
 
     return {
       opacity: 0.68 + progress * 0.2,
-      radius: 0.16 + progress * 0.25,
+      radius: 0.23 + progress * 0.34,
       x: 12 + Math.cos(angle) * radius,
       y: 12 + Math.sin(angle) * radius,
     };
@@ -97,6 +97,25 @@ function ImmersiveIcon() {
   );
 }
 
+function ExitImmersiveIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="site-nav__immersive-exit"
+      data-testid="immersive-exit-icon"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
 export function SiteNav({
   immersive,
   immersiveButtonRef,
@@ -125,7 +144,7 @@ export function SiteNav({
           ref={immersiveButtonRef}
           type="button"
         >
-          <ImmersiveIcon />
+          {immersive ? <ExitImmersiveIcon /> : <ImmersiveIcon />}
         </button>
         {links.map((link) => (
           <ExternalLink

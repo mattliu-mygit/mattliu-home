@@ -226,8 +226,8 @@ html[data-js="true"] .seo-fallback {
 .site-nav__icon-link,
 .site-nav__immersive {
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 3rem;
+  height: 3rem;
   place-items: center;
   padding: 0;
   border: 1px solid transparent;
@@ -247,8 +247,8 @@ html[data-js="true"] .seo-fallback {
 }
 
 .site-nav__icon-link svg {
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 2rem;
+  height: 2rem;
 }
 
 .site-nav__icon-link:is(:hover, :focus-visible),
@@ -261,8 +261,8 @@ html[data-js="true"] .seo-fallback {
 .site-nav__immersive-glyph {
   position: relative;
   display: grid;
-  width: 1.28rem;
-  height: 1.28rem;
+  width: 2.8rem;
+  height: 2.8rem;
   place-items: center;
   perspective: 7rem;
   filter: drop-shadow(0 0 0.28rem rgb(181 190 218 / 0.24));
@@ -272,7 +272,7 @@ html[data-js="true"] .seo-fallback {
   display: block;
   width: 100%;
   height: 100%;
-  transform: rotate(-12deg) rotateX(58deg);
+  transform: rotate(-12deg) rotateX(45deg);
   transform-style: preserve-3d;
 }
 
@@ -291,6 +291,11 @@ html[data-js="true"] .seo-fallback {
 
 .site-nav__immersive-core {
   filter: drop-shadow(0 0 0.75px currentColor);
+}
+
+.site-nav__immersive-exit {
+  width: 2rem;
+  height: 2rem;
 }
 
 .site-nav__immersive[data-active="true"] {

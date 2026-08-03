@@ -98,9 +98,15 @@ describe("personal universe", () => {
     render(<App />);
     const story = screen.getByRole("region", { name: "Portfolio story" });
     const initialHash = window.location.hash;
+    const galaxyIcon = screen.getByTestId("immersive-galaxy-icon");
     expect(
       screen.queryByRole("button", { name: /^(Show|Hide) story$/ }),
     ).not.toBeInTheDocument();
+    expect(galaxyIcon).toBeInTheDocument();
+    expect(
+      galaxyIcon.querySelectorAll("[data-galaxy-arm] circle"),
+    ).toHaveLength(64);
+    expect(screen.queryByTestId("immersive-exit-icon")).not.toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", { name: "Enter immersive view" }),
@@ -125,11 +131,10 @@ describe("personal universe", () => {
     expect(
       screen.getByRole("button", { name: "Exit immersive view" }),
     ).toBeVisible();
-    const immersiveIcon = screen.getByTestId("immersive-galaxy-icon");
-    expect(immersiveIcon).toBeInTheDocument();
     expect(
-      immersiveIcon.querySelectorAll("[data-galaxy-arm]"),
-    ).toHaveLength(4);
+      screen.queryByTestId("immersive-galaxy-icon"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("immersive-exit-icon")).toBeInTheDocument();
     expect(
       screen
         .getByRole("button", { name: "Exit immersive view" })
